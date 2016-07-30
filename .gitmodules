@@ -1,0 +1,3 @@
+[submodule "Dependencies/Utix"]
+	path = Dependencies/Utix
+	url = https://github.com/dhustkoder/Utix.git
