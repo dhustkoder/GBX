@@ -1,6 +1,6 @@
 #ifndef GBX_CPU_HPP_
 #define GBX_CPU_HPP_
-#include "Common.hpp"
+#include <Utix/Ints.h>
 
 namespace gbx {
 

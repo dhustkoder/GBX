@@ -19,21 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Source\Common.h" />
-    <ClInclude Include="..\..\Source\Cpu.h" />
-    <ClInclude Include="..\..\Source\Instructions.h" />
-    <ClInclude Include="..\..\Source\Machine.h" />
-    <ClInclude Include="..\..\Source\Memory.h" />
-    <ClInclude Include="..\..\Source\Cartridge.h" />
+    <ClInclude Include="..\..\Source\Cartridge.hpp" />
+    <ClInclude Include="..\..\Source\Common.hpp" />
+    <ClInclude Include="..\..\Source\CPU.hpp" />
+    <ClInclude Include="..\..\Source\Memory.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Source\CBInstructions.cpp" />
-    <ClCompile Include="..\..\Source\Cpu.cpp" />
-    <ClCompile Include="..\..\Source\Machine.cpp" />
-    <ClCompile Include="..\..\Source\Main.cpp" />
-    <ClCompile Include="..\..\Source\MainInstructions.cpp" />
-    <ClCompile Include="..\..\Source\Memory.cpp" />
     <ClCompile Include="..\..\Source\Cartridge.cpp" />
+    <ClCompile Include="..\..\Source\CPU.cpp" />
+    <ClCompile Include="..\..\Source\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F71158D5-BA91-444E-8295-17A4332B5BEE}</ProjectGuid>
