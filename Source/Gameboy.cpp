@@ -37,7 +37,6 @@ void destroy_gameboy(Gameboy* const gb) {
 bool Gameboy::Reset() 
 {
 	// load cartridge data into memory
-	memcpy(memory, memory + RAM_MAX_SIZE, 32_Kib);
 	const auto cartridge_info = get_cartridge_info(memory);
 
 	printf("Cartridge information\n" \
@@ -58,12 +57,18 @@ bool Gameboy::Reset()
 		return false;
 	}
 
+	// init the system, Gameboy mode
 	cpu.SetPC(CARTRIDGE_ENTRY_ADDR);
+
 	cpu.SetSP(0xfffe);
 	cpu.SetAF(0x01B0);
 	cpu.SetBC(0x0013);
 	cpu.SetDE(0x00D8);
 	cpu.SetHL(0x014D);
+
+	interrupts.enable = 0;
+	interrupts.flags = 0;
+	interrupts.master = 0;
 
 	WriteU8(0xFF05, 0x00); // TIMA
 	WriteU8(0xFF06, 0x00); // TMA
@@ -95,7 +100,6 @@ bool Gameboy::Reset()
 	WriteU8(0xFF49, 0xFF); // OBP1
 	WriteU8(0xFF4A, 0x00); // WY
 	WriteU8(0xFF4B, 0x00); // WX
-	WriteU8(0xFFFF, 0x00); // IE
 
 	return true;
 }

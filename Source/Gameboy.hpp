@@ -6,6 +6,18 @@
 namespace gbx {
 
 
+struct Interrupts
+{
+	uint8_t master;
+	uint8_t enable;
+	uint8_t flags;
+};
+
+
+
+
+
+
 struct Gameboy 
 {
 	Gameboy()=delete;
@@ -34,7 +46,8 @@ struct Gameboy
 
 
 	CPU cpu;
-	uint8_t memory[RAM_MAX_SIZE + CARTRIDGE_MAX_SIZE];
+	Interrupts interrupts;
+	Memory memory;
 };
 
 

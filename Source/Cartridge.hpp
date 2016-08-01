@@ -1,6 +1,7 @@
 #ifndef GBX_CARTRIDGE_HPP_
 #define GBX_CARTRIDGE_HPP_
 #include <Utix/Ints.h>
+#include "Memory.hpp"
 
 namespace gbx {
 
@@ -50,7 +51,7 @@ struct CartridgeInfo
 
 
 
-extern CartridgeInfo get_cartridge_info(const uint8_t* memory);
+extern CartridgeInfo get_cartridge_info(const Memory& memory);
 
 
 

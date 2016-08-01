@@ -19,9 +19,8 @@ int main(int argc, char** argv)
 	
 	const auto gameboy_guard = utix::MakeScopeExit([=] { gbx::destroy_gameboy(gameboy); });
 
-
-	gameboy->LoadRom(argv[1]);
-
+	if(!gameboy->LoadRom(argv[1]))
+		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
 }
