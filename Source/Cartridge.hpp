@@ -49,15 +49,8 @@ struct CartridgeInfo
 };
 
 
-extern bool FillCartridgeInfo(const char* file_name, CartridgeInfo* const cinfo);
 
-
-
-
-
-
-
-
+extern CartridgeInfo get_cartridge_info(const uint8_t* memory);
 
 
 

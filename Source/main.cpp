@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Cartridge.hpp"
-
-
-
-
-
+#include <Utix/ScopeExit.h>
+#include "Gameboy.hpp"
 
 
 
@@ -17,19 +13,14 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	gbx::CartridgeInfo cinfo;
-
-	if(!gbx::FillCartridgeInfo(argv[1], &cinfo))
+	gbx::Gameboy* gameboy = gbx::create_gameboy();
+	if(!gameboy)
 		return EXIT_FAILURE;
 	
+	const auto gameboy_guard = utix::MakeScopeExit([=] { gbx::destroy_gameboy(gameboy); });
 
-	printf("CARTRIDGE INFO\n"    \
-	       "INTERNAL NAME: %s\n" \
-	       "TYPE: %u\n"          \
-	       "SYSTEM: %u\n"        \
-	       "SIZE: %zu\n",
-	       cinfo.internal_name, (unsigned)cinfo.type, 
-	       (unsigned)cinfo.system, cinfo.size);
+
+	gameboy->LoadRom(argv[1]);
 
 
 	return EXIT_SUCCESS;
