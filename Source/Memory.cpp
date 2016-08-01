@@ -4,9 +4,8 @@
 #include "Memory.hpp"
 
 namespace gbx {
-static uint8_t dummy = 0; // used for undefined reference for invalid addresses
-static const uint8_t& solve_hardware_io_ref(const uint16_t address, const Gameboy& gb);
-static const uint8_t& solve_address_ref(const uint16_t address, const Gameboy& gb);
+static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb);
+static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb);
 
 
 
@@ -21,7 +20,8 @@ int8_t Gameboy::ReadS8(const uint16_t address) const {
 
 
 uint8_t Gameboy::ReadU8(const uint16_t address) const {
-	return solve_address_ref(address, *this);
+	const uint8_t* const addr = solve_address(address, *this);
+	return addr ? *addr : 0;
 }
 
 
@@ -35,17 +35,20 @@ uint16_t Gameboy::ReadU16(const uint16_t address) const {
 
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
 {
-	if(address > 0x7fff) {
-		const_cast<uint8_t&>(solve_address_ref(address, *this)) = value;
-	}
-	else {
+	if (address > 0x7fff) {
+		uint8_t* const addr = const_cast<uint8_t*>(solve_address(address, *this));
+		if (addr)
+			*addr = value;
+	} else {
+		// attempt to write to ROM
 		fprintf(stderr, "write required at ROM %4x\n", address);
 	}
 }
 
 
 
-void Gameboy::WriteU16(const uint16_t address, const uint16_t value) {
+void Gameboy::WriteU16(const uint16_t address, const uint16_t value) 
+{
 	WriteU8(address, GetLowByte(value));
 	WriteU8(address + 1, GetHighByte(value));
 }
@@ -97,54 +100,54 @@ uint16_t Gameboy::PopStack16()
 
 
 
-static const uint8_t& solve_address_ref(const uint16_t address, const Gameboy& gb)
+static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 {
 	if (address >= 0xFF80) {
 		if (address < 0xFFFF)
-			return gb.memory.zero_page[address - 0xFF80];
+			return &gb.memory.zero_page[address - 0xFF80];
 		else
-			return gb.interrupts.enable;
+			return &gb.interrupts.enable;
 	}
 	else if (address >= 0xFF00) {
-		return solve_hardware_io_ref(address, gb);
+		return solve_hardware_io_address(address, gb);
 	}
 	else if (address >= 0xFE00) {
 		if (address < 0xFEA0)
-			return gb.memory.oam[address - 0xFE00];
+			return &gb.memory.oam[address - 0xFE00];
 	}
 	else if (address >= 0xC000) {
 		if (address < 0xD000)
-			return gb.memory.ram[address - 0xC000];
+			return &gb.memory.ram[address - 0xC000];
 	}
 	else if (address >= 0xA000) {
 		ASSERT_MSG(false, "cartridge ram required");
 	}
 	else if (address >= 0x8000) {
-		return gb.memory.vram[address - 0x8000];
+		return &gb.memory.vram[address - 0x8000];
 	}
 	else if (address < 0x8000) {
-		if(address >= 0x4000)
-			return gb.memory.home[address - 0x4000];
+		if (address >= 0x4000)
+			return &gb.memory.home[address - 0x4000];
 		else
-			return gb.memory.fixed_home[address];
+			return &gb.memory.fixed_home[address];
 	}
-	
+
 	fprintf(stderr, "address %4x required\n", address);
-	return dummy;
+	return nullptr;
 }
 
 
 
-static const uint8_t& solve_hardware_io_ref(const uint16_t address, const Gameboy& gb)
+static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb)
 {
 	switch (address) {
-	case 0xFF0F: return gb.interrupts.flags;
+	case 0xFF0F: return &gb.interrupts.flags;
 	default:
 		fprintf(stderr, "hardware io %4x required\n", address);
 		break;
 	};
 
-	return dummy;
+	return nullptr;
 }
 
 
