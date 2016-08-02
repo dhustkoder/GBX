@@ -11,7 +11,8 @@ namespace gbx {
 
 
 
-Gameboy* create_gameboy() {
+Gameboy* create_gameboy() 
+{
 	Gameboy* const gb = utix::malloc_t<Gameboy>();
 	if (!gb) {
 		perror("Couldn't allocate memory");
@@ -51,7 +52,7 @@ bool Gameboy::Reset()
 	if (cartridge_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;
-	}
+	} 
 	else if (cartridge_info.type != CartridgeType::ROM_ONLY) {
 		fprintf(stderr, "cartridge type not suppoerted!");
 		return false;
@@ -133,3 +134,4 @@ bool Gameboy::Reset()
 
 
 }
+

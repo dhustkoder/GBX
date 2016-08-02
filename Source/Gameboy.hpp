@@ -8,6 +8,10 @@ namespace gbx {
 
 struct Interrupts
 {
+	enum Flags : uint8_t {
+		VBLANK = 0x01, 
+	};
+
 	uint8_t master;
 	uint8_t enable;
 	uint8_t flags;
@@ -30,6 +34,11 @@ struct Gameboy
 
 	bool LoadRom(const char* file);
 	bool Reset();
+
+
+	void StepInstruction();
+
+
 
 	int8_t ReadS8(const uint16_t address) const;
 	uint8_t ReadU8(const uint16_t address) const;

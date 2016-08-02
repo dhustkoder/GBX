@@ -10,7 +10,8 @@ namespace gbx {
 
 
 
-void CPU::PrintFlags() const {
+void CPU::PrintFlags() const 
+{
 	const auto f = GetF();
 	const auto z = f & FLAG_Z ? 1 : 0;
 	const auto n = f & FLAG_N ? 1 : 0;
@@ -23,7 +24,8 @@ void CPU::PrintFlags() const {
 
 
 
-void CPU::PrintRegisters() const {
+void CPU::PrintRegisters() const 
+{
 	printf("PC: %4x\n" \
 	       "SP: %4x\n" \
 	       "AF: %4x\n" \
@@ -38,7 +40,8 @@ void CPU::PrintRegisters() const {
 
 
 
-void CPU::ADDHL(const uint16_t second) {
+void CPU::ADDHL(const uint16_t second) 
+{
 	// flags effect: - 0 H C
 	const auto first = GetHL();
 	const uint32_t result = first + second;
@@ -52,7 +55,8 @@ void CPU::ADDHL(const uint16_t second) {
 
 
 
-uint8_t CPU::ADC(uint8_t first, const uint8_t second) {
+uint8_t CPU::ADC(uint8_t first, const uint8_t second) 
+{
 	// flags effect: Z 0 H C
 	if (GetFlags(FLAG_C))
 		++first;
@@ -65,8 +69,8 @@ uint8_t CPU::ADC(uint8_t first, const uint8_t second) {
 
 
 
-
-uint8_t CPU::SBC(uint8_t first, const uint8_t second) {
+uint8_t CPU::SBC(uint8_t first, const uint8_t second) 
+{
 	// flags effect: Z 1 H C
 	if (GetFlags(FLAG_C))
 		--first;
@@ -81,7 +85,8 @@ uint8_t CPU::SBC(uint8_t first, const uint8_t second) {
 
 
 
-uint8_t CPU::ADD(const uint8_t first, const uint8_t second) {
+uint8_t CPU::ADD(const uint8_t first, const uint8_t second) 
+{
 	// flags effect Z 0 H C
 	const uint16_t result = first + second;
 	const uint8_t f = CheckZ(result) | CheckH_3th_bit(first, second) | CheckC_11th_bit(result);
@@ -97,7 +102,8 @@ uint8_t CPU::ADD(const uint8_t first, const uint8_t second) {
 
 
 
-uint8_t CPU::SUB(const uint8_t first, const uint8_t second) {
+uint8_t CPU::SUB(const uint8_t first, const uint8_t second) 
+{
 	// flags effect: Z 1 H C
 	const uint16_t result = first - second;
 	const uint8_t f = CheckZ(result) | CheckH_borrow(first, second) | CheckC_borrow(first, second);
@@ -112,7 +118,8 @@ uint8_t CPU::SUB(const uint8_t first, const uint8_t second) {
 
 
 
-uint8_t CPU::INC(const uint8_t first) {
+uint8_t CPU::INC(const uint8_t first) 
+{
 	// flags effect: Z 0 H -
 	const uint8_t result = first + 1;
 	const uint8_t f = CheckZ(result) | CheckH_3th_bit(first, 1) | GetFlags(FLAG_C);
@@ -127,7 +134,8 @@ uint8_t CPU::INC(const uint8_t first) {
 
 
 
-uint8_t CPU::DEC(const uint8_t first) {
+uint8_t CPU::DEC(const uint8_t first) 
+{
 	// flags effect: Z 1 H -
 	const uint8_t result = first - 1;
 	const uint8_t f = CheckZ(result) | FLAG_N | CheckH_borrow(first, 1) | GetFlags(FLAG_C);
@@ -141,7 +149,8 @@ uint8_t CPU::DEC(const uint8_t first) {
 
 
 
-uint8_t CPU::OR(const uint8_t first, const uint8_t second) {
+uint8_t CPU::OR(const uint8_t first, const uint8_t second) 
+{
 	// flags effect: Z 0 0 0
 	const uint8_t result = first | second;
 	SetF(CheckZ(result));
@@ -155,7 +164,8 @@ uint8_t CPU::OR(const uint8_t first, const uint8_t second) {
 
 
 
-uint8_t CPU::AND(const uint8_t first, const uint8_t second) {
+uint8_t CPU::AND(const uint8_t first, const uint8_t second) 
+{
 	// flags effect: Z 0 1 0
 	const uint8_t result = first & second;
 	SetF(CheckZ(result) | FLAG_H);
@@ -169,7 +179,8 @@ uint8_t CPU::AND(const uint8_t first, const uint8_t second) {
 
 
 
-uint8_t CPU::XOR(const uint8_t first, const uint8_t second) {
+uint8_t CPU::XOR(const uint8_t first, const uint8_t second) 
+{
 	// flags effect: Z 0 0 0
 	const uint8_t result = first ^ second;
 	SetF(CheckZ(result));
@@ -184,7 +195,8 @@ uint8_t CPU::XOR(const uint8_t first, const uint8_t second) {
 
 
 
-uint8_t CPU::SWAP(const uint8_t value) {
+uint8_t CPU::SWAP(const uint8_t value) 
+{
 	// flags effect: Z 0 0 0
 	const uint8_t result = ((value & 0x0f) << 4) | ((value & 0xf0) >> 4);
 	SetF(CheckZ(result));
