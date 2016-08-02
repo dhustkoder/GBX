@@ -2152,16 +2152,13 @@ void pop_F1(Gameboy* const gb) {
 
 void ld_F2(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
-
-
-
-
-
-
-
-
-
-void di_F3(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void di_F3(Gameboy* const gb)
+{
+	// DI
+	// disable interrupts
+	gb->hwstate.hwflags &= ~(INTERRUPT_MASTER_ENABLED | INTERRUPT_MASTER_ACTIVE);
+	printf("DI\n");
+}
 
 
 
@@ -2207,7 +2204,8 @@ void ld_F9(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_FA(Gameboy* const gb) {
+void ld_FA(Gameboy* const gb) 
+{
 	// LD A, (a16)
 	// value in address pointe immediate 16 bit value is stored into A
 	// operands: 2
@@ -2222,14 +2220,13 @@ void ld_FA(Gameboy* const gb) {
 }
 
 
-
-
-
-
-
-
-
-void ei_FB(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void ei_FB(Gameboy* const gb)
+{ 
+	// EI
+	// enable interrupts
+	gb->hwstate.hwflags |= INTERRUPT_MASTER_ENABLED;
+	printf("EI\n");
+}
 
 
 // FC MISSING -----

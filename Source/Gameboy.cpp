@@ -39,13 +39,14 @@ bool Gameboy::Reset()
 	// load cartridge data into memory
 	const auto cartridge_info = get_cartridge_info(memory);
 
-	printf("Cartridge information\n" \
-	       "internal name: %s\n"     \
-	       "internal size: %zu\n"    \
-	       "type code: %u\n"         \
+	printf("Cartridge information\n"
+	       "internal name: %s\n"
+	       "internal size: %zu\n"
+	       "type code: %u\n"
 	       "system code: %u\n",
 	       cartridge_info.internal_name, cartridge_info.size, 
-	       (unsigned)cartridge_info.type, (unsigned)cartridge_info.system);
+	       static_cast<unsigned>(cartridge_info.type), 
+	       static_cast<unsigned>(cartridge_info.system));
 
 
 	if (cartridge_info.system != System::GAMEBOY) {
@@ -66,9 +67,9 @@ bool Gameboy::Reset()
 	cpu.SetDE(0x00D8);
 	cpu.SetHL(0x014D);
 
-	states.flags = 0;
-	states.interrupt_enable = 0;
-	states.interrupt_flags = 0;
+	hwstate.hwflags = 0;
+	hwstate.interrupt_enable = 0;
+	hwstate.interrupt_flags = 0;
 	
 
 	WriteU8(0xFF05, 0x00); // TIMA
@@ -114,22 +115,68 @@ bool Gameboy::Step()
 {
 
 	const uint16_t pc = cpu.GetPC();
-	if(pc < 0x8000) {
-		const uint8_t opcode = ReadU8(pc);
-		cpu.AddPC(1);
-		printf("PC: %4x | OP: %4x | ", pc, opcode);
-		main_table[opcode](this);
-		cpu.AddCycles(clock_table[opcode]);
-		return true;
-	}
-
-	return false;
+	const uint8_t opcode = ReadU8(pc);
+	cpu.AddPC(1);
+	printf("PC: %4x | OP: %4x | ", pc, opcode);
+	main_table[opcode](this);
+	cpu.AddCycles(clock_table[opcode]);
+	return true;
 }
 
 
 
+void Gameboy::StepInterrupts()
+{
+	if (!(hwstate.hwflags & INTERRUPT_MASTER_ENABLED)) {
+		return;
+	} else if(!(hwstate.hwflags & INTERRUPT_MASTER_ACTIVE))	{
+		hwstate.hwflags |= INTERRUPT_MASTER_ACTIVE;
+		return;
+	}
 
+	const uint8_t requests = 0x1f & hwstate.interrupt_enable & hwstate.interrupt_flags;
 
+	if(!requests)
+		return;
+
+	hwstate.hwflags &= ~INTERRUPT_MASTER_ENABLED;
+
+	if (requests & INTERRUPT_VBLANK) {
+		hwstate.interrupt_flags &= ~INTERRUPT_VBLANK;
+		PushStack16(cpu.GetPC());
+		cpu.SetPC(INTERRUPT_VBLANK_ADDR);
+		cpu.AddCycles(12);
+	}
+
+	if (requests & INTERRUPT_LCDC) {
+		hwstate.interrupt_flags &= ~INTERRUPT_LCDC;
+		PushStack16(cpu.GetPC());
+		cpu.SetPC(INTERRUPT_LCDC_ADDR);
+		cpu.AddCycles(12);
+	}
+
+	if (requests & INTERRUPT_TIMER) {
+		hwstate.interrupt_flags &= ~INTERRUPT_TIMER;
+		PushStack16(cpu.GetPC());
+		cpu.SetPC(INTERRUPT_TIMER_ADDR);
+		cpu.AddCycles(12);
+	}
+
+	if (requests & INTERRUPT_SERIAL) {
+		hwstate.interrupt_flags &= ~INTERRUPT_SERIAL;
+		PushStack16(cpu.GetPC());
+		cpu.SetPC(INTERRUPT_SERIAL_ADDR);
+		cpu.AddCycles(12);
+	}
+
+	if (requests & INTERRUPT_JOYPAD) {
+		hwstate.interrupt_flags &= ~INTERRUPT_JOYPAD;
+		PushStack16(cpu.GetPC());
+		cpu.SetPC(INTERRUPT_JOYPAD_ADDR);
+		cpu.AddCycles(12);
+	}
+
+}
 
 
 

@@ -42,7 +42,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			*addr = value;
 	} else {
 		// attempt to write to ROM
-		fprintf(stderr, "write required at ROM %4x\n", address);
+		fprintf(stderr, "ROM write attempt at: %4x\n", address);
 	}
 }
 
@@ -104,7 +104,8 @@ uint16_t Gameboy::PopStack16()
 static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 {
 	if (address >= 0xFF80) {
-		return address < 0xFFFF ? &gb.memory.zero_page[address - 0xFF80] : &gb.states.interrupt_enable;
+		return address < 0xFFFF ? &gb.memory.zero_page[address - 0xFF80] 
+		                        : &gb.hwstate.interrupt_enable;
 	}
 	else if (address >= 0xFF00) {
 		return solve_hardware_io_address(address, gb);
@@ -127,7 +128,7 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 		return &gb.memory.home[address];
 	}
 
-	fprintf(stderr, "address %4x required\n", address);
+	fprintf(stderr, "required address: %4x\n", address);
 	return nullptr;
 }
 
@@ -136,9 +137,9 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb)
 {
 	switch (address) {
-	case 0xFF0F: return &gb.states.interrupt_flags;
+	case 0xFF0F: return &gb.hwstate.interrupt_flags;
 	default:
-		fprintf(stderr, "hardware io %4x required\n", address);
+		fprintf(stderr, "required hardware io address: %4x\n", address);
 		break;
 	};
 

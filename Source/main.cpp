@@ -24,9 +24,8 @@ int main(int argc, char** argv)
 
 	// step until ROM's end
 	while(gameboy->Step()) {
-	
+		gameboy->StepInterrupts();	
 	}
-	sizeof(gbx::Gameboy);
 
 	return EXIT_SUCCESS;
 }
