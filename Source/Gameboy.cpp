@@ -34,8 +34,6 @@ void destroy_gameboy(Gameboy* const gb) {
 
 
 
-
-
 bool Gameboy::Reset() 
 {
 	// load cartridge data into memory
@@ -68,9 +66,10 @@ bool Gameboy::Reset()
 	cpu.SetDE(0x00D8);
 	cpu.SetHL(0x014D);
 
-	interrupts.enable = 0;
-	interrupts.flags = 0;
-	interrupts.master = 0;
+	states.flags = 0;
+	states.interrupt_enable = 0;
+	states.interrupt_flags = 0;
+	
 
 	WriteU8(0xFF05, 0x00); // TIMA
 	WriteU8(0xFF06, 0x00); // TMA

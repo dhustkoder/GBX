@@ -5,19 +5,26 @@
 
 namespace gbx {
 
-
-struct Interrupts
+enum InterruptFlags : uint8_t 
 {
-	enum Flags : uint8_t {
-		VBLANK = 0x01, 
-	};
-
-	uint8_t master;
-	uint8_t enable;
-	uint8_t flags;
+	INTERRUPT_VBLANK = 0x01, INTERRUPT_LCDC = 0x02,
+	INTERRUPT_TIMER = 0x04, INTERRUPT_SERIAL = 0x08,
+	INTERRUPT_JOYPAD = 0x10
 };
 
 
+struct States
+{
+	enum Flags : uint8_t
+	{
+		INTERRUPT_MASTER_ENABLED = 0x01,
+		INTERRUPT_MASTER_ACTIVE = 0x02
+	};
+
+	uint8_t flags;
+	uint8_t interrupt_enable;
+	uint8_t interrupt_flags;
+};
 
 
 
@@ -34,10 +41,7 @@ struct Gameboy
 
 	bool LoadRom(const char* file);
 	bool Reset();
-
-
 	bool Step();
-	
 
 
 	int8_t ReadS8(const uint16_t address) const;
@@ -53,9 +57,9 @@ struct Gameboy
 
 	
 
-
+	
 	CPU cpu;
-	Interrupts interrupts;
+	States states;
 	Memory memory;
 };
 

@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	while(gameboy->Step()) {
 	
 	}
-
+	sizeof(gbx::Gameboy);
 
 	return EXIT_SUCCESS;
 }

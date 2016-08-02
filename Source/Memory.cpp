@@ -104,7 +104,7 @@ uint16_t Gameboy::PopStack16()
 static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 {
 	if (address >= 0xFF80) {
-		return address < 0xFFFF ? &gb.memory.zero_page[address - 0xFF80] : &gb.interrupts.enable;
+		return address < 0xFFFF ? &gb.memory.zero_page[address - 0xFF80] : &gb.states.interrupt_enable;
 	}
 	else if (address >= 0xFF00) {
 		return solve_hardware_io_address(address, gb);
@@ -136,7 +136,7 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb)
 {
 	switch (address) {
-	case 0xFF0F: return &gb.interrupts.flags;
+	case 0xFF0F: return &gb.states.interrupt_flags;
 	default:
 		fprintf(stderr, "hardware io %4x required\n", address);
 		break;

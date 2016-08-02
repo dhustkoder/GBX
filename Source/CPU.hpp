@@ -78,7 +78,6 @@ private:
 	uint32_t clock;
 	uint16_t pc;
 	uint16_t sp;
-	
 	// TODO: check endianess, this is only compatible with little endian
 	union {
 		struct {
