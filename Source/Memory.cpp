@@ -10,9 +10,8 @@ static const uint8_t* solve_hardware_io_address(const uint16_t address, const Ga
 
 
 
-
+// TODO: this might not be totally portable 
 int8_t Gameboy::ReadS8(const uint16_t address) const {
-	// TODO: this might not be totally portable 
 	return static_cast<int8_t>(ReadU8(address));
 }
 
@@ -33,6 +32,8 @@ uint16_t Gameboy::ReadU16(const uint16_t address) const {
 
 
 
+
+// TODO: ready only hardware addresses must be checked before calling solve_address
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
 {
 	if (address > 0x7fff) {
@@ -103,10 +104,7 @@ uint16_t Gameboy::PopStack16()
 static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 {
 	if (address >= 0xFF80) {
-		if (address < 0xFFFF)
-			return &gb.memory.zero_page[address - 0xFF80];
-		else
-			return &gb.interrupts.enable;
+		return address < 0xFFFF ? &gb.memory.zero_page[address - 0xFF80] : &gb.interrupts.enable;
 	}
 	else if (address >= 0xFF00) {
 		return solve_hardware_io_address(address, gb);
@@ -126,10 +124,7 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 		return &gb.memory.vram[address - 0x8000];
 	}
 	else if (address < 0x8000) {
-		if (address >= 0x4000)
-			return &gb.memory.home[address - 0x4000];
-		else
-			return &gb.memory.fixed_home[address];
+		return &gb.memory.home[address];
 	}
 
 	fprintf(stderr, "address %4x required\n", address);
