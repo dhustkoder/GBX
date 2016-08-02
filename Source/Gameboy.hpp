@@ -36,8 +36,8 @@ struct Gameboy
 	bool Reset();
 
 
-	void StepInstruction();
-
+	bool Step();
+	
 
 
 	int8_t ReadS8(const uint16_t address) const;

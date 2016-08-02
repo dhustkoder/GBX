@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <Utix/Alloc_t.h>
+#include "Instructions.hpp"
 #include "Cartridge.hpp"
 #include "Gameboy.hpp"
 
@@ -110,7 +111,20 @@ bool Gameboy::Reset()
 
 
 
+bool Gameboy::Step()
+{
 
+	const uint16_t pc = cpu.GetPC();
+	if(pc < 0x8000) {
+		const uint8_t opcode = ReadU8(pc);
+		cpu.AddPC(1);
+		printf("PC: %4x | OP: %4x | ", pc, opcode);
+		main_table[opcode](this);
+		return true;
+	}
+
+	return false;
+}
 
 
 

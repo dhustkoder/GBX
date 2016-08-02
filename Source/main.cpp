@@ -22,6 +22,12 @@ int main(int argc, char** argv)
 	if(!gameboy->LoadRom(argv[1]))
 		return EXIT_FAILURE;
 
+	// step until ROM's end
+	while(gameboy->Step()) {
+	
+	}
+
+
 	return EXIT_SUCCESS;
 }
 
