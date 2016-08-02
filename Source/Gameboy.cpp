@@ -61,7 +61,7 @@ bool Gameboy::Reset()
 
 	// init the system, Gameboy mode
 	cpu.SetPC(CARTRIDGE_ENTRY_ADDR);
-
+	cpu.SetClock(0);
 	cpu.SetSP(0xfffe);
 	cpu.SetAF(0x01B0);
 	cpu.SetBC(0x0013);
@@ -120,6 +120,7 @@ bool Gameboy::Step()
 		cpu.AddPC(1);
 		printf("PC: %4x | OP: %4x | ", pc, opcode);
 		main_table[opcode](this);
+		cpu.AddCycles(clock_table[opcode]);
 		return true;
 	}
 

@@ -17,30 +17,24 @@ namespace gbx {
 
 // Main instructions implementation:
 // 0x00
-void nop_00(Gameboy* const) {
-	// no operation is performed
-	// operands: 0
-	// clock cyles: 4
-	
+void nop_00(Gameboy* const) 
+{
 	printf("NOP\n");
 }
 
 
 
-
-
-void ld_01(Gameboy* const gb) {
+void ld_01(Gameboy* const gb) 
+{
 	// LD BC, d16
 	// load immediate 16 bits value into BC
 	// operands: 2
 	// clock cyles: 10 or 12 ?
-	const auto pc = gb->cpu.GetPC();
-	const auto d16 = gb->ReadU16(pc);
+	const uint16_t pc = gb->cpu.GetPC();
+	const uint16_t d16 = gb->ReadU16(pc);
 	gb->cpu.SetBC(d16);
 	gb->cpu.AddPC(2);
-
-
-	printf("LD BC, %x\n", d16);
+	printf("LD BC, %4x\n", d16);
 }
 
 
@@ -2291,6 +2285,39 @@ const main_instruction_t main_table[256] = {
 /*E*/  ldh_E0,  pop_E1,   ld_E2, unknown, unknown,  push_E5, and_E6,  rst_E7,  add_E8,   jp_E9,   ld_EA, unknown,  unknown, unknown, xor_EE,  rst_EF,
 /*F*/  ldh_F0,  pop_F1,   ld_F2, di_F3,   unknown,  push_F5,  or_F6,  rst_F7,   ld_F8,   ld_F9,   ld_FA,  ei_FB,   unknown, unknown, cp_FE,   rst_FF
 };
+
+
+extern const uint8_t clock_table[256] = {
+/*     0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
+/*0*/  4, 12,  8,  8,  4,  4,  8,  4, 20,  8,  8,  8,  4,  4,  8,  4,
+/*1*/  4, 12,  8,  8,  4,  4,  8,  4, 12,  8,  8,  8,  4,  4,  8,  4,
+/*2*/  8, 12,  8,  8,  4,  4,  8,  4,  8,  8,  8,  8,  4,  4,  8,  4, 
+/*3*/  8, 12,  8,  8, 12, 12, 12,  4,  8,  8,  8,  8,  4,  4,  8,  4,
+/*4*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4, 
+/*5*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4, 
+/*6*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4, 
+/*7*/  8,  8,  8,  8,  8,  8,  4,  8,  4,  4,  4,  4,  4,  4,  8,  4,
+/*8*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,
+/*9*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,
+/*A*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,
+/*B*/  4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,
+/*C*/  8, 12, 12, 16, 12, 16,  8, 16,  8, 16, 12,  0, 12, 24,  8, 16, 
+/*D*/  8, 12, 12,  0, 12, 16,  8, 16,  8, 16, 12,  0, 12,  0,  8, 16, 
+/*E*/ 12, 12,  8,  0,  0, 16,  8, 16, 16,  4, 16,  0,  0,  0,  8, 16,
+/*F*/ 12, 12,  8,  4,  0, 16,  8, 16, 12,  8, 16,  4,  0,  0,  8, 16
+};
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

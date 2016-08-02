@@ -20,8 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Source\Cartridge.cpp" />
+    <ClCompile Include="..\..\Source\CBInstructions.cpp" />
     <ClCompile Include="..\..\Source\CPU.cpp" />
     <ClCompile Include="..\..\Source\Gameboy.cpp" />
+    <ClCompile Include="..\..\Source\Instructions.cpp" />
     <ClCompile Include="..\..\Source\main.cpp" />
     <ClCompile Include="..\..\Source\Memory.cpp" />
   </ItemGroup>
@@ -30,6 +32,7 @@
     <ClInclude Include="..\..\Source\Common.hpp" />
     <ClInclude Include="..\..\Source\CPU.hpp" />
     <ClInclude Include="..\..\Source\Gameboy.hpp" />
+    <ClInclude Include="..\..\Source\Instructions.hpp" />
     <ClInclude Include="..\..\Source\Memory.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -101,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>
@@ -116,7 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>

@@ -27,6 +27,8 @@ struct CPU
 	uint16_t GetDE() const;
 	uint16_t GetHL() const;
 
+	uint32_t GetClock() const;
+
 	Flags GetFlags(const CPU::Flags flags) const;
 	void PrintFlags() const;
 	void PrintRegisters() const;
@@ -46,8 +48,9 @@ struct CPU
 	void SetBC(const uint16_t val);
 	void SetDE(const uint16_t val);
 	void SetHL(const uint16_t val);
+	void SetClock(const uint32_t cycles);
 
-
+	void AddCycles(const uint8_t cycles);
 	void AddPC(const uint16_t val);
 	void SetFlags(const CPU::Flags flags);
 	void ClearFlags(const CPU::Flags flags);
@@ -72,6 +75,7 @@ struct CPU
 	
 
 private:
+	uint32_t clock;
 	uint16_t pc;
 	uint16_t sp;
 	
@@ -197,6 +201,7 @@ inline uint16_t CPU::GetBC() const { return bc.pair; }
 inline uint16_t CPU::GetDE() const { return de.pair; }
 inline uint16_t CPU::GetHL() const { return hl.pair; }
 
+inline uint32_t CPU::GetClock() const { return clock; }
 inline CPU::Flags CPU::GetFlags(const CPU::Flags flags) const {
 	return static_cast<Flags>(GetF() & flags);
 }
@@ -221,9 +226,7 @@ inline void CPU::SetAF(const uint16_t val) { af.pair = val; }
 inline void CPU::SetBC(const uint16_t val) { bc.pair = val; }
 inline void CPU::SetDE(const uint16_t val) { de.pair = val; }
 inline void CPU::SetHL(const uint16_t val) { hl.pair = val; }
-
-
-
+inline void CPU::SetClock(const uint32_t cycles) { clock = cycles; }
 
 inline void CPU::SetFlags(const CPU::Flags flags) {
 	SetF(GetF() | flags);
@@ -234,7 +237,7 @@ inline void CPU::ClearFlags(const CPU::Flags flags) {
 }
 
 
-
+inline void CPU::AddCycles(const uint8_t value) { clock += value; }
 inline void CPU::AddPC(const uint16_t val) { pc += val; }
 
 
