@@ -346,7 +346,8 @@ void rla_17(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void jr_18(Gameboy* const gb) {
+void jr_18(Gameboy* const gb) 
+{
 	// JR r8
 	// Add r8 to pc and jump to it.
 	// operands: 1
@@ -451,21 +452,22 @@ void rra_1F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 // 0x20
-void jr_20(Gameboy* const gb) {
+void jr_20(Gameboy* const gb) 
+{
 	// JR NZ, r8
 	// jump if Z flags is reset
 	// operands: 1
 	// clock cycles: 12 if jumps, 8 if not
-
 	const auto pc = gb->cpu.GetPC();
 	const auto r8 = gb->ReadS8(pc);
 	const uint16_t jump_addr = (pc+r8) + 1;
 
-	if(gb->cpu.GetFlags(CPU::FLAG_Z) == 0)
+	if(gb->cpu.GetFlags(CPU::FLAG_Z) == 0) {
 		gb->cpu.SetPC(jump_addr);
-	else 
+		gb->cpu.AddCycles(4);
+	} else {
 		gb->cpu.AddPC(1);
-
+	}
 
 	printf("JR NZ, %x\n", jump_addr);
 }
@@ -542,7 +544,8 @@ void daa_27(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 
 
 
-void jr_28(Gameboy* const gb) {
+void jr_28(Gameboy* const gb) 
+{
 	// JP Z, r8
 	// jump if Z flag is set
 	// operands: 1
@@ -552,11 +555,13 @@ void jr_28(Gameboy* const gb) {
 	const auto zero_flag = gb->cpu.GetFlags(CPU::FLAG_Z);
 	const uint16_t jump_addr = (pc+r8) + 1;
 	
-	if(zero_flag)
+	if(zero_flag) {
 		gb->cpu.SetPC(jump_addr);
-	else
+		gb->cpu.AddCycles(4);
+	} else {
 		gb->cpu.AddPC(1);
-	
+	}
+
 	printf("JP Z, %x\n", jump_addr);
 }
 
@@ -646,7 +651,8 @@ void cpl_2F(Gameboy* const gb) {
 
 
 // 0x30
-void jr_30(Gameboy* const gb) {
+void jr_30(Gameboy* const gb) 
+{
 	// JR NC, r8
 	// jump if C flag is reset
 	// operands: 1
@@ -657,10 +663,12 @@ void jr_30(Gameboy* const gb) {
 	const auto r8 = gb->ReadS8(pc);
 	const uint16_t jump_addr = (pc+r8) + 1;
 	
-	if(!carry_flag)
+	if(!carry_flag) {
 		gb->cpu.SetPC(jump_addr);
-	else
+		gb->cpu.AddCycles(4);
+	} else {
 		gb->cpu.AddPC(1);
+	}
 	
 	printf("JR NC, %x\n", jump_addr);
 }
@@ -773,10 +781,12 @@ void jr_38(Gameboy* const gb) {
 	const auto carry_flag = gb->cpu.GetFlags(CPU::FLAG_C);
 	const uint16_t jump_addr = (pc+r8) + 1;
 
-	if(carry_flag)
+	if(carry_flag) {
 		gb->cpu.SetPC(jump_addr);
-	else
+		gb->cpu.AddCycles(4);
+	} else {
 		gb->cpu.AddPC(1);
+	}
 
 
 	printf("JR C, %x\n", jump_addr);
