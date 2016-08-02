@@ -1,6 +1,7 @@
 #ifndef GBX_GAMEBOY_HPP_
 #define GBX_GAMEBOY_HPP_
 #include "CPU.hpp"
+#include "GPU.hpp"
 #include "Memory.hpp"
 
 namespace gbx {
@@ -42,7 +43,8 @@ struct Gameboy
 
 	bool LoadRom(const char* file);
 	bool Reset();
-	bool Step();
+	void StepCPU();
+	void StepGPU();
 	void StepInterrupts();
 
 	int8_t ReadS8(const uint16_t address) const;
@@ -60,6 +62,7 @@ struct Gameboy
 
 	
 	CPU cpu;
+	GPU gpu;
 	HWState hwstate;
 	Memory memory;
 };

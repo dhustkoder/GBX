@@ -36,13 +36,16 @@ uint16_t Gameboy::ReadU16(const uint16_t address) const {
 // TODO: ready only hardware addresses must be checked before calling solve_address
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
 {
-	if (address > 0x7fff) {
-		uint8_t* const addr = const_cast<uint8_t*>(solve_address(address, *this));
-		if (addr)
-			*addr = value;
-	} else {
-		// attempt to write to ROM
+	if (address < 0x8000) {
 		fprintf(stderr, "ROM write attempt at: %4x\n", address);
+	} 
+	else if (address == 0xFF44) {
+		gpu.ly = 0;
+	} 
+	else {
+		const uint8_t* const addr = solve_address(address, *this);
+		if (addr)
+			*const_cast<uint8_t*>(addr) = value;
 	}
 }
 
@@ -138,6 +141,7 @@ static const uint8_t* solve_hardware_io_address(const uint16_t address, const Ga
 {
 	switch (address) {
 	case 0xFF0F: return &gb.hwstate.interrupt_flags;
+	case 0xFF44: return &gb.gpu.ly;
 	default:
 		fprintf(stderr, "required hardware io address: %4x\n", address);
 		break;

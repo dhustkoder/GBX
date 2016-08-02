@@ -23,7 +23,9 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 
 	// step until ROM's end
-	while(gameboy->Step()) {
+	while(true) {
+		gameboy->StepCPU();
+		gameboy->StepGPU();
 		gameboy->StepInterrupts();	
 	}
 

@@ -60,12 +60,15 @@ bool Gameboy::Reset()
 
 	// init the system, Gameboy mode
 	cpu.SetPC(CARTRIDGE_ENTRY_ADDR);
-	cpu.SetClock(0);
 	cpu.SetSP(0xfffe);
 	cpu.SetAF(0x01B0);
 	cpu.SetBC(0x0013);
 	cpu.SetDE(0x00D8);
 	cpu.SetHL(0x014D);
+	cpu.SetClock(0);
+
+	gpu.counter = 456;
+	gpu.ly = 0;
 
 	hwstate.hwflags = 0;
 	hwstate.interrupt_enable = 0;
@@ -111,16 +114,29 @@ bool Gameboy::Reset()
 
 
 
-bool Gameboy::Step()
+void Gameboy::StepCPU()
 {
-
 	const uint16_t pc = cpu.GetPC();
 	const uint8_t opcode = ReadU8(pc);
 	cpu.AddPC(1);
 	printf("PC: %4x | OP: %4x | ", pc, opcode);
 	main_table[opcode](this);
-	cpu.AddCycles(clock_table[opcode]);
-	return true;
+	const uint8_t cycles = clock_table[opcode];
+	cpu.AddCycles(cycles);
+	gpu.counter -= cycles;
+}
+
+
+
+void Gameboy::StepGPU()
+{
+	if (gpu.counter <= 0) {
+		if (++gpu.ly >= 144 && (hwstate.interrupt_enable & INTERRUPT_VBLANK) ) 
+			hwstate.interrupt_flags |= INTERRUPT_VBLANK;
+
+		gpu.counter += 456;
+	}
+
 }
 
 
