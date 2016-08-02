@@ -114,7 +114,7 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 			return &gb.memory.oam[address - 0xFE00];
 	}
 	else if (address >= 0xC000) {
-		if (address < 0xD000)
+		if (address < 0xE000)
 			return &gb.memory.ram[address - 0xC000];
 	}
 	else if (address >= 0xA000) {
