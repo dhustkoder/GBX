@@ -1865,7 +1865,17 @@ void rst_D7(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ret_D8(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
-void reti_D9(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+
+
+void reti_D9(Gameboy* const gb)
+{ 
+	// RETI
+	// return from interrupt
+	const uint16_t addr = gb->PopStack16();
+	gb->cpu.SetPC(addr);
+	gb->hwstate.hwflags |= INTERRUPT_MASTER_ENABLED;
+}
 
 
 
