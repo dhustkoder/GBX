@@ -8,6 +8,7 @@
 namespace gbx {
 
 
+
 Gameboy* create_gameboy() 
 {
 	Gameboy* const gb = utix::malloc_t<Gameboy>();
@@ -117,7 +118,7 @@ void Gameboy::Step()
 {
 	const uint16_t pc = cpu.GetPC();
 	const uint8_t opcode = ReadU8(pc);
-	printf("PC: %4x | OP: %4x | ", pc, opcode);
+	//printf("PC: %4x | OP: %4x | ", pc, opcode);
 	cpu.AddPC(1);
 
 	main_table[opcode](this);
@@ -132,8 +133,12 @@ void Gameboy::Step()
 
 void Gameboy::UpdateGPU()
 {
-	if (!gpu.IsLCDEnabled())
+	if (!(gpu.control & GPU::LCD_ON_OFF)) {
+		gpu.clock = 0;
+		gpu.scanline = 0;
+		gpu.SetMode(GPU::Mode::VBLANK);
 		return;
+	}
 
 	switch (gpu.GetMode()) {
 	case GPU::Mode::HBLANK:

@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	if(!gameboy->LoadRom(argv[1]))
 		return EXIT_FAILURE;
 
-	// step until ROM's end
+
 	while(true) {
 		gameboy->Step();
 		gameboy->UpdateGPU();
