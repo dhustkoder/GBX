@@ -636,10 +636,11 @@ void cpl_2F(Gameboy* const gb) {
 	const auto a = gb->cpu.GetA();
 	const uint8_t result = ~a;
 	gb->cpu.SetA(result);
-	gb->cpu.SetF(CPU::FLAG_N | CPU::FLAG_H);
+	gb->cpu.SetFlags(CPU::FLAG_N | CPU::FLAG_H);
 	
 	
-	printf("CPL ; -> A(%x), Result(%x)\n", a, result);
+	printf("CPL ; -> A(%x), Result(%x) | ", a, result);
+	gb->cpu.PrintFlags();
 }
 
 
@@ -740,7 +741,7 @@ void inc_34(Gameboy* const gb) {
 
 
 
-void dec_35(Gameboy* const){ ASSERT_INSTR_IMPL();  }
+void dec_35(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
@@ -1811,7 +1812,7 @@ void PREFIX_CB(Gameboy* const gb)
 	const uint16_t pc = gb->cpu.GetPC();
 	const uint8_t cb_opcode = gb->ReadU8(pc);
 	gb->cpu.AddPC(1);
-	printf("| CB_OPCODE %2x | ", cb_opcode);
+	printf("CB_OPCODE %2x | ", cb_opcode);
 
 	cb_table[cb_opcode](&gb->cpu);
 	

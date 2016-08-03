@@ -38,9 +38,17 @@ uint16_t Gameboy::ReadU16(const uint16_t address) const {
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
 {
 	if (address > 0x7fff) {
+
+		// set debug breaks
+		if (address == 0xff80 && value == 0xff) {
+			// joypad problem
+			UTIX_DEBUG_BREAK_();
+		}
+
+
 		if (address == 0xFF44) {
 			gpu.scanline = 0;
-		} 
+		}
 		else {
 			const uint8_t* const addr = solve_address(address, *this);
 			if (addr)
