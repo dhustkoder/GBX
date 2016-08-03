@@ -1804,7 +1804,27 @@ void jp_CA(Gameboy* const gb) {
 
 
 
-void PREFIX_CB(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void PREFIX_CB(Gameboy* const gb) 
+{
+	// PREFIX_CB calls the cb_table -
+	// and adds the clock cycles for it
+	const uint16_t pc = gb->cpu.GetPC();
+	const uint8_t cb_opcode = gb->ReadU8(pc);
+	gb->cpu.AddPC(1);
+	printf("| CB_OPCODE %2x | ", cb_opcode);
+
+	cb_table[cb_opcode](&gb->cpu);
+	
+	const uint8_t lownibble = GetLowNibble(cb_opcode);
+	if (lownibble == 0x06 || lownibble == 0x0E)
+		gb->cpu.AddCycles(16);
+	else
+		gb->cpu.AddCycles(4);
+}
+
+
+
+
 void call_CC(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
 

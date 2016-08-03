@@ -118,7 +118,7 @@ void Gameboy::Step()
 {
 	const uint16_t pc = cpu.GetPC();
 	const uint8_t opcode = ReadU8(pc);
-	//printf("PC: %4x | OP: %4x | ", pc, opcode);
+	printf("PC: %4x | OP: %4x | ", pc, opcode);
 	cpu.AddPC(1);
 
 	main_table[opcode](this);

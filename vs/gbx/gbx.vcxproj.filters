@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="References">
+      <UniqueIdentifier>{49ce4f0d-75c5-4e91-bfbd-977fbcc41f2a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Source\Cartridge.cpp">
@@ -62,5 +65,10 @@
     <ClInclude Include="..\..\Source\HWState.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\References\GBSPEC.TXT">
+      <Filter>References</Filter>
+    </Text>
   </ItemGroup>
 </Project>

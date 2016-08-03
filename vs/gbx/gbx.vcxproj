@@ -37,6 +37,9 @@
     <ClInclude Include="..\..\Source\Instructions.hpp" />
     <ClInclude Include="..\..\Source\Memory.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\References\GBSPEC.TXT" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F71158D5-BA91-444E-8295-17A4332B5BEE}</ProjectGuid>
     <RootNamespace>gbx</RootNamespace>
