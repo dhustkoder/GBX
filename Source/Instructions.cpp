@@ -797,7 +797,27 @@ void jr_38(Gameboy* const gb) {
 
 
 void add_39(Gameboy* const){ ASSERT_INSTR_IMPL();  }
-void ld_3A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+
+void ld_3A(Gameboy* const gb)
+{
+	// LD A, (HL-) or LD A,(HLD) or LDD A,(HL)
+	// load value in mem pointed by HL in A, decrement HL
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t hl = gb->cpu.GetHL();
+	const uint8_t value = gb->ReadU8(hl);
+	gb->cpu.SetHL(hl - 1);
+	gb->cpu.SetA(value);
+
+	printf("LD A, (HL-); -> HL(%x), A(%x)\n", hl, value);
+}
+
+
+
+
 void dec_3B(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 
 
@@ -1069,7 +1089,25 @@ void ld_63(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_64(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_65(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_66(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_67(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+void ld_67(Gameboy* const gb) 
+{
+	// LD H, A
+	// load A into H
+	// operands: 0
+	// clock cycles: 4
+	const uint8_t a = gb->cpu.GetA();
+	gb->cpu.SetH(a);
+
+	printf("LD H, A; -> A(%x)\n", a);
+}
+
+
+
+
+
 void ld_68(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_69(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_6A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
@@ -1102,7 +1140,27 @@ void ld_6B(Gameboy* const gb) {
 
 void ld_6C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_6D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_6E(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+
+void ld_6E(Gameboy* const gb)
+{
+	// LD L, (HL)
+	// load value in mem pointed by HL into L
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t hl = gb->cpu.GetHL();
+	const uint8_t value = gb->ReadU8(hl);
+	gb->cpu.SetL(value);
+
+	printf("LD L, (HL); -> HL(%x), L(%x)\n", hl, value);
+}
+
+
+
+
+
 void ld_6F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1871,10 +1929,12 @@ void ret_D8(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void reti_D9(Gameboy* const gb)
 { 
 	// RETI
-	// return from interrupt
+	// return and enable interrupts
 	const uint16_t addr = gb->PopStack16();
 	gb->cpu.SetPC(addr);
-	gb->hwstate.hwflags |= INTERRUPT_MASTER_ENABLED;
+	gb->hwstate.hwflags |= HWState::INTERRUPT_MASTER_ENABLED;
+
+	printf("RETI\n");
 }
 
 
@@ -2162,11 +2222,15 @@ void pop_F1(Gameboy* const gb) {
 
 void ld_F2(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
+
+
+
 void di_F3(Gameboy* const gb)
 {
 	// DI
 	// disable interrupts
-	gb->hwstate.hwflags &= ~(INTERRUPT_MASTER_ENABLED | INTERRUPT_MASTER_ACTIVE);
+	gb->hwstate.hwflags &= ~(HWState::INTERRUPT_MASTER_ENABLED 
+	                         | HWState::INTERRUPT_MASTER_ACTIVE);
 	printf("DI\n");
 }
 
@@ -2234,7 +2298,7 @@ void ei_FB(Gameboy* const gb)
 { 
 	// EI
 	// enable interrupts
-	gb->hwstate.hwflags |= INTERRUPT_MASTER_ENABLED;
+	gb->hwstate.hwflags |= HWState::INTERRUPT_MASTER_ENABLED;
 	printf("EI\n");
 }
 

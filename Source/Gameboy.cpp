@@ -7,7 +7,8 @@
 
 namespace gbx {
 
-
+static uint8_t execute_instruction(Gameboy* const gb);
+static void update_lcd(const uint8_t cycles, Gameboy* const gb);
 
 
 
@@ -67,12 +68,13 @@ bool Gameboy::Reset()
 	cpu.SetHL(0x014D);
 	cpu.SetClock(0);
 
-	gpu.counter = 456;
-	gpu.ly = 0;
+	lcd.counter = 456;
+	lcd.control = 0x91;
+	lcd.scanline = 0x00;
 
-	hwstate.hwflags = 0;
-	hwstate.interrupt_enable = 0;
-	hwstate.interrupt_flags = 0;
+	hwstate.hwflags = 0x00;
+	hwstate.interrupt_enable = 0x00;
+	hwstate.interrupt_flags = 0x00;
 	
 
 	WriteU8(0xFF05, 0x00); // TIMA
@@ -96,7 +98,7 @@ bool Gameboy::Reset()
 	WriteU8(0xFF24, 0x77); // NR50
 	WriteU8(0xFF25, 0xF3); // NR51
 	WriteU8(0xFF26, 0xF1); // NR52
-	WriteU8(0xFF40, 0x91); // LCDC
+	// WriteU8(0xFF40, 0x91); // LCDC, in GPU
 	WriteU8(0xFF42, 0x00); // SCY
 	WriteU8(0xFF43, 0x00); // SCX
 	WriteU8(0xFF45, 0x00); // LYC
@@ -114,39 +116,24 @@ bool Gameboy::Reset()
 
 
 
-void Gameboy::StepCPU()
+void Gameboy::Step()
 {
-	const uint16_t pc = cpu.GetPC();
-	const uint8_t opcode = ReadU8(pc);
-	cpu.AddPC(1);
-	printf("PC: %4x | OP: %4x | ", pc, opcode);
-	main_table[opcode](this);
-	const uint8_t cycles = clock_table[opcode];
-	cpu.AddCycles(cycles);
-	gpu.counter -= cycles;
+	const uint8_t cycles = execute_instruction(this);
+	update_lcd(cycles, this);
 }
 
 
 
-void Gameboy::StepGPU()
-{
-	if (gpu.counter <= 0) {
-		if (++gpu.ly >= 144 && (hwstate.interrupt_enable & INTERRUPT_VBLANK) ) 
-			hwstate.interrupt_flags |= INTERRUPT_VBLANK;
 
-		gpu.counter += 456;
-	}
-
-}
 
 
 
 void Gameboy::StepInterrupts()
 {
-	if (!(hwstate.hwflags & INTERRUPT_MASTER_ENABLED)) {
+	if (!(hwstate.hwflags & HWState::INTERRUPT_MASTER_ENABLED)) {
 		return;
-	} else if(!(hwstate.hwflags & INTERRUPT_MASTER_ACTIVE))	{
-		hwstate.hwflags |= INTERRUPT_MASTER_ACTIVE;
+	} else if(!(hwstate.hwflags & HWState::INTERRUPT_MASTER_ACTIVE)) {
+		hwstate.hwflags |= HWState::INTERRUPT_MASTER_ACTIVE;
 		return;
 	}
 
@@ -155,7 +142,7 @@ void Gameboy::StepInterrupts()
 	if(!requests)
 		return;
 
-	hwstate.hwflags &= ~INTERRUPT_MASTER_ENABLED;
+	hwstate.hwflags &= ~HWState::INTERRUPT_MASTER_ENABLED;
 
 	if (requests & INTERRUPT_VBLANK) {
 		hwstate.interrupt_flags &= ~INTERRUPT_VBLANK;
@@ -202,6 +189,47 @@ void Gameboy::StepInterrupts()
 
 
 
+static uint8_t execute_instruction(Gameboy* const gb)
+{
+	CPU& cpu = gb->cpu;
+
+	const uint16_t pc = cpu.GetPC();
+	const uint8_t opcode = gb->ReadU8(pc);
+	cpu.AddPC(1);
+	printf("PC: %4x | OP: %4x | ", pc, opcode);
+
+
+	main_table[opcode](gb);
+	const uint8_t cycles = clock_table[opcode];
+	cpu.AddCycles(cycles);
+	return cycles;
+}
+
+
+
+
+static void update_lcd(const uint8_t cycles, Gameboy* const gb)
+{
+	LCD& lcd = gb->lcd;
+	HWState& hwstate = gb->hwstate;
+
+
+	if(!(lcd.control & LCD::LCD_CONTROL_OP))
+		return;
+
+	lcd.counter -= cycles;
+
+	if (lcd.counter <= 0) {
+		++lcd.scanline;
+
+		if (lcd.scanline == 144)
+			hwstate.interrupt_flags |= INTERRUPT_VBLANK; 
+		else if(lcd.scanline >= 153)
+			lcd.scanline = 0;
+
+		lcd.counter += 456;
+	}
+}
 
 
 

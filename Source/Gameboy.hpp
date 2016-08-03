@@ -1,12 +1,11 @@
 #ifndef GBX_GAMEBOY_HPP_
 #define GBX_GAMEBOY_HPP_
 #include "CPU.hpp"
-#include "GPU.hpp"
 #include "Memory.hpp"
 
 namespace gbx {
 
-enum InterruptFlag : uint8_t 
+enum Interrupts : uint8_t 
 {
 	INTERRUPT_VBLANK = 0x01, INTERRUPT_LCDC = 0x02,
 	INTERRUPT_TIMER = 0x04, INTERRUPT_SERIAL = 0x08,
@@ -14,20 +13,39 @@ enum InterruptFlag : uint8_t
 };
 
 
-enum HWFlags : uint8_t
-{
-	INTERRUPT_MASTER_ENABLED = 0x01,
-	INTERRUPT_MASTER_ACTIVE = 0x02
-};
-
-
 struct HWState
 {
+	enum HWFlags : uint8_t
+	{
+		INTERRUPT_MASTER_ENABLED = 0x01,
+		INTERRUPT_MASTER_ACTIVE = 0x20
+	};
+	
 	uint8_t hwflags;
 	uint8_t interrupt_enable;
 	uint8_t interrupt_flags;
 };
 
+
+
+struct LCD
+{
+	enum CONTROL : uint8_t 
+	{
+		LCD_CONTROL_OP = 0x80,
+		WIN_TILE_MAP_SELECT = 0x40,
+		WIN_ON_OFF = 0x20,
+		BG_WIN_TILE_MAP_SELECT = 0x10,
+		BG_TILE_MAP_SELECT = 0x08,
+		OBJ_SIZE = 0x04,
+		OBJ_ON_OFF = 0x02,
+		BG_ON_OFF = 0x01
+	};
+
+	int16_t counter;
+	uint8_t control;
+	uint8_t scanline;
+};
 
 
 
@@ -43,8 +61,7 @@ struct Gameboy
 
 	bool LoadRom(const char* file);
 	bool Reset();
-	void StepCPU();
-	void StepGPU();
+	void Step();
 	void StepInterrupts();
 
 	int8_t ReadS8(const uint16_t address) const;
@@ -62,7 +79,7 @@ struct Gameboy
 
 	
 	CPU cpu;
-	GPU gpu;
+	LCD lcd;
 	HWState hwstate;
 	Memory memory;
 };

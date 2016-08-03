@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <Utix/Assert.h>
 #include "Gameboy.hpp"
 #include "Memory.hpp"
@@ -38,10 +39,10 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 {
 	if (address < 0x8000) {
 		fprintf(stderr, "ROM write attempt at: %4x\n", address);
-	} 
+	}
 	else if (address == 0xFF44) {
-		gpu.ly = 0;
-	} 
+		lcd.scanline = 0;
+	}
 	else {
 		const uint8_t* const addr = solve_address(address, *this);
 		if (addr)
@@ -141,7 +142,8 @@ static const uint8_t* solve_hardware_io_address(const uint16_t address, const Ga
 {
 	switch (address) {
 	case 0xFF0F: return &gb.hwstate.interrupt_flags;
-	case 0xFF44: return &gb.gpu.ly;
+	case 0xFF40: return &gb.lcd.control;
+	case 0xFF44: return &gb.lcd.scanline;
 	default:
 		fprintf(stderr, "required hardware io address: %4x\n", address);
 		break;

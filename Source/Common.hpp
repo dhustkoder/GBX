@@ -22,6 +22,13 @@ constexpr uint16_t ConcatBytes(const uint8_t high_byte, const uint8_t low_byte) 
 }
 
 
+
+
+constexpr bool GetBit(const uint16_t value, const uint8_t bit) {
+	return value & ( 1 << bit );
+}
+
+
 constexpr uint8_t GetLowByte(const uint16_t value) {
 	return value & 0x00FF;
 }
