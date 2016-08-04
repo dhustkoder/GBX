@@ -5,15 +5,20 @@ namespace gbx {
 
 
 
-// common names:
-// d8:  immediate 8 bit value
-// d16: immediate 16 bit value
-// a8:  8 bit unsigned data, which are added to $FF00 in certain instructions (replacement for missing IN and OUT instructions)
-// a16: 16 bit address
-// r8: means 8 bit signed data, which are added to program counter
-// note: on gameboy PC appears to be incremented before the instruction is executed -
-// so relative jump instructions (jr) here still need to add its operand length to pc, or to r8 itself 
+/* common names:
+ * d8:  immediate 8 bit value
+ * d16: immediate 16 bit value
+ * a8:  8 bit unsigned data, which are added to $FF00 in certain instructions (replacement for missing IN and OUT instructions)
+ * a16: 16 bit address
+ * r8: means 8 bit signed data, which are added to program counter
+ * note: on gameboy PC appears to be incremented before the instruction is executed -
+ * so relative jump instructions (jr) here still need to add its operand length to pc, or to r8 itself 
+ */
 
+/* NOTE: 
+ * IF the instruction modifies the FLAGS state, use CPU methods to calculate if available,
+ * then store the return result in the target register/variable
+ */
 
 
 // Main instructions implementation:
