@@ -18,8 +18,7 @@ namespace gbx {
 
 // Main instructions implementation:
 // 0x00
-void nop_00(Gameboy* const) 
-{
+void nop_00(Gameboy* const) {
 	printf("NOP\n");
 }
 
@@ -45,7 +44,8 @@ void ld_01(Gameboy* const gb)
 
 
 
-void ld_02(Gameboy* const gb) {
+void ld_02(Gameboy* const gb) 
+{
 	// LD (BC), A
 	// value in register A is stored in memory location pointed by BC
 	// operands: 0
@@ -54,8 +54,6 @@ void ld_02(Gameboy* const gb) {
 	const auto a = gb->cpu.GetA();
 	gb->WriteU8(bc, a);
 	
-
-
 	printf("LD (BC), A; ->  BC(%x), A(%x)\n", bc, a);
 }
 
@@ -65,7 +63,8 @@ void ld_02(Gameboy* const gb) {
 
 
 
-void inc_03(Gameboy* const gb) {
+void inc_03(Gameboy* const gb) 
+{
 	// INC BC
 	// adds one to BC
 	// operands: 0
@@ -84,7 +83,8 @@ void inc_03(Gameboy* const gb) {
 
 
 
-void inc_04(Gameboy* const gb) { 
+void inc_04(Gameboy* const gb) 
+{ 
 	// INC B
 	// adds one to B
 	// operands: 0
@@ -105,7 +105,8 @@ void inc_04(Gameboy* const gb) {
 
 
 
-void dec_05(Gameboy* const gb) {
+void dec_05(Gameboy* const gb) 
+{
 	// DEC B
 	// decrement B by 1
 	// operands: 0
@@ -125,7 +126,8 @@ void dec_05(Gameboy* const gb) {
 
 
 
-void ld_06(Gameboy* const gb) {
+void ld_06(Gameboy* const gb) 
+{
 	// LD B, d8
 	// loads immediate 8 bit value into B
 	// operands: 1
@@ -153,7 +155,8 @@ void ld_0A(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
 
 
 
-void dec_0B(Gameboy* const gb) {
+void dec_0B(Gameboy* const gb) 
+{
 	// DEC BC
 	// decrement BC
 	// operands: 0
@@ -170,7 +173,8 @@ void dec_0B(Gameboy* const gb) {
 
 
 
-void inc_0C(Gameboy* const gb) { 
+void inc_0C(Gameboy* const gb) 
+{ 
 	// INC C
 	// increment C
 	// operands: 0
@@ -188,7 +192,8 @@ void inc_0C(Gameboy* const gb) {
 
 
 
-void dec_0D(Gameboy* const gb) {
+void dec_0D(Gameboy* const gb) 
+{
 	// DEC C
 	// subtract C by one
 	// operands: 0
@@ -210,7 +215,8 @@ void dec_0D(Gameboy* const gb) {
 
 
 
-void ld_0E(Gameboy* const gb) { 
+void ld_0E(Gameboy* const gb) 
+{ 
 	// LD C, d8
 	// loads immediate 8 bit value into C
 	// operands: 1
@@ -249,7 +255,8 @@ void stop_10(Gameboy* const gb){ ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
 
 
-void ld_11(Gameboy* const gb) {
+void ld_11(Gameboy* const gb) 
+{
 	// LD DE, d16
 	// store immediate d16 value into DE
 	// operands: 2
@@ -269,7 +276,8 @@ void ld_11(Gameboy* const gb) {
 
 
 
-void ld_12(Gameboy* const gb) {
+void ld_12(Gameboy* const gb) 
+{
 	// LD (DE), A
 	// store A into mem address pointed by DE
 	// operands: 0
@@ -288,7 +296,8 @@ void ld_12(Gameboy* const gb) {
 
 
 
-void inc_13(Gameboy* const gb) {
+void inc_13(Gameboy* const gb) 
+{
 	// INC DE
 	// increment DE
 	// operands: 0
@@ -317,7 +326,8 @@ void dec_15(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_16(Gameboy* const gb) {
+void ld_16(Gameboy* const gb) 
+{
 	// LD D, d8
 	// immediate 8 bit value stored into D
 	// operands: 1
@@ -367,7 +377,8 @@ void jr_18(Gameboy* const gb)
 
 
 
-void add_19(Gameboy* const gb) {
+void add_19(Gameboy* const gb) 
+{
 	// ADD HL, DE
 	// add DE into HL
 	// operands: 0
@@ -392,7 +403,8 @@ void add_19(Gameboy* const gb) {
 
 
 
-void ld_1A(Gameboy* const gb) {
+void ld_1A(Gameboy* const gb) 
+{
 	// LD A, (DE)
 	// store value in mem address pointed by DE into A
 	// operands: 0
@@ -417,7 +429,8 @@ void dec_1B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void inc_1C(Gameboy* const gb) {
+void inc_1C(Gameboy* const gb) 
+{
 	// INC E
 	// operands: 0
 	// clock cycles: 4
@@ -480,7 +493,8 @@ void jr_20(Gameboy* const gb)
 
 
 
-void ld_21(Gameboy* const gb) {
+void ld_21(Gameboy* const gb) 
+{
 	// LD HL, d16
 	// load immediate 16 bit value into HL
 	// operands: 2
@@ -499,7 +513,8 @@ void ld_21(Gameboy* const gb) {
 
 
 
-void ld_22(Gameboy* const gb) {
+void ld_22(Gameboy* const gb) 
+{
 	// LD (HL+), A / or /  LD (HLI), A / or / LDI (HL), A
 	// Put A into memory address HL. Increment HL
 	// operands: 0
@@ -519,7 +534,8 @@ void ld_22(Gameboy* const gb) {
 
 
 
-void inc_23(Gameboy* const gb) {
+void inc_23(Gameboy* const gb) 
+{
 	// INC HL
 	// operands: 0
 	// clock cycles: 8
@@ -580,7 +596,8 @@ void add_29(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_2A(Gameboy* const gb) {
+void ld_2A(Gameboy* const gb) 
+{
 	// LD A, (HL+)
 	// store value in address pointed by HL into A, increment HL
 	// operands: 0
@@ -603,7 +620,8 @@ void ld_2A(Gameboy* const gb) {
 
 
 
-void dec_2B(Gameboy* const gb) {
+void dec_2B(Gameboy* const gb) 
+{
 	// DEC HL
 	// decrement register HL by 1
 	// operands: 0
@@ -641,7 +659,8 @@ void ld_2E(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
 
 
-void cpl_2F(Gameboy* const gb) {
+void cpl_2F(Gameboy* const gb) 
+{
 	// CPL
 	// Complement A register, flip all bits
 	// operands: 0
@@ -695,7 +714,8 @@ void jr_30(Gameboy* const gb)
 
 
 
-void ld_31(Gameboy* const gb) {
+void ld_31(Gameboy* const gb) 
+{
 	// LD SP, d16
 	// loads immediate 16 bits value into SP
 	// operands: 2
@@ -714,7 +734,8 @@ void ld_31(Gameboy* const gb) {
 
 
 
-void ld_32(Gameboy* const gb) {
+void ld_32(Gameboy* const gb) 
+{
 	// LD (HL-), A  / or / LD (HLD), A / or / LDD (HL), A
 	// store A into memory pointed by HL, Decrements HL
 	// operands: 0
@@ -738,7 +759,8 @@ void inc_33(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 
 
 
-void inc_34(Gameboy* const gb) {
+void inc_34(Gameboy* const gb) 
+{
 	// INC (HL)
 	// increment value pointed by hl in memory
 	// operands: 0
@@ -775,7 +797,8 @@ void dec_35(Gameboy* const gb)
 
 
 
-void ld_36(Gameboy* const gb) {
+void ld_36(Gameboy* const gb) 
+{
 	// LD (HL), d8
 	// store d8 into mem address pointed by HL
 	// operands: 1
@@ -801,7 +824,8 @@ void scf_37(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 
 
 
-void jr_38(Gameboy* const gb) {
+void jr_38(Gameboy* const gb) 
+{
 	// JR C, r8
 	// jump if C flag is set
 	// operands: 1
@@ -853,7 +877,8 @@ void dec_3B(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 
 
 
-void inc_3C(Gameboy* const gb) {
+void inc_3C(Gameboy* const gb) 
+{
 	// INC A
 	// increment A
 	// operands: 0
@@ -870,7 +895,8 @@ void inc_3C(Gameboy* const gb) {
 
 
 
-void dec_3D(Gameboy* const gb) { 
+void dec_3D(Gameboy* const gb) 
+{ 
 	// DEC A
 	// decrement A
 	// operands: 0
@@ -891,7 +917,8 @@ void dec_3D(Gameboy* const gb) {
 
 
 
-void ld_3E(Gameboy* const gb) { 
+void ld_3E(Gameboy* const gb) 
+{ 
 	// LD A, d8
 	// loads immediate 8 bit value into A
 	// operands: 1
@@ -931,7 +958,8 @@ void ld_46(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_47(Gameboy* const gb) {
+void ld_47(Gameboy* const gb) 
+{
 	// LD B, A
 	// value in A is stored in B
 	// operands: 0
@@ -961,7 +989,8 @@ void ld_4E(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_4F(Gameboy* const gb) {
+void ld_4F(Gameboy* const gb) 
+{
 	// LD C, A
 	// value in A is stored in C
 	// operands: 0
@@ -996,7 +1025,8 @@ void ld_55(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_56(Gameboy* const gb) {
+void ld_56(Gameboy* const gb) 
+{
 	// LD D, (HL)
 	// value in memory address pointed by HL is stored in D
 	// operands: 0
@@ -1017,7 +1047,8 @@ void ld_56(Gameboy* const gb) {
 
 
 
-void ld_57(Gameboy* const gb) {
+void ld_57(Gameboy* const gb) 
+{
 	// LD D, A
 	// the value in A is loaded into D
 	// operands: 0
@@ -1048,7 +1079,8 @@ void ld_5D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_5E(Gameboy* const gb) {
+void ld_5E(Gameboy* const gb) 
+{
 	// LD E, (HL)
 	// value in address pointed by HL is stored into E
 	// operands: 0
@@ -1068,7 +1100,8 @@ void ld_5E(Gameboy* const gb) {
 
 
 
-void ld_5F(Gameboy* const gb) {
+void ld_5F(Gameboy* const gb) 
+{
 	// LD E, A
 	// value in A is stored in E
 	// operands: 0
@@ -1099,7 +1132,8 @@ void ld_61(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_62(Gameboy* const gb) {
+void ld_62(Gameboy* const gb) 
+{
 	// LD H, D
 	// value in D is stored into H
 	// operands: 0
@@ -1148,7 +1182,8 @@ void ld_6A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_6B(Gameboy* const gb) {
+void ld_6B(Gameboy* const gb) 
+{
 	// LD L, E
 	// value in E is stored in L
 	// operands: 0
@@ -1199,7 +1234,8 @@ void ld_6F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 // 0x70
-void ld_70(Gameboy* const gb) {
+void ld_70(Gameboy* const gb) 
+{
 	// LD (HL), B
 	// value in B is stored into address pointed by HL
 	// operands: 0
@@ -1222,7 +1258,8 @@ void ld_70(Gameboy* const gb) {
 
 
 
-void ld_71(Gameboy* const gb) {
+void ld_71(Gameboy* const gb) 
+{
 	// LD (HL), C
 	// value in C is stored into address pointed by HL
 	// operands: 0
@@ -1254,7 +1291,8 @@ void ld_77(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_78(Gameboy* const gb) {
+void ld_78(Gameboy* const gb) 
+{
 	// LD A, B
 	// store value in B into A
 	// operands: 0
@@ -1272,7 +1310,8 @@ void ld_78(Gameboy* const gb) {
 
 
 
-void ld_79(Gameboy* const gb) {
+void ld_79(Gameboy* const gb) 
+{
 	// LD A, C
 	// value in C is stored in A
 	// operands: 0
@@ -1293,7 +1332,8 @@ void ld_79(Gameboy* const gb) {
 
 
 
-void ld_7A(Gameboy* const gb) {
+void ld_7A(Gameboy* const gb) 
+{
 	// LD A, D
 	// value in D is stored in A
 	// operands: 0
@@ -1318,7 +1358,8 @@ void ld_7B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_7C(Gameboy* const gb) {
+void ld_7C(Gameboy* const gb) 
+{
 	// LD A, H
 	// store value in H into A
 	// operands: 0
@@ -1343,7 +1384,8 @@ void ld_7D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void ld_7E(Gameboy* const gb) {
+void ld_7E(Gameboy* const gb) 
+{
 	// LD A, (HL)
 	// value in mem pointed by HL is stored in A
 	// operands: 0
@@ -1385,7 +1427,8 @@ void add_86(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void add_87(Gameboy* const gb) {
+void add_87(Gameboy* const gb) 
+{
 	// ADD A, A
 	// add A into A
 	// operands: 0
@@ -1453,7 +1496,8 @@ void and_A0(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void and_A1(Gameboy* const gb) {
+void and_A1(Gameboy* const gb) 
+{
 	// AND B
 	// logical AND on B with A, result in A
 	// operands: 0
@@ -1484,7 +1528,8 @@ void and_A6(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void and_A7(Gameboy* const gb) {
+void and_A7(Gameboy* const gb) 
+{
 	// AND A
 	// Logically AND A with A, result in A.
 	// operands: 0
@@ -1512,7 +1557,8 @@ void xor_A8(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void xor_A9(Gameboy* const gb) {
+void xor_A9(Gameboy* const gb) 
+{
 	// XOR C
 	// logical XOR on C with A, result in A
 	// operands: 0
@@ -1544,7 +1590,8 @@ void xor_AE(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void xor_AF(Gameboy* const gb) {
+void xor_AF(Gameboy* const gb) 
+{
 	// XOR A
 	// bitwise xor in a with a
 	// operands: 0
@@ -1570,7 +1617,8 @@ void xor_AF(Gameboy* const gb) {
 
 
 // 0xB0
-void or_B0(Gameboy* const gb) {
+void or_B0(Gameboy* const gb) 
+{
 	// OR B
 	// logical or on B with A, result in A
 	// operands: 0
@@ -1594,7 +1642,8 @@ void or_B0(Gameboy* const gb) {
 
 
 
-void or_B1(Gameboy* const gb) {
+void or_B1(Gameboy* const gb) 
+{
 	// OR C
 	// or C with A, result in A
 	// operands: 0
@@ -1627,7 +1676,8 @@ void or_B5(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void or_B6(Gameboy* const gb) {
+void or_B6(Gameboy* const gb) 
+{
 	// OR (HL)
 	// value in memory address pointed by HL is or'ed with A, result in A
 	// operands: 0
@@ -1670,7 +1720,8 @@ void cp_BF(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 // 0xC0
-void ret_C0(Gameboy* const gb) { 
+void ret_C0(Gameboy* const gb) 
+{ 
 	// RET NZ
 	// return if zero flag is reset
 	// operands: 0
@@ -1693,7 +1744,8 @@ void ret_C0(Gameboy* const gb) {
 
 
 
-void pop_C1(Gameboy* const gb) {
+void pop_C1(Gameboy* const gb) 
+{
 	// POP BC
 	// operands: 0
 	// clock cycles: 12
@@ -1719,7 +1771,8 @@ void jp_C2(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
 
 
-void jp_C3(Gameboy* const gb) {
+void jp_C3(Gameboy* const gb) 
+{
 	// JP a16
 	// 16 bit address is copied to PC
 	// operands: 2
@@ -1743,7 +1796,8 @@ void call_C4(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
 
 
-void push_C5(Gameboy* const gb) {
+void push_C5(Gameboy* const gb) 
+{
 	// PUSH BC
 	// Push register pair BC onto stack.
 	// operands: 0
@@ -1770,7 +1824,8 @@ void rst_C7(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
 
 
 
-void ret_C8(Gameboy* const gb) {
+void ret_C8(Gameboy* const gb) 
+{
 	// RET Z
 	// return if z flag is set
 	// operands: 0
@@ -1792,7 +1847,8 @@ void ret_C8(Gameboy* const gb) {
 
 
 
-void ret_C9(Gameboy* const gb) {
+void ret_C9(Gameboy* const gb) 
+{
 	// RET
 	// return from subroutine
 	// pop 2 bytes from stack and jump to that address
@@ -1810,7 +1866,8 @@ void ret_C9(Gameboy* const gb) {
 
 
 
-void jp_CA(Gameboy* const gb) {
+void jp_CA(Gameboy* const gb) 
+{
 	// JP Z, a16
 	// jump to immediate 16 bit address if flag Z is set
 	// operands: 2
@@ -1863,7 +1920,8 @@ void call_CC(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
 
 
-void call_CD(Gameboy* const gb) {
+void call_CD(Gameboy* const gb) 
+{
 	// CALL a16
 	// call subroutine at immediate 16 bits address
 	// stack grows backwards ?
@@ -1896,7 +1954,8 @@ void rst_CF(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
 
 
 // 0xD0
-void ret_D0(Gameboy* const gb) { 
+void ret_D0(Gameboy* const gb) 
+{ 
 	// RET NC
 	// return if C flag is reset
 	// operands: 0
@@ -1920,7 +1979,8 @@ void ret_D0(Gameboy* const gb) {
 
 
 
-void pop_D1(Gameboy* const gb) {
+void pop_D1(Gameboy* const gb) 
+{
 	// POP DE
 	// Pop two bytes off stack into register pair nn.
 	// operands: 0
@@ -1949,7 +2009,8 @@ void call_D4(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
 
 
-void push_D5(Gameboy* const gb) {
+void push_D5(Gameboy* const gb) 
+{
 	// PUSH DE
 	// push DE into stack
 	// operands: 0
@@ -2007,7 +2068,8 @@ void rst_DF(Gameboy* const)     { ASSERT_INSTR_IMPL();  }
 
 
 // 0xE0
-void ldh_E0(Gameboy* const gb) {
+void ldh_E0(Gameboy* const gb) 
+{
 	// LDH (a8), A
 	// store value in A into memory address 0xFF00 + a8
 	// operands: 1
@@ -2029,7 +2091,8 @@ void ldh_E0(Gameboy* const gb) {
 
 
 
-void pop_E1(Gameboy* const gb) {
+void pop_E1(Gameboy* const gb) 
+{
 	// POP HL
 	// pop 2 bytes off stack into register HL
 	// operands: 0
@@ -2048,7 +2111,8 @@ void pop_E1(Gameboy* const gb) {
 
 
 
-void ld_E2(Gameboy* const gb) {
+void ld_E2(Gameboy* const gb) 
+{
 	// LD (C), A
 	// store value in A into memory address 0xFF00 + C
 	// operand length: 0
@@ -2073,7 +2137,8 @@ void ld_E2(Gameboy* const gb) {
 
 
 
-void push_E5(Gameboy* const gb) {
+void push_E5(Gameboy* const gb) 
+{
 	// PUSH HL
 	// push hl register into stack
 	// operands: 0
@@ -2093,7 +2158,8 @@ void push_E5(Gameboy* const gb) {
 
 
 
-void and_E6(Gameboy* const gb) {
+void and_E6(Gameboy* const gb) 
+{
 	// AND d8
 	// logical AND d8 with A, result in A.
 	// operands: 1
@@ -2126,7 +2192,8 @@ void rst_E7(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-void add_E8(Gameboy* const gb) {
+void add_E8(Gameboy* const gb) 
+{
 	// ADD SP, operands: 2
 	// add immediate signed 8 bit data to SP
 	// operands: 1
@@ -2155,7 +2222,8 @@ void add_E8(Gameboy* const gb) {
 
 
 
-void jp_E9(Gameboy* const gb) {
+void jp_E9(Gameboy* const gb) 
+{
 	// JP (HL)
 	// Jump to address contained in HL
 	// operands: 0
@@ -2174,7 +2242,8 @@ void jp_E9(Gameboy* const gb) {
 
 
 
-void ld_EA(Gameboy* const gb) {
+void ld_EA(Gameboy* const gb) 
+{
 	// LD (a16), A
 	// store value in A into immediate 16 bits address
 	// operands: 2
@@ -2204,7 +2273,8 @@ void xor_EE(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
 
 
-void rst_EF(Gameboy* const gb) {
+void rst_EF(Gameboy* const gb) 
+{
 	// RST 28H
 	// push present address onto stack, and jump to 0x0000 + 0x28
 	// operands: 0
@@ -2228,7 +2298,8 @@ void rst_EF(Gameboy* const gb) {
 
 
 // 0XF0
-void ldh_F0(Gameboy* const gb) {
+void ldh_F0(Gameboy* const gb) 
+{
 	// LDH A, (a8)
 	// put content of memory address  (0xFF00 + immediate 8 bit value(a8)) into A
 	// operands: 1
@@ -2251,7 +2322,8 @@ void ldh_F0(Gameboy* const gb) {
 
 
 
-void pop_F1(Gameboy* const gb) {
+void pop_F1(Gameboy* const gb) 
+{
 	// POP AF
 	// pop 16 bits from stack into AF
 	// operands: 0
@@ -2299,7 +2371,8 @@ void di_F3(Gameboy* const gb)
 
 
 
-void push_F5(Gameboy* const gb) {
+void push_F5(Gameboy* const gb) 
+{
 	// PUSH AF
 	// push register AF into stack
 	// operands: 0
@@ -2361,7 +2434,8 @@ void ei_FB(Gameboy* const gb)
 
 
 
-void cp_FE(Gameboy* const gb) {
+void cp_FE(Gameboy* const gb) 
+{
 	// CP d8
 	// compare A with immediate 8 bits value d8, throws alway the result
 	// operands: 1
@@ -2389,7 +2463,6 @@ void rst_FF(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 // undefined / unknown opcodes
 void unknown(Gameboy* const) {
-	// not implemented instruction
 	printf("UNDEFINED INSTRUCTION!\n");	
 }
 

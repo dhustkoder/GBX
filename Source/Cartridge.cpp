@@ -24,8 +24,8 @@ bool Gameboy::LoadRom(const char* file_name)
 		fseek(file, 0, SEEK_END);
 
 		const auto file_size = static_cast<size_t>(ftell(file));
-		if (file_size > CARTRIDGE_MAX_SIZE
-			|| file_size < CARTRIDGE_MIN_SIZE) {
+		if (file_size > CARTRIDGE_MAX_SIZE 
+		    || file_size < CARTRIDGE_MIN_SIZE) {
 			fprintf(stderr, "size of \'%s\': %zu bytes is incompatible!\n", file_name, file_size);
 			return false;
 		}
