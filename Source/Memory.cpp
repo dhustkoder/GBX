@@ -5,55 +5,112 @@
 #include "Memory.hpp"
 
 namespace gbx {
-// NOTE: special hardware addresses must be treated (instead or before calling solve_address/solve_hardware_io_addr)
-static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb);
-static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb);
-
 
 
 
 // TODO: this might not be totally portable 
-int8_t Gameboy::ReadS8(const uint16_t address) const {
+int8_t Gameboy::ReadS8(const uint16_t address) const 
+{
 	return static_cast<int8_t>(ReadU8(address));
 }
 
 
 
 
-uint8_t Gameboy::ReadU8(const uint16_t address) const {
-	const uint8_t* const addr = solve_address(address, *this);
-	return addr ? *addr : 0;
+uint8_t Gameboy::ReadU8(const uint16_t address) const 
+{
+	if (address >= 0xFF80) {
+		return address != 0xFFFF ? memory.hram[address - 0xFF80]
+		                         : hwstate.interrupt_enable;
+	}
+	else if (address >= 0xFF00) {
+		switch (address) {
+		case 0xFF00: return keys.value;
+		case 0xFF0F: return hwstate.interrupt_flags;
+		case 0xFF40: return gpu.control;
+		case 0xFF41: return gpu.status;
+		case 0xFF44: return gpu.scanline;
+		default:
+			fprintf(stderr, "required hardware io address: %4x\n", address);
+			break;
+		};
+	}
+	else if (address >= 0xFE00) {
+		if (address < 0xFEA0)
+			return memory.oam[address - 0xFE00];
+	}
+	else if (address >= 0xC000) {
+		if (address < 0xE000)
+			return memory.wram[address - 0xC000];
+	}
+	else if (address >= 0xA000) {
+		ASSERT_MSG(false, "cartridge ram required");
+	}
+	else if (address >= 0x8000) {
+		return memory.vram[address - 0x8000];
+	}
+	else if (address < 0x8000) {
+		return memory.home[address];
+	}
+
+	return 0;
 }
-
-
-
-uint16_t Gameboy::ReadU16(const uint16_t address) const {
-	return ConcatBytes(ReadU8(address + 1), ReadU8(address));
-}
-
-
-
-
 
 
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
 {
-	if (address == 0xFF00) {
-		keys.value = value | 0xCF;
+
+	if (address >= 0xFF80) {
+		if (address != 0xFFFF) 
+			memory.hram[address - 0xFF80] = value;
+		else 
+			hwstate.interrupt_enable = value;
 	}
-	else if (address == 0xFF44) {
-		gpu.scanline = 0;
+	
+	else if (address >= 0xFF00) {
+		switch (address) {
+		case 0xFF00: keys.value = value | 0xCF; break;
+		case 0xFF0F: hwstate.interrupt_flags = value; break;
+		case 0xFF40: gpu.control = value; break;
+		case 0xFF41: gpu.status = value & 0xFC; break;
+		case 0xFF44: gpu.scanline = 0; break;
+		default:
+			fprintf(stderr, "required hardware io address: %4x\n", address);
+			break;
+		};
 	}
-	else if(address > 0x7fff) {
-		const uint8_t* const addr = solve_address(address, *this);
-		if (addr)
-			const_cast<uint8_t&>(*addr) = value;
+	else if (address >= 0xFE00) {
+		if (address < 0xFEA0)
+			memory.oam[address - 0xFE00] = value;
 	}
-	else {
-		fprintf(stderr, "Write at ROM (%4x) required!\n", address);
+	else if (address >= 0xC000) {
+		if (address < 0xE000)
+			memory.wram[address - 0xC000] = value;
+	}
+	else if (address >= 0xA000) {
+		ASSERT_MSG(false, "cartridge ram required");
+	}
+	else if (address >= 0x8000) {
+		memory.vram[address - 0x8000] = value;
+	}
+	else if (address <= 0x7FFF) {
+		fprintf(stderr, "write at %4x required\n", address);
 	}
 
 }
+
+
+
+
+
+
+
+uint16_t Gameboy::ReadU16(const uint16_t address) const 
+{
+	return ConcatBytes(ReadU8(address + 1), ReadU8(address));
+}
+
+
 
 
 
@@ -75,12 +132,15 @@ void Gameboy::PushStack8(const uint8_t value)
 }
 
 
+
+
 void Gameboy::PushStack16(const uint16_t value) 
 {
 	const uint16_t sp = cpu.GetSP() - 2;
 	WriteU16(sp, value);
 	cpu.SetSP(sp);
 }
+
 
 
 
@@ -107,57 +167,6 @@ uint16_t Gameboy::PopStack16()
 
 
 
-
-
-
-static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
-{
-	if (address >= 0xFF80) {
-		return address < 0xFFFF ? &gb.memory.hram[address - 0xFF80] 
-		                        : &gb.hwstate.interrupt_enable;
-	}
-	else if (address >= 0xFF00) {
-		return solve_hardware_io_address(address, gb);
-	}
-	else if (address >= 0xFE00) {
-		if (address < 0xFEA0)
-			return &gb.memory.oam[address - 0xFE00];
-	}
-	else if (address >= 0xC000) {
-		if (address < 0xE000)
-			return &gb.memory.wram[address - 0xC000];
-	}
-	else if (address >= 0xA000) {
-		ASSERT_MSG(false, "cartridge ram required");
-	}
-	else if (address >= 0x8000) {
-		return &gb.memory.vram[address - 0x8000];
-	}
-	else if (address < 0x8000) {
-		return &gb.memory.home[address];
-	}
-
-	fprintf(stderr, "required address: %4x\n", address);
-	return nullptr;
-}
-
-
-
-static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb)
-{
-	switch (address) {
-	case 0xFF00: return &gb.keys.value;
-	case 0xFF0F: return &gb.hwstate.interrupt_flags;
-	case 0xFF40: return &gb.gpu.control;
-	case 0xFF41: return &gb.gpu.status;
-	case 0xFF44: return &gb.gpu.scanline;
-	default:
-		fprintf(stderr, "required hardware io address: %4x\n", address);
-		break;
-	};
-
-	return nullptr;
-}
 
 
 

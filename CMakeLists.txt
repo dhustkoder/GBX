@@ -5,7 +5,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -pedantic-errors -Wall -Wextra -Werror
 
 option(ADDRESS_SANITIZER OFF)
 option(UNDEFINED_SANITIZER OFF)
-
+option(ENABLE_LTO OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type selected! default to Debug")
@@ -17,9 +17,15 @@ endif()
 # "Release" full optimization , no debug info.
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG -O3 -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG -O3 -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
 
-	set(LINK_FLAGS "-nodefaultlibs -flto -s -Wl,--gc-sections")
+	set(LINK_FLAGS "-nodefaultlibs -s -Wl,--gc-sections")
+
+	if(ENABLE_LTO)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
+		set(LINK_FLAGS "${LINK_FLAGS} -flto") 
+	endif()
+
 	set(CMAKE_EXE_LINKER_FLAGS "${LINK_FLAGS}")
 	set(CMAKE_SHARED_LINKER_FLAGS "${LINK_FLAGS}")
 	set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "${LINK_FLAGS}")

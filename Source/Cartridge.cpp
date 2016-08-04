@@ -68,8 +68,7 @@ CartridgeInfo get_cartridge_info(const Memory& memory)
 	const uint8_t super_gb_check = memory.home[0x146];
 	if (super_gb_check == 0x03) {
 		cinfo.system = System::SUPER_GAMEBOY;
-	}
-	else {
+	} else {
 		const uint8_t color_check = memory.home[0x143];
 		cinfo.system = color_check == 0x80 ? System::GAMEBOY_COLOR : System::GAMEBOY;
 	}

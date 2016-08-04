@@ -359,10 +359,4 @@ const cb_instruction_t cb_table[256] = {
 
 
 
-#ifdef _DEBUG
-const char* cb_table_disassembly[256] = {nullptr};
-#endif
-
-
-
 }

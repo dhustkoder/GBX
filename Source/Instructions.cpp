@@ -2496,14 +2496,4 @@ extern const uint8_t clock_table[256] = {
 };
 
 
-
-
-
-#ifdef _DEBUG
-
-const char* main_table_disassembly[256] = { nullptr };
-
-
-#endif
-
 }

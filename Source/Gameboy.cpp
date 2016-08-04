@@ -123,7 +123,7 @@ void Gameboy::Step()
 	const uint8_t opcode = ReadU8(pc);
 	cpu.AddPC(1);
 
-	debug_printf("PC: %4x | OP: %4x | ", pc, opcode);
+	debug_printf("PC: %4x | OP: %4x\n", pc, opcode);
 
 	main_table[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
@@ -192,7 +192,6 @@ void Gameboy::UpdateGPU()
 
 		break;
 	}
-
 }
 
 
