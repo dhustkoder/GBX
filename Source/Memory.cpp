@@ -32,7 +32,12 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 		case 0xFF0F: return hwstate.interrupt_flags;
 		case 0xFF40: return gpu.control;
 		case 0xFF41: return gpu.status;
+		case 0xFF42: return gpu.scy;
+		case 0xFF43: return gpu.scx;
 		case 0xFF44: return gpu.scanline;
+		case 0xFF45: return gpu.scanline_compare;
+		case 0xFF4A: return gpu.wy;
+		case 0xFF4B: return gpu.wx;
 		default:
 			fprintf(stderr, "required hardware io address: %4x\n", address);
 			break;
@@ -71,11 +76,36 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 	}
 	else if (address >= 0xFF00) {
 		switch (address) {
-		case 0xFF00: keys.value = value | 0xCF; break;
-		case 0xFF0F: hwstate.interrupt_flags = value; break;
-		case 0xFF40: gpu.control = value; break;
-		case 0xFF41: gpu.status = value & 0xFC; break;
-		case 0xFF44: gpu.scanline = 0; break;
+		case 0xFF00:
+			keys.value = value | 0xCF;
+			break;
+		case 0xFF0F:
+			hwstate.interrupt_flags = value; 
+			break;
+		case 0xFF40:
+			gpu.control = value; 
+			break;
+		case 0xFF41:
+			gpu.status = (value & 0xF8) | (gpu.status & 0x07);
+			break;
+		case 0xFF42:
+			gpu.scy = value;
+			break;
+		case 0xFF43:
+			gpu.scx = value;
+			break;
+		case 0xFF44: 
+			gpu.scanline = 0;
+			break;
+		case 0xFF45:
+			gpu.scanline_compare = value;
+			break;
+		case 0xFF4A:
+			gpu.wy = value;
+			break;
+		case 0xFF4B:
+			gpu.wx = value;
+			break;
 		default:
 			fprintf(stderr, "required hardware io address: %4x\n", address);
 			break;

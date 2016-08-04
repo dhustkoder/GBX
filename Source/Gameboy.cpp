@@ -66,10 +66,15 @@ bool Gameboy::Reset()
 	cpu.SetHL(0x014D);
 	cpu.SetClock(0);
 
+	gpu.scanline = 0x00;
+	gpu.scanline_compare = 0x00;
+	gpu.scx = 0x00;
+	gpu.scy = 0x00;
+	gpu.wy = 0x00;
+	gpu.wx = 0x00;
 	gpu.clock = 0;
 	gpu.control = 0x91;
 	gpu.status = 0x00;
-	gpu.scanline = 0x00;
 
 	keys.value = 0xCF;
 
@@ -100,14 +105,14 @@ bool Gameboy::Reset()
 	WriteU8(0xFF25, 0xF3); // NR51
 	WriteU8(0xFF26, 0xF1); // NR52
 	// WriteU8(0xFF40, 0x91); // LCDC, in GPU
-	WriteU8(0xFF42, 0x00); // SCY
-	WriteU8(0xFF43, 0x00); // SCX
-	WriteU8(0xFF45, 0x00); // LYC
+	// WriteU8(0xFF42, 0x00); // SCY, in GPU
+	// WriteU8(0xFF43, 0x00); // SCX, in GPU
+	// WriteU8(0xFF45, 0x00); // LYC, in GPU
 	WriteU8(0xFF47, 0xFC); // BGP
 	WriteU8(0xFF48, 0xFF); // OBP0
 	WriteU8(0xFF49, 0xFF); // OBP1
-	WriteU8(0xFF4A, 0x00); // WY
-	WriteU8(0xFF4B, 0x00); // WX
+	// WriteU8(0xFF4A, 0x00); // WY, in GPU
+	// WriteU8(0xFF4B, 0x00); // WX, in GPU
 
 	return true;
 }
@@ -137,12 +142,28 @@ void Gameboy::Step()
 
 void Gameboy::UpdateGPU()
 {
+
 	if (!(gpu.control & GPU::LCD_ON_OFF)) {
 		gpu.clock = 0;
 		gpu.scanline = 0;
 		gpu.SetMode(GPU::Mode::VBLANK);
 		return;
 	}
+
+
+	const auto compare_ly = [this]() {
+		if (gpu.scanline != gpu.scanline_compare) {
+			if (gpu.status & GPU::COINCIDENCE_FLAG)
+				gpu.status &= ~GPU::COINCIDENCE_FLAG;
+		} else {
+			if (!(gpu.status & GPU::COINCIDENCE_FLAG))
+				gpu.status |= GPU::COINCIDENCE_FLAG;
+			
+			if (gpu.status & GPU::COINCIDENCE_INTERRUPT)
+				if (hwstate.interrupt_enable & INTERRUPT_LCD_STAT)
+					hwstate.interrupt_flags |= INTERRUPT_LCD_STAT;
+		}
+	};
 
 	switch (gpu.GetMode()) {
 	case GPU::Mode::HBLANK:
@@ -157,6 +178,7 @@ void Gameboy::UpdateGPU()
 				gpu.SetMode(GPU::Mode::OAM);
 			}
 
+			compare_ly();
 			gpu.clock -= 204;
 		}
 
@@ -171,6 +193,7 @@ void Gameboy::UpdateGPU()
 				gpu.SetMode(GPU::Mode::OAM);
 			}
 
+			compare_ly();
 			gpu.clock -= 456;
 		}
 
@@ -224,8 +247,8 @@ void Gameboy::UpdateInterrupts()
 		cpu.AddCycles(12);
 	}
 
-	if (requests & INTERRUPT_LCDC) {
-		hwstate.interrupt_flags &= ~INTERRUPT_LCDC;
+	if (requests & INTERRUPT_LCD_STAT) {
+		hwstate.interrupt_flags &= ~INTERRUPT_LCD_STAT;
 		PushStack16(cpu.GetPC());
 		cpu.SetPC(INTERRUPT_LCDC_ADDR);
 		cpu.AddCycles(12);

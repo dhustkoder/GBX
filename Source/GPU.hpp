@@ -18,6 +18,15 @@ struct GPU
 		TRANSFER = 0x03
 	};
 
+	enum StatusMask : uint8_t
+	{
+		COINCIDENCE_INTERRUPT = 0x40,
+		OAM_INTERRUPT = 0x20,
+		VBLANK_INTERRUPT = 0x10,
+		HBLANK_INTERRUPT = 0x08,
+		COINCIDENCE_FLAG = 0x04,
+	};
+
 
 	enum ControlMask : uint8_t
 	{
@@ -35,9 +44,14 @@ struct GPU
 	void SetMode(Mode mode);
 
 	uint16_t clock;
+	uint8_t scy;
+	uint8_t scx;
+	uint8_t wy;
+	uint8_t wx;
+	uint8_t scanline;
+	uint8_t scanline_compare;
 	uint8_t control;
 	uint8_t status;
-	uint8_t scanline;
 };
 
 
@@ -56,11 +70,6 @@ inline void GPU::SetMode(const Mode mode)
 	status &= 0xfc; // clean mode
 	status |= static_cast<uint8_t>(mode);
 }
-
-
-
-
-
 
 
 
