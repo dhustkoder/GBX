@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "Debug.hpp"
 #include "CPU.hpp"
 
 
@@ -17,7 +18,7 @@ void CPU::PrintFlags() const
 	const auto n = f & FLAG_N ? 1 : 0;
 	const auto h = f & FLAG_H ? 1 : 0;
 	const auto c = f & FLAG_C ? 1 : 0;
-	printf("CPU FLAGS: Z(%x), N(%x), H(%x), C(%x)\n", z, n, h, c);
+	debug_printf("CPU FLAGS: Z(%x), N(%x), H(%x), C(%x)\n", z, n, h, c);
 }
 
 
@@ -26,7 +27,7 @@ void CPU::PrintFlags() const
 
 void CPU::PrintRegisters() const 
 {
-	printf("PC: %4x\n" \
+	debug_printf("PC: %4x\n" \
 	       "SP: %4x\n" \
 	       "AF: %4x\n" \
 	       "BC: %4x\n" \
@@ -34,7 +35,6 @@ void CPU::PrintRegisters() const
 	       "HL: %4x\n", GetPC(), GetSP(), 
 	       GetAF(), GetBC(), GetDE(), GetHL());
 }
-
 
 
 

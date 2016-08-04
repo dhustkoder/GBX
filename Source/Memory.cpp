@@ -44,10 +44,13 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 	else if (address == 0xFF44) {
 		gpu.scanline = 0; // read only
 	}
-	else {
+	else if(address > 0x7fff) {
 		const uint8_t* const addr = solve_address(address, *this);
 		if (addr)
 			const_cast<uint8_t&>(*addr) = value;
+	}
+	else {
+		fprintf(stderr, "Write at ROM (%4x) required!\n", address);
 	}
 
 }

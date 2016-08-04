@@ -30,6 +30,7 @@ struct CPU
 	uint32_t GetClock() const;
 
 	Flags GetFlags(const CPU::Flags flags) const;
+
 	void PrintFlags() const;
 	void PrintRegisters() const;
 
@@ -179,13 +180,6 @@ constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint8_t second) {
 
 
 
-
-
-
-
-
-
-
 inline uint8_t CPU::GetA() const { return af.bytes.a; }
 inline uint8_t CPU::GetF() const { return af.bytes.f; }
 inline uint8_t CPU::GetB() const { return bc.bytes.b; }
@@ -202,14 +196,11 @@ inline uint16_t CPU::GetAF() const { return af.pair; }
 inline uint16_t CPU::GetBC() const { return bc.pair; }
 inline uint16_t CPU::GetDE() const { return de.pair; }
 inline uint16_t CPU::GetHL() const { return hl.pair; }
-
 inline uint32_t CPU::GetClock() const { return clock; }
+
 inline CPU::Flags CPU::GetFlags(const CPU::Flags flags) const {
 	return static_cast<Flags>(GetF() & flags);
 }
-
-
-
 
 
 inline void CPU::SetA(const uint8_t val) { af.bytes.a = val; }

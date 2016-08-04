@@ -89,7 +89,7 @@ void swap_37(CPU* const cpu) {
 	cpu->SetA(result);
 
 
-	printf("SWAP A; -> A(%x), Result(%x) | ", a, result);
+	debug_printf("SWAP A; -> A(%x), Result(%x) | ", a, result);
 	cpu->PrintFlags();
 }
 
@@ -199,7 +199,7 @@ void res_87(CPU* const cpu) {
 	const uint8_t result = a & 0xfe;
 	cpu->SetA(result);
 
-	printf("RES 0, A; -> A(%x), Result(%x)\n", a, result);
+	debug_printf("RES 0, A; -> A(%x), Result(%x)\n", a, result);
 }
 
 
@@ -358,7 +358,7 @@ const cb_instruction_t cb_table[256] = {
 /*D*/  set_D0,  set_D1,  set_D2,  set_D3,  set_D4,  set_D5,  set_D6,  set_D7,  set_D8,  set_D9,  set_DA,  set_DB,  set_DC,  set_DD,  set_DE,  set_DF,
 /*E*/  set_E0,  set_E1,  set_E2,  set_E3,  set_E4,  set_E5,  set_E6,  set_E7,  set_E8,  set_E9,  set_EA,  set_EB,  set_EC,  set_ED,  set_EE,  set_EF,
 /*F*/  set_F0,  set_F1,  set_F2,  set_F3,  set_F4,  set_F5,  set_F6,  set_F7,  set_F8,  set_F9,  set_FA,  set_FB,  set_FC,  set_ED,  set_FE,  set_FF
-};;
+};
 
 
 

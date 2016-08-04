@@ -13,10 +13,6 @@ namespace gbx {
 
 
 
-
-
-
-
 struct Gameboy 
 {
 	Gameboy()=delete;
