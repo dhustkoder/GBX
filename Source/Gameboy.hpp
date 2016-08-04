@@ -2,10 +2,19 @@
 #define GBX_GAMEBOY_HPP_
 #include "CPU.hpp"
 #include "GPU.hpp"
+#include "Keys.hpp"
 #include "HWState.hpp"
 #include "Memory.hpp"
 
 namespace gbx {
+
+
+
+
+
+
+
+
 
 
 struct Gameboy 
@@ -38,6 +47,7 @@ struct Gameboy
 
 	CPU cpu;
 	GPU gpu;
+	Keys keys;
 	HWState hwstate;
 	Memory memory;
 };

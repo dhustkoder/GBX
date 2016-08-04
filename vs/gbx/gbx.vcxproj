@@ -35,6 +35,7 @@
     <ClInclude Include="..\..\Source\GPU.hpp" />
     <ClInclude Include="..\..\Source\HWState.hpp" />
     <ClInclude Include="..\..\Source\Instructions.hpp" />
+    <ClInclude Include="..\..\Source\Keys.hpp" />
     <ClInclude Include="..\..\Source\Memory.hpp" />
   </ItemGroup>
   <ItemGroup>

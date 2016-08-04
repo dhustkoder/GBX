@@ -65,6 +65,9 @@
     <ClInclude Include="..\..\Source\HWState.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Keys.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\References\GBSPEC.TXT">

@@ -5,6 +5,7 @@
 #include "Memory.hpp"
 
 namespace gbx {
+// NOTE: special hardware addresses must be treated (instead or before calling solve_address/solve_hardware_io_addr)
 static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb);
 static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb);
 
@@ -34,30 +35,21 @@ uint16_t Gameboy::ReadU16(const uint16_t address) const {
 
 
 
-// TODO: ready only hardware addresses must be checked before calling solve_address
+
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
 {
-	if (address > 0x7fff) {
-
-		// set debug breaks
-		if (address == 0xff80 && value == 0xff) {
-			// joypad problem
-			UTIX_DEBUG_BREAK_();
-		}
-
-
-		if (address == 0xFF44) {
-			gpu.scanline = 0;
-		}
-		else {
-			const uint8_t* const addr = solve_address(address, *this);
-			if (addr)
-				const_cast<uint8_t&>(*addr) = value;
-		}
+	if (address == 0xFF00) {
+		keys.value = value | 0xCF;
+	} 
+	else if (address == 0xFF44) {
+		gpu.scanline = 0; // read only
 	}
 	else {
-		fprintf(stderr, "ROM write attempt at: %4x\n", address);
+		const uint8_t* const addr = solve_address(address, *this);
+		if (addr)
+			const_cast<uint8_t&>(*addr) = value;
 	}
+
 }
 
 
@@ -151,6 +143,7 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 static const uint8_t* solve_hardware_io_address(const uint16_t address, const Gameboy& gb)
 {
 	switch (address) {
+	case 0xFF00: return &gb.keys.value;
 	case 0xFF0F: return &gb.hwstate.interrupt_flags;
 	case 0xFF40: return &gb.gpu.control;
 	case 0xFF41: return &gb.gpu.status;

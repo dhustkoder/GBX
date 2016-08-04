@@ -25,11 +25,6 @@ int main(int argc, char** argv)
 
 
 	while(true) {
-		// set pc debug breaks
-		if (gameboy->cpu.GetPC() == 0x352) {
-			// past joypad problem
-			UTIX_DEBUG_BREAK_();
-		}
 		gameboy->Step();
 		gameboy->UpdateGPU();
 		gameboy->UpdateInterrupts();

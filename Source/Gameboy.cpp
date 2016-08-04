@@ -70,6 +70,8 @@ bool Gameboy::Reset()
 	gpu.status = 0x00;
 	gpu.scanline = 0x00;
 
+	keys.value = 0xCF;
+
 	hwstate.hwflags = 0x00;
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
@@ -120,7 +122,6 @@ void Gameboy::Step()
 	const uint8_t opcode = ReadU8(pc);
 	printf("PC: %4x | OP: %4x | ", pc, opcode);
 	cpu.AddPC(1);
-
 	main_table[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
 	cpu.AddCycles(cycles);

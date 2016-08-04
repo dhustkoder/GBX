@@ -619,9 +619,23 @@ void dec_2B(Gameboy* const gb) {
 
 
 
+void inc_2C(Gameboy* const gb)
+{
+	// INC L
+	// increment L
+	// operands: 0 
+	// clock cycles: 4
+	// flags affected: Z 0 H -
+	const uint8_t l = gb->cpu.GetL();
+	const uint8_t result = gb->cpu.INC(l);
+	gb->cpu.SetL(result);
+
+	printf("INC L; -> L(%x), Result(%x) | ", l, result);
+	gb->cpu.PrintFlags();
+}
 
 
-void inc_2C(Gameboy* const){ ASSERT_INSTR_IMPL();  }
+
 void dec_2D(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 void ld_2E(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
@@ -741,7 +755,21 @@ void inc_34(Gameboy* const gb) {
 
 
 
-void dec_35(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void dec_35(Gameboy* const gb)
+{
+	// DEC (HL)
+	// decrement value in mem pointed by HL
+	// operands: 0
+	// clock cycles: 12
+	// flags affected: Z 1 H -
+	const uint16_t hl = gb->cpu.GetHL();
+	const uint8_t value = gb->ReadU8(hl);
+	const uint8_t result = gb->cpu.DEC(value);
+	gb->WriteU8(hl, result);
+
+	printf("DEC (HL); HL(%x), (HL)(%x), Result(%x) | ", hl, value, result);
+	gb->cpu.PrintFlags();
+}
 
 
 
