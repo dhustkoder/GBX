@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "Gameboy.hpp"
 #include "Instructions.hpp"
 namespace gbx {
@@ -17,8 +18,9 @@ namespace gbx {
 
 // Main instructions implementation:
 // 0x00
-void nop_00(Gameboy* const) {
-	debug_printf("NOP\n");
+void nop_00(Gameboy* const)
+{
+
 }
 
 
@@ -33,7 +35,6 @@ void ld_01(Gameboy* const gb)
 	const uint16_t d16 = gb->ReadU16(pc);
 	gb->cpu.SetBC(d16);
 	gb->cpu.AddPC(2);
-	debug_printf("LD BC, %4x\n", d16);
 }
 
 
@@ -53,7 +54,7 @@ void ld_02(Gameboy* const gb)
 	const auto a = gb->cpu.GetA();
 	gb->WriteU8(bc, a);
 	
-	debug_printf("LD (BC), A; ->  BC(%x), A(%x)\n", bc, a);
+	
 }
 
 
@@ -72,7 +73,7 @@ void inc_03(Gameboy* const gb)
 	const uint16_t result = bc + 1;
 	gb->cpu.SetBC(result);	
 
-	debug_printf("INC BC; -> BC(%x), Result(%x)\n", bc, result);
+	
 }
 
 
@@ -94,8 +95,8 @@ void inc_04(Gameboy* const gb)
 	gb->cpu.SetB(result);
 	
 
-	debug_printf("INC B; -> B(%x), Result(%x) | ", b, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -115,9 +116,6 @@ void dec_05(Gameboy* const gb)
 	const auto result = gb->cpu.DEC(b);
 	gb->cpu.SetB(result);
 	
-
-	debug_printf("DEC B; -> B(%x), Result(%x) | ", b, result);
-	gb->cpu.PrintFlags();
 }
 
 
@@ -135,9 +133,7 @@ void ld_06(Gameboy* const gb)
 	const auto d8 = gb->ReadU8(pc);
 	gb->cpu.SetB(d8);
 	gb->cpu.AddPC(1);
-
-
-	debug_printf("LD B, %x\n", d8);
+	
 }
 
 
@@ -145,10 +141,10 @@ void ld_06(Gameboy* const gb)
 
 
 
-void rlca_07(Gameboy* const){ ASSERT_INSTR_IMPL();  }
-void ld_08(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
-void add_09(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_0A(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
+void rlca_07(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_08(Gameboy* const gb){ ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void add_09(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
+void ld_0A(Gameboy* const)   { ASSERT_INSTR_IMPL();  }
 
 
 
@@ -164,8 +160,6 @@ void dec_0B(Gameboy* const gb)
 	const uint16_t result = bc - 1;
 	gb->cpu.SetBC(result);
 	
-	
-	debug_printf("DEC BC; -> BC(%x), Result(%x)\n", bc, result);
 }
 
 
@@ -182,9 +176,7 @@ void inc_0C(Gameboy* const gb)
 	const auto c = gb->cpu.GetC();
 	const auto result = gb->cpu.INC(c);
 	gb->cpu.SetC(result);
-
-	debug_printf("INC C; C(%x), Result(%x) | ", c, result);
-	gb->cpu.PrintFlags();
+	
 }
 
 
@@ -205,8 +197,8 @@ void dec_0D(Gameboy* const gb)
 	
 
 
-	debug_printf("DEC C; -> C(%x), Result(%x) | ", c, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -226,7 +218,7 @@ void ld_0E(Gameboy* const gb)
 	gb->cpu.SetC(d8);
 	gb->cpu.AddPC(1);
 
-	debug_printf("LD C, %x\n", d8);
+	
 }
 
 
@@ -267,7 +259,7 @@ void ld_11(Gameboy* const gb)
 	gb->cpu.AddPC(2);
 	
 	
-	debug_printf("LD DE, %x\n", d16);
+	
 }
 
 
@@ -287,7 +279,7 @@ void ld_12(Gameboy* const gb)
 	gb->WriteU8(de, a);
 	
 	
-	debug_printf("LD (DE), A; -> DE(%x), A(%x)\n", de, a);
+	
 }
 
 
@@ -307,7 +299,7 @@ void inc_13(Gameboy* const gb)
 	gb->cpu.SetDE(result);
 	
 	
-	debug_printf("INC DE; -> DE(%x), Result(%x)\n", de, result);
+	
 }
 
 
@@ -338,7 +330,7 @@ void ld_16(Gameboy* const gb)
 	gb->cpu.AddPC(1);
 	
 	
-	debug_printf("LD D, %x\n", d8);
+	
 }
 
 
@@ -369,7 +361,7 @@ void jr_18(Gameboy* const gb)
 	gb->cpu.SetPC(address);
 
 
-	debug_printf("JR %x\n", address);
+	
 }
 
 
@@ -384,15 +376,8 @@ void add_19(Gameboy* const gb)
 	// operands: 0
 	// clock cycles: 8
 	// flags affected: - 0 H C
-	const auto hl = gb->cpu.GetHL();
 	const auto de = gb->cpu.GetDE();
 	gb->cpu.ADDHL(de);
-	const auto result = gb->cpu.GetHL();
-	
-	
-	
-	debug_printf("LD HL, DE; -> HL(%x), DE(%x), Result(%x) | ", hl, de, result);
-	gb->cpu.PrintFlags();
 }
 
 
@@ -414,7 +399,7 @@ void ld_1A(Gameboy* const gb)
 	gb->cpu.SetA(value);
 	
 	
-	debug_printf("LD A, (DE); -> DE(%x), (DE)(%x)\n", de, value);
+	
 }
 
 
@@ -440,8 +425,8 @@ void inc_1C(Gameboy* const gb)
 	gb->cpu.SetE(result);
 	
 	
-	debug_printf("INC E; -> E(%x), Result(%x) | ", e, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -483,7 +468,7 @@ void jr_20(Gameboy* const gb)
 		gb->cpu.AddPC(1);
 	}
 
-	debug_printf("JR NZ, %x\n", jump_addr);
+	
 }
 
 
@@ -505,7 +490,7 @@ void ld_21(Gameboy* const gb)
 	gb->cpu.AddPC(2);
 
 
-	debug_printf("LD HL, %x\n", d16);
+	
 }
 
 
@@ -525,7 +510,7 @@ void ld_22(Gameboy* const gb)
 	gb->cpu.SetHL(hl + 1);
 	
 	
-	debug_printf("LD (HL+), A; -> HL(%x), A(%x)\n", hl, a);
+	
 }
 
 
@@ -544,7 +529,7 @@ void inc_23(Gameboy* const gb)
 	gb->cpu.SetHL(result);
 	
 
-	debug_printf("INC HL; -> HL(%x), Result(%x)\n", hl, result);
+	
 }
 
 
@@ -579,7 +564,7 @@ void jr_28(Gameboy* const gb)
 		gb->cpu.AddPC(1);
 	}
 
-	debug_printf("JP Z, %x\n", jump_addr);
+	
 }
 
 
@@ -608,7 +593,7 @@ void ld_2A(Gameboy* const gb)
 	gb->cpu.SetHL(hl + 1);
 	 
 
-	debug_printf("LD A, (HL+); -> HL(%x), (HL)(%x)\n", hl, value);
+	
 }
 
 
@@ -631,7 +616,7 @@ void dec_2B(Gameboy* const gb)
 	gb->cpu.SetHL(result);
 	
 	
-	debug_printf("DEC HL; -> HL(%x), Result(%x)\n", hl, result);
+	
 }
 
 
@@ -648,8 +633,8 @@ void inc_2C(Gameboy* const gb)
 	const uint8_t result = gb->cpu.INC(l);
 	gb->cpu.SetL(result);
 
-	debug_printf("INC L; -> L(%x), Result(%x) | ", l, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -672,8 +657,8 @@ void cpl_2F(Gameboy* const gb)
 	gb->cpu.SetFlags(CPU::FLAG_N | CPU::FLAG_H);
 	
 	
-	debug_printf("CPL ; -> A(%x), Result(%x) | ", a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -705,7 +690,7 @@ void jr_30(Gameboy* const gb)
 		gb->cpu.AddPC(1);
 	}
 	
-	debug_printf("JR NC, %x\n", jump_addr);
+	
 }
 
 
@@ -725,7 +710,7 @@ void ld_31(Gameboy* const gb)
 	gb->cpu.SetSP(d16);
 	gb->cpu.AddPC(2); 
 
-	debug_printf("LD SP, %x\n", d16);
+	
 }
 
 
@@ -746,7 +731,7 @@ void ld_32(Gameboy* const gb)
 	gb->cpu.SetHL(hl - 1);
 	
 
-	debug_printf("LD (HL-), A; -> HL(%x) , A(%x)\n", hl, a);
+	
 }
 
 
@@ -770,8 +755,8 @@ void inc_34(Gameboy* const gb)
 	const auto result = gb->cpu.INC(value);
 	gb->WriteU8(hl, result);
 
-	debug_printf("INC (HL); -> HL(%X), (HL)(%x), Result(%x) | ", hl, value, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -789,8 +774,8 @@ void dec_35(Gameboy* const gb)
 	const uint8_t result = gb->cpu.DEC(value);
 	gb->WriteU8(hl, result);
 
-	debug_printf("DEC (HL); HL(%x), (HL)(%x), Result(%x) | ", hl, value, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -809,7 +794,7 @@ void ld_36(Gameboy* const gb)
 	gb->WriteU8(hl, d8);
 	gb->cpu.AddPC(1);
 	
-	debug_printf("LD (HL), %x; -> HL(%x)\n", d8, hl);
+	
 }
 
 
@@ -843,7 +828,7 @@ void jr_38(Gameboy* const gb)
 	}
 
 
-	debug_printf("JR C, %x\n", jump_addr);
+	
 }
 
 
@@ -866,7 +851,7 @@ void ld_3A(Gameboy* const gb)
 	gb->cpu.SetHL(hl - 1);
 	gb->cpu.SetA(value);
 
-	debug_printf("LD A, (HL-); -> HL(%x), A(%x)\n", hl, value);
+	
 }
 
 
@@ -888,8 +873,8 @@ void inc_3C(Gameboy* const gb)
 	const auto result = gb->cpu.INC(a);
 	gb->cpu.SetA(result);
 
-	debug_printf("INC A; -> A(%x), Result(%x) | ", a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -906,8 +891,8 @@ void dec_3D(Gameboy* const gb)
 	const auto result = gb->cpu.DEC(a);
 	gb->cpu.SetA(result);
 
-	debug_printf("DEC A; -> A(%x), Result(%x) | ", a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -928,7 +913,7 @@ void ld_3E(Gameboy* const gb)
 	gb->cpu.SetA(d8);
 	gb->cpu.AddPC(1);
 
-	debug_printf("LD A, %x\n", d8);
+	
 }
 
 
@@ -968,7 +953,7 @@ void ld_47(Gameboy* const gb)
 	gb->cpu.SetB(a);
 	
 	
-	debug_printf("LD B, A; -> A(%x)\n", a);
+	
 }
 
 
@@ -999,7 +984,7 @@ void ld_4F(Gameboy* const gb)
 	gb->cpu.SetC(a);
 	
 	
-	debug_printf("LD C, A; -> A(%x)\n", a);
+	
 }
 
 
@@ -1036,7 +1021,7 @@ void ld_56(Gameboy* const gb)
 	gb->cpu.SetD(value); 
 	
 
-	debug_printf("LD D, (HL); -> HL(%x), (HL)(%x)\n", hl, value);
+	
 }
 
 
@@ -1057,7 +1042,7 @@ void ld_57(Gameboy* const gb)
 	gb->cpu.SetD(a);
 	
 
-	debug_printf("LD D, A; -> A(%x)\n", a);
+	
 }
 
 
@@ -1091,7 +1076,7 @@ void ld_5E(Gameboy* const gb)
 	
 
 
-	debug_printf("LD E, (HL); -> HL(%x), (HL)(%x)\n", hl, value);
+	
 }
 
 
@@ -1110,7 +1095,7 @@ void ld_5F(Gameboy* const gb)
 	gb->cpu.SetE(a);
 	
 	
-	debug_printf("LD E, A; -> A(%x)\n", a);
+	
 }
 
 
@@ -1143,7 +1128,7 @@ void ld_62(Gameboy* const gb)
 	gb->cpu.SetH(d);
 	
 
-	debug_printf("LD H, D; -> D(%x)\n", d);
+	
 }
 
 
@@ -1165,7 +1150,7 @@ void ld_67(Gameboy* const gb)
 	const uint8_t a = gb->cpu.GetA();
 	gb->cpu.SetH(a);
 
-	debug_printf("LD H, A; -> A(%x)\n", a);
+	
 }
 
 
@@ -1192,7 +1177,7 @@ void ld_6B(Gameboy* const gb)
 	gb->cpu.SetL(e);
 	
 
-	debug_printf("LD L, E; -> E(%x)\n", e);
+	
 }
 
 
@@ -1219,7 +1204,7 @@ void ld_6E(Gameboy* const gb)
 	const uint8_t value = gb->ReadU8(hl);
 	gb->cpu.SetL(value);
 
-	debug_printf("LD L, (HL); -> HL(%x), L(%x)\n", hl, value);
+	
 }
 
 
@@ -1245,7 +1230,7 @@ void ld_70(Gameboy* const gb)
 	gb->WriteU8(hl, b);
 	
 
-	debug_printf("LD (HL), B; -> HL(%x), B(%x)\n", hl, b);
+	
 }
 
 
@@ -1269,7 +1254,7 @@ void ld_71(Gameboy* const gb)
 	gb->WriteU8(hl, c);
 	
 
-	debug_printf("LD (HL), C; -> HL(%x), C(%x)\n", hl, c);
+	
 }
 
 
@@ -1301,7 +1286,7 @@ void ld_78(Gameboy* const gb)
 	gb->cpu.SetA(b);
 	
 	
-	debug_printf("LD A, B; -> B(%x)\n", b);
+	
 }
 
 
@@ -1320,7 +1305,7 @@ void ld_79(Gameboy* const gb)
 	gb->cpu.SetA(c);
 	
 	
-	debug_printf("LD A, C; -> C(%x)\n", c);
+	
 }
 
 
@@ -1342,7 +1327,7 @@ void ld_7A(Gameboy* const gb)
 	gb->cpu.SetA(d);
 	
  
-	debug_printf("LD A, D; -> D(%x)\n", d);
+	
 }
 
 
@@ -1368,7 +1353,7 @@ void ld_7C(Gameboy* const gb)
 	gb->cpu.SetA(h);
 	
 	
-	debug_printf("LD A, H; -> H(%x)\n", h);
+	
 }
 
 
@@ -1394,7 +1379,7 @@ void ld_7E(Gameboy* const gb)
 	const auto value = gb->ReadU8(hl);
 	gb->cpu.SetA(value);
 	
-	debug_printf("LD A, (HL); -> HL(%x), (HL)(%x)\n", hl, value);
+	
 }
 
 
@@ -1439,8 +1424,8 @@ void add_87(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 
-	debug_printf("ADD A, A; -> A(%x), Result(%x) | ", a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1509,8 +1494,8 @@ void and_A1(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 	
-	debug_printf("AND B; -> B(%x), A(%x), Result(%x) | ", b, a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1540,8 +1525,8 @@ void and_A7(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 	
-	debug_printf("AND A; -> A(%x), Result(%x) | ", a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1570,8 +1555,8 @@ void xor_A9(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 	
-	debug_printf("XOR C; -> C(%x), A(%x), Result(%x) | ", c, a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1602,8 +1587,8 @@ void xor_AF(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 
-	debug_printf("XOR A; -> A(%x), Result(%x) | ", a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1630,8 +1615,8 @@ void or_B0(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 	
-	debug_printf("OR B; -> B(%x), A(%x), Result(%x) | ", b, a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1656,8 +1641,8 @@ void or_B1(Gameboy* const gb)
 	
 	
 	
-	debug_printf("OR C; -> A(%x), C(%x), Result(%x) | ", a, c, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1690,8 +1675,8 @@ void or_B6(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	
 
-	debug_printf("OR (HL); -> HL(%x), (HL)(%x), A(%x), Result(%x) | ", hl, value, a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -1735,7 +1720,7 @@ void ret_C0(Gameboy* const gb)
 		
 	}
 
-	debug_printf("RET NZ\n");
+	
 }
 
 
@@ -1753,7 +1738,7 @@ void pop_C1(Gameboy* const gb)
 	gb->cpu.SetBC(value);
 	
 	
-	debug_printf("POP BC;\n");
+	
 }
 
 
@@ -1781,7 +1766,7 @@ void jp_C3(Gameboy* const gb)
 	const auto a16 = gb->ReadU16(pc);
 	gb->cpu.SetPC(a16);
 
-	debug_printf("JP %x\n", a16);
+	
 }
 
 
@@ -1806,7 +1791,7 @@ void push_C5(Gameboy* const gb)
 	gb->PushStack16(bc);
 	
 	
-	debug_printf("PUSH BC\n");
+	
 }
 
 
@@ -1838,7 +1823,7 @@ void ret_C8(Gameboy* const gb)
 		
 	}
 	
-	debug_printf("RET Z\n");
+	
 }
 
 
@@ -1858,7 +1843,7 @@ void ret_C9(Gameboy* const gb)
 	const auto address = gb->PopStack16();
 	gb->cpu.SetPC(address);
 
-	debug_printf("RET\n");
+	
 }
 
 
@@ -1881,7 +1866,7 @@ void jp_CA(Gameboy* const gb)
 	else
 		gb->cpu.AddPC(2);
 	
-	debug_printf("JP Z, %x\n", a16);
+	
 }
 
 
@@ -1897,7 +1882,7 @@ void PREFIX_CB(Gameboy* const gb)
 	const uint16_t pc = gb->cpu.GetPC();
 	const uint8_t cb_opcode = gb->ReadU8(pc);
 	gb->cpu.AddPC(1);
-	debug_printf("CB_OPCODE %2x | ", cb_opcode);
+	
 
 	cb_table[cb_opcode](&gb->cpu);
 	
@@ -1933,7 +1918,7 @@ void call_CD(Gameboy* const gb)
 	gb->PushStack16(pc + 2);
 	gb->cpu.SetPC(a16);
 
-	debug_printf("CALL %x\n", a16);
+	
 }
 
 
@@ -1960,15 +1945,10 @@ void ret_D0(Gameboy* const gb)
 	// return if C flag is reset
 	// operands: 0
 	// clock cycles: 20 if return 8 if not
-	const auto carry_flag = gb->cpu.GetFlags(CPU::FLAG_C);
-
-	if(!carry_flag)
+	if(!gb->cpu.GetFlags(CPU::FLAG_C)) {
 		gb->cpu.SetPC(gb->PopStack16());
-	else
-		
-
-
-	debug_printf("RET NC;\n");
+		gb->cpu.AddCycles(12);
+	}
 }
 
 
@@ -1989,7 +1969,7 @@ void pop_D1(Gameboy* const gb)
 	gb->cpu.SetDE(value);
 	
 	
-	debug_printf("POP DE;\n");
+	
 }
 
 
@@ -2019,7 +1999,7 @@ void push_D5(Gameboy* const gb)
 	gb->PushStack16(de);
 	
 	
-	debug_printf("PUSH DE\n");
+	
 }
 
 
@@ -2045,7 +2025,7 @@ void reti_D9(Gameboy* const gb)
 	gb->cpu.SetPC(addr);
 	gb->hwstate.hwflags |= HWState::INTERRUPT_MASTER_ENABLED;
 
-	debug_printf("RETI\n");
+	
 }
 
 
@@ -2080,7 +2060,7 @@ void ldh_E0(Gameboy* const gb)
 	gb->WriteU8(0xFF00 + a8, a);
 	gb->cpu.AddPC(1);
 
-	debug_printf("LDH (0xFF00 + %x), A; -> A(%x)\n", a8, a);
+	
 }
 
 
@@ -2101,7 +2081,7 @@ void pop_E1(Gameboy* const gb)
 	gb->cpu.SetHL(value);
 	
 
-	debug_printf("POP HL\n");
+	
 }
 
 
@@ -2120,7 +2100,7 @@ void ld_E2(Gameboy* const gb)
 	const auto c = gb->cpu.GetC();
 	const auto a = gb->cpu.GetA();
 	gb->WriteU8(0xFF00 + c, a);
-	debug_printf("LD (C), A; -> C(%x), A(%x)\n", c, a);
+	
 }
 
 
@@ -2147,7 +2127,7 @@ void push_E5(Gameboy* const gb)
 	gb->PushStack16(hl);
 	
 
-	debug_printf("PUSH HL\n");
+	
 }
 
 
@@ -2172,8 +2152,8 @@ void and_E6(Gameboy* const gb)
 	gb->cpu.SetA(result);
 	gb->cpu.AddPC(1);
 	
-	debug_printf("AND %x; -> A(%x), Result(%x) | ", d8, a, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -2209,8 +2189,8 @@ void add_E8(Gameboy* const gb)
 	gb->cpu.SetSP(result & 0xffff);
 	gb->cpu.AddPC(1);
 	
-	debug_printf("ADD SP, %i; -> SP(%x) | ", r8, result);
-	gb->cpu.PrintFlags();
+	
+	
 }
 
 
@@ -2231,7 +2211,7 @@ void jp_E9(Gameboy* const gb)
 	const auto hl = gb->cpu.GetHL();
 	gb->cpu.SetPC(hl);
 	
-	debug_printf("JP (HL); HL -> (%x)\n", hl);
+	
 }
 
 
@@ -2255,7 +2235,7 @@ void ld_EA(Gameboy* const gb)
 	gb->cpu.AddPC(2);
 
 
-	debug_printf("LD (%x), A; -> A(%x)\n", a16, a);
+	
 }
 
 
@@ -2283,7 +2263,7 @@ void rst_EF(Gameboy* const gb)
 	gb->PushStack16(pc);
 	gb->cpu.SetPC(0x0028);
 	
-	debug_printf("RST 28H\n");
+	
 }
 
 
@@ -2312,7 +2292,7 @@ void ldh_F0(Gameboy* const gb)
 	gb->cpu.AddPC(1);
 
 
-	debug_printf("LDH A, (0xff00 + %x); -> A(%x)\n", a8, value);
+	
 }
 
 
@@ -2333,7 +2313,7 @@ void pop_F1(Gameboy* const gb)
 	gb->cpu.SetAF(value);
 	
 	
-	debug_printf("POP AF\n");
+	
 }
 
 
@@ -2353,7 +2333,7 @@ void di_F3(Gameboy* const gb)
 	// disable interrupts
 	gb->hwstate.hwflags &= ~(HWState::INTERRUPT_MASTER_ENABLED 
 	                         | HWState::INTERRUPT_MASTER_ACTIVE);
-	debug_printf("DI\n");
+	
 }
 
 
@@ -2380,7 +2360,7 @@ void push_F5(Gameboy* const gb)
 	gb->PushStack16(gb->cpu.GetAF());
 	
 
-	debug_printf("PUSH AF\n");
+	
 }
 
 
@@ -2413,7 +2393,7 @@ void ld_FA(Gameboy* const gb)
 	gb->cpu.SetA(value);
 	gb->cpu.AddPC(2);
 
-	debug_printf("LD A, (%x); -> A(%x)\n", a16, value);
+	
 }
 
 
@@ -2422,7 +2402,7 @@ void ei_FB(Gameboy* const gb)
 	// EI
 	// enable interrupts
 	gb->hwstate.hwflags |= HWState::INTERRUPT_MASTER_ENABLED;
-	debug_printf("EI\n");
+	
 }
 
 
@@ -2438,17 +2418,15 @@ void cp_FE(Gameboy* const gb)
 {
 	// CP d8
 	// compare A with immediate 8 bits value d8, throws alway the result
+	// compare with a subtraction
 	// operands: 1
 	// clock cycles: 8
 	// flags affected: Z 1 H C
-	const auto pc = gb->cpu.GetPC();
 	const auto a = gb->cpu.GetA();
+	const auto pc = gb->cpu.GetPC();
 	const auto d8 = gb->ReadU8(pc);
-	const auto result = gb->cpu.SUB(a, d8); // does the compare
+	gb->cpu.SUB(a, d8);
 	gb->cpu.AddPC(1);
-
-	debug_printf("CP %x; -> A(%X), Result(%x) | ", d8, a, result);
-	gb->cpu.PrintFlags();
 }
 
 
@@ -2462,8 +2440,9 @@ void rst_FF(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 // undefined / unknown opcodes
-void unknown(Gameboy* const) {
-	debug_printf("UNDEFINED INSTRUCTION!\n");	
+void unknown(Gameboy* const gb) 
+{
+	fprintf(stderr, "undefined opcode at %4x\n", gb->cpu.GetPC());
 }
 
 
@@ -2515,17 +2494,11 @@ extern const uint8_t clock_table[256] = {
 
 
 
+#ifdef _DEBUG
+
+const char* main_table_disassembly[256] = { nullptr };
 
 
-
-
-
-
-
-
-
-
-
-
+#endif
 
 }

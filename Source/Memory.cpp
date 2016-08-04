@@ -40,9 +40,9 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 {
 	if (address == 0xFF00) {
 		keys.value = value | 0xCF;
-	} 
+	}
 	else if (address == 0xFF44) {
-		gpu.scanline = 0; // read only
+		gpu.scanline = 0;
 	}
 	else if(address > 0x7fff) {
 		const uint8_t* const addr = solve_address(address, *this);

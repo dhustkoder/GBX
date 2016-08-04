@@ -9,7 +9,8 @@ namespace gbx {
 
 
 #ifdef _DEBUG
-inline void debug_puts(const char* str) {
+inline void debug_puts(const char* str) 
+{
 	puts(str);
 }
 

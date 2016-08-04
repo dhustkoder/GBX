@@ -45,7 +45,8 @@ struct GPU
 
 
 
-inline GPU::Mode GPU::GetMode() const {
+inline GPU::Mode GPU::GetMode() const 
+{
 	return static_cast<Mode>(status & 0x03);
 }
 

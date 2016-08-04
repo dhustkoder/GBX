@@ -78,7 +78,8 @@ void swap_36(CPU* const) { ASSERT_INSTR_IMPL(); }
 
 
 
-void swap_37(CPU* const cpu) {
+void swap_37(CPU* const cpu)
+{
 	// SWAP A
 	// swap upper & lower bits of A
 	// bytes: 2
@@ -87,10 +88,6 @@ void swap_37(CPU* const cpu) {
 	const auto a = cpu->GetA();
 	const auto result = cpu->SWAP(a);
 	cpu->SetA(result);
-
-
-	debug_printf("SWAP A; -> A(%x), Result(%x) | ", a, result);
-	cpu->PrintFlags();
 }
 
 
@@ -190,7 +187,8 @@ void res_86(CPU* const) { ASSERT_INSTR_IMPL(); }
 
 
 
-void res_87(CPU* const cpu) {
+void res_87(CPU* const cpu)
+{
 	// RES 0, A
 	// reset bit 0 in register A
 	// bytes: 2
@@ -198,8 +196,6 @@ void res_87(CPU* const cpu) {
 	const auto a = cpu->GetA();
 	const uint8_t result = a & 0xfe;
 	cpu->SetA(result);
-
-	debug_printf("RES 0, A; -> A(%x), Result(%x)\n", a, result);
 }
 
 
@@ -363,8 +359,9 @@ const cb_instruction_t cb_table[256] = {
 
 
 
-
-
+#ifdef _DEBUG
+const char* cb_table_disassembly[256] = {nullptr};
+#endif
 
 
 
