@@ -113,7 +113,7 @@ uint16_t Gameboy::PopStack16()
 static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 {
 	if (address >= 0xFF80) {
-		return address < 0xFFFF ? &gb.memory.zero_page[address - 0xFF80] 
+		return address < 0xFFFF ? &gb.memory.hram[address - 0xFF80] 
 		                        : &gb.hwstate.interrupt_enable;
 	}
 	else if (address >= 0xFF00) {
@@ -125,7 +125,7 @@ static const uint8_t* solve_address(const uint16_t address, const Gameboy& gb)
 	}
 	else if (address >= 0xC000) {
 		if (address < 0xE000)
-			return &gb.memory.ram[address - 0xC000];
+			return &gb.memory.wram[address - 0xC000];
 	}
 	else if (address >= 0xA000) {
 		ASSERT_MSG(false, "cartridge ram required");
