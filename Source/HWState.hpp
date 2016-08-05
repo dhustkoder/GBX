@@ -14,7 +14,6 @@ enum Interrupt : uint8_t
 	INTERRUPT_JOYPAD = 0x10
 };
 
-
 struct HWState
 {
 
@@ -24,16 +23,20 @@ struct HWState
 		INTERRUPT_MASTER_ACTIVE = 0x02
 	};
 
+
 	bool GetIntMaster() const;
 	bool GetIntActive() const;
+	uint8_t GetPendentInts() const;
 	void EnableIntMaster();
 	void EnableIntActive();
 	void DisableIntMaster();
 
-	void EnableInterrupt(const Interrupt intrr);
-	void DisableInterrupt(const Interrupt interr);
-	void RequestInterrupt(const Interrupt interr);
-	void ClearInterrupt(const Interrupt interr);
+	void EnableInt(const Interrupt intrr);
+	void DisableInt(const Interrupt interr);
+	void RequestInt(const Interrupt interr);
+	void ClearInt(const Interrupt interr);
+
+
 
 	uint8_t flags;
 	uint8_t interrupt_enable;
@@ -52,6 +55,13 @@ inline bool HWState::GetIntActive() const
 {
 	return (flags & HWFlags::INTERRUPT_MASTER_ACTIVE) != 0;
 }
+
+
+inline uint8_t HWState::GetPendentInts() const
+{
+	return 0x1f & interrupt_enable & interrupt_flags;
+}
+
 
 
 inline void HWState::EnableIntMaster() 
@@ -73,25 +83,25 @@ inline void HWState::DisableIntMaster()
 
 
 
-inline void HWState::EnableInterrupt(const Interrupt inter)
+inline void HWState::EnableInt(const Interrupt inter)
 {
-	interrupt_enable |= static_cast<uint8_t>(inter);
+	interrupt_enable |= inter;
 }
 
-inline void HWState::DisableInterrupt(const Interrupt inter)
+inline void HWState::DisableInt(const Interrupt inter)
 {
-	interrupt_enable &= ~static_cast<uint8_t>(inter);
+	interrupt_enable &= ~inter;
 }
 
-inline void HWState::RequestInterrupt(const Interrupt inter)
+inline void HWState::RequestInt(const Interrupt inter)
 {
-	interrupt_flags |= static_cast<uint8_t>(inter);
+	interrupt_flags |= inter;
 }
 
 
-inline void HWState::ClearInterrupt(const Interrupt inter)
+inline void HWState::ClearInt(const Interrupt inter)
 {
-	interrupt_flags &= ~static_cast<uint8_t>(inter);
+	interrupt_flags &= ~inter;
 }
 
 

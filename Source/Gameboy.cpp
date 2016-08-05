@@ -150,43 +150,43 @@ void Gameboy::UpdateInterrupts()
 		return;
 	}
 
-	const uint8_t requests = 0x1f & hwstate.interrupt_enable & hwstate.interrupt_flags;
+	const uint8_t pendents = hwstate.GetPendentInts();
 
-	if(!requests)
+	if(!pendents)
 		return;
 
 	hwstate.DisableIntMaster();
 
-	if (requests & INTERRUPT_VBLANK) {
-		hwstate.interrupt_flags &= ~INTERRUPT_VBLANK;
+	if (pendents & INTERRUPT_VBLANK) {
+		hwstate.ClearInt(INTERRUPT_VBLANK);
 		PushStack16(cpu.GetPC());
 		cpu.SetPC(INTERRUPT_VBLANK_ADDR);
 		cpu.AddCycles(12);
 	}
 
-	if (requests & INTERRUPT_LCD_STAT) {
-		hwstate.interrupt_flags &= ~INTERRUPT_LCD_STAT;
+	if (pendents & INTERRUPT_LCD_STAT) {
+		hwstate.ClearInt(INTERRUPT_LCD_STAT);
 		PushStack16(cpu.GetPC());
 		cpu.SetPC(INTERRUPT_LCD_STAT_ADDR);
 		cpu.AddCycles(12);
 	}
 
-	if (requests & INTERRUPT_TIMER) {
-		hwstate.interrupt_flags &= ~INTERRUPT_TIMER;
+	if (pendents & INTERRUPT_TIMER) {
+		hwstate.ClearInt(INTERRUPT_TIMER);
 		PushStack16(cpu.GetPC());
 		cpu.SetPC(INTERRUPT_TIMER_ADDR);
 		cpu.AddCycles(12);
 	}
 
-	if (requests & INTERRUPT_SERIAL) {
-		hwstate.interrupt_flags &= ~INTERRUPT_SERIAL;
+	if (pendents & INTERRUPT_SERIAL) {
+		hwstate.ClearInt(INTERRUPT_SERIAL);
 		PushStack16(cpu.GetPC());
 		cpu.SetPC(INTERRUPT_SERIAL_ADDR);
 		cpu.AddCycles(12);
 	}
 
-	if (requests & INTERRUPT_JOYPAD) {
-		hwstate.interrupt_flags &= ~INTERRUPT_JOYPAD;
+	if (pendents & INTERRUPT_JOYPAD) {
+		hwstate.ClearInt(INTERRUPT_JOYPAD);
 		PushStack16(cpu.GetPC());
 		cpu.SetPC(INTERRUPT_JOYPAD_ADDR);
 		cpu.AddCycles(12);

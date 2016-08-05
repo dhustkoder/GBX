@@ -38,10 +38,7 @@ void Gameboy::UpdateGPU()
 		return;
 	}
 
-	const auto check_stat_interrupt = [this](StatusMask interrupt_on) {
-		if (gpu.status & interrupt_on)
-			hwstate.RequestInterrupt(INTERRUPT_LCD_STAT);
-	};
+
 
 	const auto compare_ly = [this]() {
 		if (gpu.scanline != gpu.scanline_compare) {
@@ -51,8 +48,14 @@ void Gameboy::UpdateGPU()
 			if (!(gpu.status & COINCIDENCE_FLAG))
 				gpu.status |= COINCIDENCE_FLAG;
 			if (gpu.status & INTERRUPT_ON_COINCIDENCE)
-				hwstate.RequestInterrupt(INTERRUPT_LCD_STAT);
+				hwstate.RequestInt(INTERRUPT_LCD_STAT);
 		}
+	};
+
+
+	const auto check_stat_interrupt = [this](StatusMask interrupt_on) {
+		if (gpu.status & interrupt_on)
+			hwstate.RequestInt(INTERRUPT_LCD_STAT);
 	};
 
 
