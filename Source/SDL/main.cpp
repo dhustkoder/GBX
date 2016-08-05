@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <time.h>
 #include <SDL2/SDL.h>
 #include <Utix/ScopeExit.h>
 #include "Gameboy.hpp"
@@ -49,7 +48,6 @@ int main(int argc, char** argv)
 		quit_sdl();
 	});
 
-	srand(time(0));
 	
 	while (true) {
 		SDL_PollEvent(&event);
@@ -79,25 +77,12 @@ int main(int argc, char** argv)
 
 
 
-void update_graphics(gbx::Gameboy* const gb)
+void update_graphics(gbx::Gameboy*)
 {
 
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -126,7 +111,7 @@ bool init_sdl()
 	                          160, 144, 0);
 	if (!window) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n", SDL_GetError());
-		return false;
+		goto free_sdl;
 	}
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -150,6 +135,7 @@ free_renderer:
 	SDL_DestroyRenderer(renderer);
 free_window:
 	SDL_DestroyWindow(window);
+free_sdl:
 	SDL_Quit();
 
 	return false;
