@@ -19,7 +19,10 @@ int8_t Gameboy::ReadS8(const uint16_t address) const
 
 uint8_t Gameboy::ReadU8(const uint16_t address) const 
 {
-	if (address >= 0xFF80) {
+	if (address < 0x8000) {
+		return memory.home[address];
+	}
+	else if (address >= 0xFF80) {
 		return address != 0xFFFF ? memory.hram[address - 0xFF80]
 		                         : hwstate.interrupt_enable;
 	}
@@ -46,15 +49,15 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 	else if (address >= 0xA000) {
 		ASSERT_MSG(false, "cartridge ram required");
 	}
-	else if (address >= 0x8000) {
+	else {
 		return memory.vram[address - 0x8000];
 	}
-	else if (address < 0x8000) {
-		return memory.home[address];
-	}
+
 
 	return 0;
 }
+
+
 
 
 void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
@@ -66,7 +69,6 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		else 
 			hwstate.interrupt_enable = value;
 	}
-	
 	else if (address >= 0xFF00) {
 		switch (address) {
 		case 0xFF00: keys.value = value | 0xCF; break;
@@ -93,7 +95,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 	else if (address >= 0x8000) {
 		memory.vram[address - 0x8000] = value;
 	}
-	else if (address <= 0x7FFF) {
+	else {
 		fprintf(stderr, "write at %4x required\n", address);
 	}
 
