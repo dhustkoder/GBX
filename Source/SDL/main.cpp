@@ -150,6 +150,7 @@ free_renderer:
 	SDL_DestroyRenderer(renderer);
 free_window:
 	SDL_DestroyWindow(window);
+	SDL_Quit();
 
 	return false;
 }
