@@ -26,8 +26,8 @@ struct GPU
 	uint8_t scx;
 	uint8_t wy;
 	uint8_t wx;
-	uint8_t scanline;
-	uint8_t scanline_compare;
+	uint8_t ly;
+	uint8_t lyc;
 	uint8_t control;
 	uint8_t status;
 };

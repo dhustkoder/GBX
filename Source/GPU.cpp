@@ -33,7 +33,7 @@ void Gameboy::UpdateGPU()
 {
 	if (!(gpu.control & LCD_ON_OFF)) {
 		gpu.clock = 0;
-		gpu.scanline = 0;
+		gpu.ly = 0;
 		gpu.SetMode(GPU::Mode::VBLANK);
 		return;
 	}
@@ -41,7 +41,7 @@ void Gameboy::UpdateGPU()
 
 
 	const auto compare_ly = [this]() {
-		if (gpu.scanline != gpu.scanline_compare) {
+		if (gpu.ly != gpu.lyc) {
 			if (gpu.status & COINCIDENCE_FLAG)
 				gpu.status &= ~COINCIDENCE_FLAG;
 		} else {
@@ -63,9 +63,9 @@ void Gameboy::UpdateGPU()
 	switch (gpu.GetMode()) {
 	case GPU::Mode::HBLANK:
 		if (gpu.clock >= 204) {
-			++gpu.scanline;
+			++gpu.ly;
 
-			if (gpu.scanline == 143) {
+			if (gpu.ly == 143) {
 				hwstate.interrupt_flags |= INTERRUPT_VBLANK;
 				gpu.SetMode(GPU::Mode::VBLANK);
 				check_stat_interrupt(INTERRUPT_ON_VBLANK);
@@ -83,10 +83,10 @@ void Gameboy::UpdateGPU()
 
 	case GPU::Mode::VBLANK:
 		if (gpu.clock >= 456) {
-			++gpu.scanline;
+			++gpu.ly;
 
-			if (gpu.scanline > 153) {
-				gpu.scanline = 0;
+			if (gpu.ly > 153) {
+				gpu.ly = 0;
 				gpu.SetMode(GPU::Mode::OAM);
 				check_stat_interrupt(INTERRUPT_ON_OAM);
 			}

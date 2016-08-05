@@ -34,8 +34,8 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 		case 0xFF41: return gpu.status;
 		case 0xFF42: return gpu.scy;
 		case 0xFF43: return gpu.scx;
-		case 0xFF44: return gpu.scanline;
-		case 0xFF45: return gpu.scanline_compare;
+		case 0xFF44: return gpu.ly;
+		case 0xFF45: return gpu.lyc;
 		case 0xFF4A: return gpu.wy;
 		case 0xFF4B: return gpu.wx;
 		default:
@@ -95,10 +95,10 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			gpu.scx = value;
 			break;
 		case 0xFF44: 
-			gpu.scanline = 0;
+			gpu.ly = 0;
 			break;
 		case 0xFF45:
-			gpu.scanline_compare = value;
+			gpu.lyc = value;
 			break;
 		case 0xFF4A:
 			gpu.wy = value;
