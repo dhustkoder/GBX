@@ -48,22 +48,24 @@ int main(int argc, char** argv)
 		quit_sdl();
 	});
 
+	SDL_RenderClear(renderer);
 	
 	while (true) {
 		SDL_PollEvent(&event);
 		if(event.type == SDL_QUIT)
 			break;
 
-		SDL_RenderClear(renderer);
-
 		gameboy->Step();
 		gameboy->UpdateGPU();
 		gameboy->UpdateInterrupts();
-		update_graphics(gameboy);
-
-		SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		SDL_RenderPresent(renderer);
+		if (gameboy->cpu.GetPC() == 0x282A) {
+			update_graphics(gameboy);
+			SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
+			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+			SDL_RenderPresent(renderer);
+			SDL_Delay(1000*10);
+			break;
+		}
 	}
 
 
@@ -77,11 +79,21 @@ int main(int argc, char** argv)
 
 
 
-void update_graphics(gbx::Gameboy*)
+void update_graphics(gbx::Gameboy* const gb)
 {
+	const uint8_t* vram = gb->memory.vram;
 
+	for (size_t tile = 0; tile < 20; ++tile) {
+		for (size_t i = 0; i < 8; ++i) {
+			for (size_t j = 0; j < 8; ++j) {
+				if ((vram[(tile*16)+i*2]&vram[(tile*16)+i*2+1]) & (0x80 >> j))
+					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = ~0x00;
+				else
+					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = 0x00;
 
-
+			}
+		}
+	}
 }
 
 
@@ -99,16 +111,15 @@ void update_graphics(gbx::Gameboy*)
 
 bool init_sdl()
 {
-
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		fprintf(stderr, "failed to init SDL2: %s\n", SDL_GetError());
 		return false;
 	}
 
 	window = SDL_CreateWindow("SDL2", 
-	                          SDL_WINDOWPOS_CENTERED, 
-	                          SDL_WINDOWPOS_CENTERED, 
-	                          160, 144, 0);
+	                          SDL_WINDOWPOS_CENTERED,
+	                          SDL_WINDOWPOS_CENTERED,
+	                          WIN_WIDTH, WIN_HEIGHT, 0);
 	if (!window) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n", SDL_GetError());
 		goto free_sdl;
@@ -122,12 +133,16 @@ bool init_sdl()
 	}
 
 
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 160, 144);
+	texture = SDL_CreateTexture(renderer,
+	                            SDL_PIXELFORMAT_RGBA8888,
+	                            SDL_TEXTUREACCESS_TARGET,
+	                            WIN_WIDTH, WIN_HEIGHT);
 
 	if (!texture) {
 		fprintf(stderr, "failed to create SDL_Texture: %s\n", SDL_GetError());
 		goto free_renderer;
 	}
+
 
 	return true;
 
