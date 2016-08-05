@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\Source\CBInstructions.cpp" />
     <ClCompile Include="..\..\Source\CPU.cpp" />
     <ClCompile Include="..\..\Source\Gameboy.cpp" />
+    <ClCompile Include="..\..\Source\GPU.cpp" />
     <ClCompile Include="..\..\Source\Instructions.cpp" />
     <ClCompile Include="..\..\Source\main.cpp" />
     <ClCompile Include="..\..\Source\Memory.cpp" />

@@ -38,8 +38,6 @@ void Gameboy::UpdateGPU()
 		return;
 	}
 
-
-
 	const auto compare_ly = [this]() {
 		if (gpu.ly != gpu.lyc) {
 			if (gpu.status & COINCIDENCE_FLAG)
@@ -52,8 +50,8 @@ void Gameboy::UpdateGPU()
 		}
 	};
 
-
-	const auto check_stat_interrupt = [this](StatusMask interrupt_on) {
+	const auto set_mode_and_check_stat = [this](GPU::Mode mode, StatusMask interrupt_on) {
+		gpu.SetMode(mode);
 		if (gpu.status & interrupt_on)
 			hwstate.RequestInt(INTERRUPT_LCD_STAT);
 	};
@@ -67,12 +65,9 @@ void Gameboy::UpdateGPU()
 
 			if (gpu.ly == 143) {
 				hwstate.interrupt_flags |= INTERRUPT_VBLANK;
-				gpu.SetMode(GPU::Mode::VBLANK);
-				check_stat_interrupt(INTERRUPT_ON_VBLANK);
-			}
-			else {
-				gpu.SetMode(GPU::Mode::OAM);
-				check_stat_interrupt(INTERRUPT_ON_OAM);
+				set_mode_and_check_stat(GPU::Mode::VBLANK, INTERRUPT_ON_VBLANK);
+			} else {
+				set_mode_and_check_stat(GPU::Mode::OAM, INTERRUPT_ON_OAM);
 			}
 
 			compare_ly();
@@ -87,8 +82,7 @@ void Gameboy::UpdateGPU()
 
 			if (gpu.ly > 153) {
 				gpu.ly = 0;
-				gpu.SetMode(GPU::Mode::OAM);
-				check_stat_interrupt(INTERRUPT_ON_OAM);
+				set_mode_and_check_stat(GPU::Mode::OAM, INTERRUPT_ON_OAM);
 			}
 
 			compare_ly();
@@ -107,9 +101,8 @@ void Gameboy::UpdateGPU()
 
 	case GPU::Mode::TRANSFER:
 		if (gpu.clock >= 172) {
+			set_mode_and_check_stat(GPU::Mode::HBLANK, INTERRUPT_ON_HBLANK);
 			gpu.clock -= 172;
-			gpu.SetMode(GPU::Mode::HBLANK);
-			check_stat_interrupt(INTERRUPT_ON_HBLANK);
 		}
 
 		break;
