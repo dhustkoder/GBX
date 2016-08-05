@@ -1,9 +1,9 @@
 			
 BUILD_MODE :=
 INCLUDE_DIRS := -I./Dependencies/Utix/Utix/include/ -I./Source/
-SOURCE_FILES := ./Source/*.cpp ./Source/CLI/main.cpp
+SOURCE_FILES := ./Source/*.cpp ./Source/SDL/main.cpp
 LINK_PATHS :=
-LINK_LIBS := -lc
+LINK_LIBS := -lc -lSDL2
 CXX_FLAGS := $(SOURCE_FILES) \
              $(INCLUDE_DIRS) \
              -std=c++11 -pedantic -pedantic-errors -Wall -Wextra -Werror -fno-exceptions -fno-rtti

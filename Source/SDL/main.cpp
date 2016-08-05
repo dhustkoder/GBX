@@ -1,43 +1,69 @@
 #include <stdio.h>
+#include <time.h>
 #include <SDL2/SDL.h>
-
+#include <Utix/ScopeExit.h>
+#include "Gameboy.hpp"
 
 
 bool init_sdl();
 void quit_sdl();
+void update_graphics(gbx::Gameboy* const gb);
 
-struct SDL_Quit_Guard { 
-	~SDL_Quit_Guard() { quit_sdl(); }
-};
+constexpr const int WIN_WIDTH = 160;
+constexpr const int WIN_HEIGHT = 144;
+constexpr const int PITCH = WIN_WIDTH * sizeof(Uint32);
+constexpr const int GFX_BUFFER_SIZE = WIN_WIDTH * WIN_HEIGHT;
+
 
 static SDL_Event event;
 static SDL_Window* window;
 static SDL_Texture* texture;
 static SDL_Renderer* renderer;
+static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
 
-
-int main(int argc, char**)
+int main(int argc, char** argv)
 {
-	int pitch = 160 * sizeof(Uint32);
+	if (argc < 2) {
+		fprintf(stderr, "usage: %s <rom>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
-	if(!init_sdl())
+	gbx::Gameboy* gameboy = gbx::create_gameboy();
+	
+	if (!gameboy)
 		return EXIT_FAILURE;
 
-	const SDL_Quit_Guard sdl_quit_guard{};
+	const auto gameboy_guard = utix::MakeScopeExit([=] {
+		gbx::destroy_gameboy(gameboy);
+	});
 
-	constexpr const int buffer_size = 160 * 144;
+	if (!gameboy->LoadRom(argv[1]))
+		return EXIT_FAILURE;
 
-	printf("%i\n", pitch);
-	Uint32 buffer[buffer_size] = { 0 };
-	buffer[buffer_size/2 + 160/2-1] = 0xff00ff00;
 
-	while (1) {
+	if (!init_sdl())
+		return EXIT_FAILURE;
+
+
+	const auto sdl_guard = utix::MakeScopeExit([] {
+		quit_sdl();
+	});
+
+	srand(time(0));
+	
+	while (true) {
 		SDL_PollEvent(&event);
 		if(event.type == SDL_QUIT)
 			break;
 
 		SDL_RenderClear(renderer);
-		SDL_UpdateTexture(texture, nullptr, buffer, pitch);
+
+		gameboy->Step();
+		gameboy->UpdateGPU();
+		gameboy->UpdateInterrupts();
+		update_graphics(gameboy);
+
+		SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);
 	}
@@ -45,6 +71,41 @@ int main(int argc, char**)
 
 	return EXIT_SUCCESS;
 }
+
+
+
+
+
+
+
+
+void update_graphics(gbx::Gameboy* const gb)
+{
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -70,7 +131,7 @@ bool init_sdl()
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-	if(!renderer) {
+	if (!renderer) {
 		fprintf(stderr, "failed to create SDL_Renderer: %s\n", SDL_GetError());
 		goto free_window;
 	}
@@ -78,7 +139,7 @@ bool init_sdl()
 
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 160, 144);
 
-	if(!texture) {
+	if (!texture) {
 		fprintf(stderr, "failed to create SDL_Texture: %s\n", SDL_GetError());
 		goto free_renderer;
 	}
