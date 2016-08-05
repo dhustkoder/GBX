@@ -2028,7 +2028,7 @@ void reti_D9(Gameboy* const gb)
 	// return and enable interrupts
 	const uint16_t addr = gb->PopStack16();
 	gb->cpu.SetPC(addr);
-	gb->hwstate.hwflags |= HWState::INTERRUPT_MASTER_ENABLED;
+	gb->hwstate.EnableIntMaster();
 
 	
 }
@@ -2336,9 +2336,7 @@ void di_F3(Gameboy* const gb)
 {
 	// DI
 	// disable interrupts
-	gb->hwstate.hwflags &= ~(HWState::INTERRUPT_MASTER_ENABLED 
-	                         | HWState::INTERRUPT_MASTER_ACTIVE);
-	
+	gb->hwstate.DisableIntMaster(); 
 }
 
 
@@ -2406,7 +2404,7 @@ void ei_FB(Gameboy* const gb)
 { 
 	// EI
 	// enable interrupts
-	gb->hwstate.hwflags |= HWState::INTERRUPT_MASTER_ENABLED;
+	gb->hwstate.EnableIntMaster();
 	
 }
 

@@ -72,13 +72,13 @@ bool Gameboy::Reset()
 	gpu.scy = 0x00;
 	gpu.wy = 0x00;
 	gpu.wx = 0x00;
-	gpu.clock = 0;
 	gpu.control = 0x91;
 	gpu.status = 0x00;
+	gpu.clock = 0;
 
 	keys.value = 0xCF;
 
-	hwstate.hwflags = 0x00;
+	hwstate.flags = 0x00;
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
 	
@@ -140,96 +140,13 @@ void Gameboy::Step()
 
 
 
-void Gameboy::UpdateGPU()
-{
-
-	if (!(gpu.control & GPU::LCD_ON_OFF)) {
-		gpu.clock = 0;
-		gpu.scanline = 0;
-		gpu.SetMode(GPU::Mode::VBLANK);
-		return;
-	}
-
-
-	const auto compare_ly = [this]() {
-		if (gpu.scanline != gpu.scanline_compare) {
-			if (gpu.status & GPU::COINCIDENCE_FLAG)
-				gpu.status &= ~GPU::COINCIDENCE_FLAG;
-		} else {
-			if (!(gpu.status & GPU::COINCIDENCE_FLAG))
-				gpu.status |= GPU::COINCIDENCE_FLAG;
-			
-			if (gpu.status & GPU::COINCIDENCE_INTERRUPT)
-				if (hwstate.interrupt_enable & INTERRUPT_LCD_STAT)
-					hwstate.interrupt_flags |= INTERRUPT_LCD_STAT;
-		}
-	};
-
-	switch (gpu.GetMode()) {
-	case GPU::Mode::HBLANK:
-		if (gpu.clock >= 204) {
-			++gpu.scanline;
-
-			if (gpu.scanline == 143) {
-				hwstate.interrupt_flags |= INTERRUPT_VBLANK;
-				gpu.SetMode(GPU::Mode::VBLANK);
-			}
-			else {
-				gpu.SetMode(GPU::Mode::OAM);
-			}
-
-			compare_ly();
-			gpu.clock -= 204;
-		}
-
-		break;
-
-	case GPU::Mode::VBLANK:
-		if (gpu.clock >= 456) {
-			++gpu.scanline;
-
-			if (gpu.scanline > 153) {
-				gpu.scanline = 0;
-				gpu.SetMode(GPU::Mode::OAM);
-			}
-
-			compare_ly();
-			gpu.clock -= 456;
-		}
-
-		break;
-
-	case GPU::Mode::OAM:
-		if (gpu.clock >= 80) {
-			gpu.SetMode(GPU::Mode::TRANSFER);
-			gpu.clock -= 80;
-		}
-
-		break;
-
-	case GPU::Mode::TRANSFER:
-		if (gpu.clock >= 172) {
-			gpu.SetMode(GPU::Mode::HBLANK);
-			gpu.clock -= 172;
-		}
-
-		break;
-	}
-}
-
-
-
-
-
-
-
 void Gameboy::UpdateInterrupts()
 {
-	if (!(hwstate.hwflags & HWState::INTERRUPT_MASTER_ENABLED)) {
+	if (!hwstate.GetIntMaster()) {
 		return;
 	} 
-	else if(!(hwstate.hwflags & HWState::INTERRUPT_MASTER_ACTIVE)) {
-		hwstate.hwflags |= HWState::INTERRUPT_MASTER_ACTIVE;
+	else if(!hwstate.GetIntActive()) {
+		hwstate.EnableIntActive();
 		return;
 	}
 
@@ -238,7 +155,7 @@ void Gameboy::UpdateInterrupts()
 	if(!requests)
 		return;
 
-	hwstate.hwflags &= ~HWState::INTERRUPT_MASTER_ENABLED;
+	hwstate.DisableIntMaster();
 
 	if (requests & INTERRUPT_VBLANK) {
 		hwstate.interrupt_flags &= ~INTERRUPT_VBLANK;
@@ -250,7 +167,7 @@ void Gameboy::UpdateInterrupts()
 	if (requests & INTERRUPT_LCD_STAT) {
 		hwstate.interrupt_flags &= ~INTERRUPT_LCD_STAT;
 		PushStack16(cpu.GetPC());
-		cpu.SetPC(INTERRUPT_LCDC_ADDR);
+		cpu.SetPC(INTERRUPT_LCD_STAT_ADDR);
 		cpu.AddCycles(12);
 	}
 

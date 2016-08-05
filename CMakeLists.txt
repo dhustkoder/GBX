@@ -56,7 +56,7 @@ set(GBX_SRC_DIR "./Source")
 include_directories("./Dependencies/Utix/Utix/include/")
 
 #files
-file(GLOB_RECURSE GBX_SRC "${GBX_SRC_DIR}/*.cpp")
+file(GLOB GBX_SRC "${GBX_SRC_DIR}/*.cpp")
 
 # compile
 add_executable(${PROJECT_NAME} ${GBX_SRC})
