@@ -33,13 +33,13 @@
     <ClCompile Include="..\..\Source\Instructions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\GPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\SDL\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

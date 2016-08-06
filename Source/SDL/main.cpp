@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <SDL2/SDL_main.h>
 #include <SDL2/SDL.h>
 #include <Utix/ScopeExit.h>
 #include "Gameboy.hpp"
@@ -87,7 +89,7 @@ void update_graphics(gbx::Gameboy* const gb)
 		for (size_t i = 0; i < 8; ++i) {
 			for (size_t j = 0; j < 8; ++j) {
 				if ((vram[(tile*16)+i*2]&vram[(tile*16)+i*2+1]) & (0x80 >> j))
-					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = ~0x00;
+					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = ~Uint32(0x00);
 				else
 					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = 0x00;
 

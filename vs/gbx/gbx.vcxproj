@@ -25,8 +25,8 @@
     <ClCompile Include="..\..\Source\Gameboy.cpp" />
     <ClCompile Include="..\..\Source\GPU.cpp" />
     <ClCompile Include="..\..\Source\Instructions.cpp" />
-    <ClCompile Include="..\..\Source\main.cpp" />
     <ClCompile Include="..\..\Source\Memory.cpp" />
+    <ClCompile Include="..\..\Source\SDL\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Source\Cartridge.hpp" />
@@ -93,16 +93,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;C:\Users\rafae\Documents\GitHub\gbx\Source;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;$(SolutionDir)\..\..\Source;$(SolutionDir)\..\..\Dependencies\SDL2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;C:\Users\rafae\Documents\GitHub\gbx\Source;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;$(SolutionDir)\..\..\Source;$(SolutionDir)\..\..\Dependencies\SDL2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;C:\Users\rafae\Documents\GitHub\gbx\Source;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;$(SolutionDir)\..\..\Source;$(SolutionDir)\..\..\Dependencies\SDL2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;C:\Users\rafae\Documents\GitHub\gbx\Source;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\..\..\Dependencies\Utix\Utix\include;$(SolutionDir)\..\..\Source;$(SolutionDir)\..\..\Dependencies\SDL2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -114,9 +114,9 @@
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Dependencies\SDL2\lib\WIN\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2main.lib;SDL2test.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -129,7 +129,9 @@
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2test.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Dependencies\SDL2\lib\WIN\x64</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -156,9 +158,9 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Dependencies\SDL2\lib\WIN\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -185,7 +187,9 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\Dependencies\SDL2\lib\WIN\x64</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
