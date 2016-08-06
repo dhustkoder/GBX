@@ -82,36 +82,29 @@ int main(int argc, char** argv)
 
 
 
-
-
-
 void update_graphics(gbx::Gameboy* const gb)
 {
-	const uint8_t* vram = gb->memory.vram;
+	struct Tile {
+		uint8_t data[16];
+	};
+	
+	const Tile* tiles = reinterpret_cast<Tile*>(gb->memory.vram);
+	
+	const auto draw_pixel_line = [](const uint8_t pixline, size_t x, size_t y) {
+		for (size_t pix = 0; pix < 8; ++pix)
+			gfx_buffer[(y*WIN_WIDTH) + (pix+x)] = (pixline&(0x80 >> pix)) ? ~0 : 0;
+	};
 
-	uint8_t tiles[18][20][8][8];
-
-	for (size_t tile_idy = 0; tile_idy < 18; ++tile_idy) {
-		for (size_t tile_idx = 0; tile_idx < 20; ++tile_idx) {
-			for (size_t y = 0; y < 8; ++y) {
-				const uint8_t tile_data = vram[(tile_idy*320) + (tile_idx * 16) + y*2] 
-				                          & vram[(tile_idy*320) + (tile_idx * 16) + y*2 + 1];
-				for (size_t x = 0; x < 8; ++x)
-					tiles[tile_idy][tile_idx][y][x] = tile_data & (0x80 >> x);
-			}
+	const auto draw_tile = [=](const Tile& tile, size_t x, size_t y) {
+		for (size_t i = 0; i < 8; ++i) {
+			const uint8_t pixline = tile.data[i * 2] & tile.data[i * 2 + 1];
+			draw_pixel_line(pixline, x, y+i);
 		}
-	}
+	};
 
-	for (size_t tile_idy = 0; tile_idy < 18; ++tile_idy) {
-		for (size_t tile_idx = 0; tile_idx < 20; ++tile_idx) {
-			for (size_t y = 0; y < 8; ++y) {
-				for (size_t x = 0; x < 8; ++x) {
-					gfx_buffer[((y+(tile_idy*8))*WIN_WIDTH) + x + (tile_idx * 8)] = tiles[tile_idy][tile_idx][y][x] ? ~Uint32(0) : 0x00;
-				}
-			}
-		}
-	}
-
+	for (size_t y = 0; y < 18; ++y)
+		for (size_t x = 0; x < 20; ++x)
+			draw_tile(*tiles++, x*8, y*8);
 }
 
 

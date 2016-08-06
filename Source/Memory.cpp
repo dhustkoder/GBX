@@ -6,7 +6,7 @@
 
 namespace gbx {
 
-static void dma_transfer(const uint16_t value, Gameboy* const gb);
+static void dma_transfer(const uint8_t value, Gameboy* const gb);
 
 
 
@@ -221,12 +221,11 @@ uint16_t Gameboy::PopStack16()
 
 
 
-static void dma_transfer(const uint16_t value, Gameboy* const gb)
+static void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
-	uint16_t address = value * 100;
-	for (size_t i = 0; i < 0xA0; ++i, ++address) {
-		gb->memory.oam[i] = gb->ReadU8(address);
-	}
+	uint16_t source_addrs = value * 100;
+	for (size_t i = 0; i < 0xA0; ++i, ++source_addrs)
+		gb->memory.oam[i] = gb->ReadU8(source_addrs);
 }
 
 
