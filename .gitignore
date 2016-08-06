@@ -4,6 +4,10 @@ build/
 Build/
 BUILD/
 
+#gbx binaries
+./gbx
+./gbx.exe
+./gbx.app
 
 # C C++
 # Compiled Object files
