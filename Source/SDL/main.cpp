@@ -7,9 +7,11 @@
 #include "Gameboy.hpp"
 
 namespace {
+
 static bool init_sdl();
 static void quit_sdl();
 static void update_graphics(gbx::Gameboy* const gb);
+
 static SDL_Event event;
 
 }
@@ -45,24 +47,34 @@ int main(int argc, char** argv)
 		quit_sdl();
 	});
 
-	
-	while (true) {
-		SDL_PollEvent(&event);
-		if(event.type == SDL_QUIT)
-			break;
 
-		gameboy->Step();
-		gameboy->UpdateGPU();
-		gameboy->UpdateInterrupts();
-		if (gameboy->cpu.GetPC() == 0x036C) {
-			update_graphics(gameboy);
-			break;
+	bool need_update = true;
+	while (true) {
+
+		if (SDL_PollEvent(&event))
+			if (event.type == SDL_QUIT)
+				break;
+
+		if (need_update) {
+			gameboy->Step();
+			gameboy->UpdateGPU();
+			gameboy->UpdateInterrupts();
+
+			if (gameboy->cpu.GetPC() == 0x2800) {
+				update_graphics(gameboy);
+				need_update = false;
+			}
 		}
 	}
 
-	SDL_Delay(1000 * 10);
 	return EXIT_SUCCESS;
 }
+
+
+
+
+
+
 
 
 

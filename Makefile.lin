@@ -25,7 +25,7 @@ release: compile
 compile: compile_objs link clean
 
 link: compile_objs
-	$(CXX) -ogbx *.o $(LINK_FLAGS)
+	$(CXX) -ogbx.out *.o $(LINK_FLAGS)
 
 
 compile_objs:
