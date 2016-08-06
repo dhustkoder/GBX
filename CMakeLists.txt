@@ -58,10 +58,10 @@ include_directories("./Dependencies/Utix/Utix/include/")
 include_directories("${GBX_SRC_DIR}")
 
 #files
-file(GLOB GBX_SRC "${GBX_SRC_DIR}/*.cpp" "${GBX_SRC_DIR}/CLI/*.cpp")
+file(GLOB GBX_SRC "${GBX_SRC_DIR}/*.cpp" "${GBX_SRC_DIR}/SDL/*.cpp")
 
 # compile
 add_executable(${PROJECT_NAME} ${GBX_SRC})
 
 # link libraries
-target_link_libraries(${PROJECT_NAME} -lc)
+target_link_libraries(${PROJECT_NAME} -lc -lSDL2)
