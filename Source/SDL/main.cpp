@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 		gameboy->Step();
 		gameboy->UpdateGPU();
 		gameboy->UpdateInterrupts();
-		if (gameboy->cpu.GetPC() == 0x282A) {
+		if (gameboy->cpu.GetPC() == 0x2800) {
 			update_graphics(gameboy);
 			SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
@@ -85,17 +85,29 @@ void update_graphics(gbx::Gameboy* const gb)
 {
 	const uint8_t* vram = gb->memory.vram;
 
-	for (size_t tile = 0; tile < 20; ++tile) {
-		for (size_t i = 0; i < 8; ++i) {
-			for (size_t j = 0; j < 8; ++j) {
-				if ((vram[(tile*16)+i*2]&vram[(tile*16)+i*2+1]) & (0x80 >> j))
-					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = ~Uint32(0x00);
-				else
-					gfx_buffer[(i*WIN_WIDTH) + j + (tile*8)] = 0x00;
+	uint8_t tiles[18][20][8][8];
 
+	for (size_t tile_idy = 0; tile_idy < 18; ++tile_idy) {
+		for (size_t tile_idx = 0; tile_idx < 20; ++tile_idx) {
+			for (size_t i = 0; i < 8; ++i) {
+				const uint8_t tile_data = vram[(tile_idy*256) + (tile_idx * 16) + i * 2] 
+				                          & vram[(tile_idy*256) + (tile_idx * 16) + i * 2 + 1];
+				for (size_t j = 0; j < 8; ++j)
+					tiles[tile_idy][tile_idx][i][j] = tile_data & (0x80 >> j);
 			}
 		}
 	}
+
+	for (size_t tile_idy = 0; tile_idy < 18; ++tile_idy) {
+		for (size_t tile_idx = 0; tile_idx < 20; ++tile_idx) {
+			for (size_t y = 0; y < 8; ++y) {
+				for (size_t x = 0; x < 8; ++x) {
+					gfx_buffer[((y+(tile_idy*8))*WIN_WIDTH) + x + (tile_idx * 8)] = tiles[tile_idy][tile_idx][y][x] ? ~Uint32(0) : 0x00;
+				}
+			}
+		}
+	}
+
 }
 
 
@@ -121,7 +133,7 @@ bool init_sdl()
 	window = SDL_CreateWindow("SDL2", 
 	                          SDL_WINDOWPOS_CENTERED,
 	                          SDL_WINDOWPOS_CENTERED,
-	                          WIN_WIDTH, WIN_HEIGHT, 0);
+	                          WIN_WIDTH*2, WIN_HEIGHT*2, 0);
 	if (!window) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n", SDL_GetError());
 		goto free_sdl;
