@@ -22,6 +22,10 @@ static SDL_Texture* texture;
 static SDL_Renderer* renderer;
 static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
 
+
+
+
+
 int main(int argc, char** argv)
 {
 	if (argc < 2) {
@@ -89,11 +93,11 @@ void update_graphics(gbx::Gameboy* const gb)
 
 	for (size_t tile_idy = 0; tile_idy < 18; ++tile_idy) {
 		for (size_t tile_idx = 0; tile_idx < 20; ++tile_idx) {
-			for (size_t i = 0; i < 8; ++i) {
-				const uint8_t tile_data = vram[(tile_idy*256) + (tile_idx * 16) + i * 2] 
-				                          & vram[(tile_idy*256) + (tile_idx * 16) + i * 2 + 1];
-				for (size_t j = 0; j < 8; ++j)
-					tiles[tile_idy][tile_idx][i][j] = tile_data & (0x80 >> j);
+			for (size_t y = 0; y < 8; ++y) {
+				const uint8_t tile_data = vram[(tile_idy*320) + (tile_idx * 16) + y*2] 
+				                          & vram[(tile_idy*320) + (tile_idx * 16) + y*2 + 1];
+				for (size_t x = 0; x < 8; ++x)
+					tiles[tile_idy][tile_idx][y][x] = tile_data & (0x80 >> x);
 			}
 		}
 	}
