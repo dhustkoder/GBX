@@ -103,7 +103,7 @@ static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
 static void draw_tile(const Tile& tile, size_t win_x, size_t win_y)
 {
 	// TODO: endiannes check
-	enum Color : Uint32
+	enum Pixel : Uint32
 	{
 		BLACK = 0x00000000,
 		WHITE = 0xFFFFFF00,
@@ -115,21 +115,21 @@ static void draw_tile(const Tile& tile, size_t win_x, size_t win_y)
 		return (byte & (0x80 >> right_shift)) != 0;
 	};
 
-	const auto set_pixel = [](const Uint32 value, size_t x, size_t y) {
-		gfx_buffer[(y*WIN_WIDTH) + x] = value;
+	const auto set_gfx = [](const Pixel pixel, size_t x, size_t y) {
+		gfx_buffer[(y*WIN_WIDTH) + x] = pixel;
 	};
 
-	const auto get_color = [=](const Tile& tile, size_t line, size_t pixel) {
-		const bool bit_1 = check_bit(tile.data[line * 2], pixel);
-		const bool bit_2 = check_bit(tile.data[line * 2 + 1], pixel);
+	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) {
+		const bool bit_1 = check_bit(tile.data[y], x);
+		const bool bit_2 = check_bit(tile.data[y + 1], x);
 		return bit_1 ? bit_2 ? BLACK : DARK_GREY
                              : bit_2 ? LIGHT_GREY : WHITE;
 	};
 
 	for (size_t tile_y = 0; tile_y < 8; ++tile_y) {
 		for (size_t tile_x = 0; tile_x < 8; ++tile_x) {
-			const auto color = get_color(tile, tile_y, tile_x);
-			set_pixel(color, win_x + tile_x, win_y + tile_y);
+			const auto pixel = get_pixel(tile, tile_x, tile_y * 2);
+			set_gfx(pixel, win_x + tile_x, win_y + tile_y);
 		}
 	}
 }
