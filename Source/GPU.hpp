@@ -22,14 +22,15 @@ struct GPU
 	void SetMode(const Mode mode);
 
 	uint16_t clock;
+	uint8_t control;
+	uint8_t status;
 	uint8_t scy;
 	uint8_t scx;
 	uint8_t wy;
 	uint8_t wx;
 	uint8_t ly;
 	uint8_t lyc;
-	uint8_t control;
-	uint8_t status;
+	uint8_t bgp;
 };
 
 

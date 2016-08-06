@@ -66,14 +66,15 @@ bool Gameboy::Reset()
 	cpu.SetHL(0x014D);
 	cpu.SetClock(0);
 
+	gpu.control = 0x91;
+	gpu.status = 0x00;
 	gpu.ly = 0x00;
 	gpu.lyc = 0x00;
 	gpu.scx = 0x00;
 	gpu.scy = 0x00;
 	gpu.wy = 0x00;
 	gpu.wx = 0x00;
-	gpu.control = 0x91;
-	gpu.status = 0x00;
+	gpu.bgp = 0x00;
 	gpu.clock = 0;
 
 	keys.value = 0xCF;
@@ -108,7 +109,7 @@ bool Gameboy::Reset()
 	// WriteU8(0xFF42, 0x00); // SCY, in GPU
 	// WriteU8(0xFF43, 0x00); // SCX, in GPU
 	// WriteU8(0xFF45, 0x00); // LYC, in GPU
-	WriteU8(0xFF47, 0xFC); // BGP
+	// WriteU8(0xFF47, 0xFC); // BGP, in GPU
 	WriteU8(0xFF48, 0xFF); // OBP0
 	WriteU8(0xFF49, 0xFF); // OBP1
 	// WriteU8(0xFF4A, 0x00); // WY, in GPU

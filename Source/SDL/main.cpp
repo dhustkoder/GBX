@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	gbx::Gameboy* gameboy = gbx::create_gameboy();
+	static gbx::Gameboy* const gameboy = gbx::create_gameboy();
 	
 	if (!gameboy)
 		return EXIT_FAILURE;
@@ -100,7 +100,7 @@ static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
 
 
 
-static void draw_tile(const Tile& tile, size_t win_x, size_t win_y)
+static void draw_tile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y)
 {
 	// TODO: endiannes check
 	enum Pixel : Uint32
@@ -111,19 +111,29 @@ static void draw_tile(const Tile& tile, size_t win_x, size_t win_y)
 		DARK_GREY = 0xA9A9A900,
 	};
 
-	const auto check_bit = [](const uint8_t byte, size_t right_shift) {
-		return (byte & (0x80 >> right_shift)) != 0;
-	};
-
 	const auto set_gfx = [](const Pixel pixel, size_t x, size_t y) {
 		gfx_buffer[(y*WIN_WIDTH) + x] = pixel;
 	};
 
-	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) {
-		const bool bit_1 = check_bit(tile.data[y], x);
-		const bool bit_2 = check_bit(tile.data[y + 1], x);
-		return bit_1 ? bit_2 ? BLACK : DARK_GREY
-                             : bit_2 ? LIGHT_GREY : WHITE;
+	const auto get_color = [](const uint8_t val) -> Pixel {
+		switch (val) {
+		case 0x00: return WHITE;
+		case 0x01: return LIGHT_GREY;
+		case 0x02: return DARK_GREY;
+		default: return BLACK;
+		};
+	};
+
+	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) -> Pixel {
+		const bool up_bit = (tile.data[y] & (0x80 >> x)) != 0;
+		const bool down_bit = (tile.data[y + 1] & (0x80 >> x)) != 0;
+		if (up_bit && down_bit)
+			return get_color(bgp >> 6);
+		else if (up_bit && !down_bit)
+			return get_color((bgp & 0x30) >> 4);
+		else if (!up_bit && down_bit)
+			return get_color((bgp & 0x0C) >> 2);
+		return get_color((bgp & 0x03));
 	};
 
 	for (size_t tile_y = 0; tile_y < 8; ++tile_y) {
@@ -143,10 +153,11 @@ static void draw_tile(const Tile& tile, size_t win_x, size_t win_y)
 static void update_graphics(gbx::Gameboy* const gb)
 {
 	const Tile* tiles = reinterpret_cast<Tile*>(gb->memory.vram);
+	const uint8_t bgp = gb->gpu.bgp;
 
 	for (size_t y = 0; y < 18; ++y)
 		for (size_t x = 0; x < 20; ++x)
-			draw_tile(*tiles++, x * 8, y * 8);
+			draw_tile(*tiles++, bgp, x * 8, y * 8);
 
 	SDL_RenderClear(renderer);
 	SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
