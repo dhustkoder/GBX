@@ -8,9 +8,9 @@
 
 namespace {
 
-static bool init_sdl();
-static void quit_sdl();
-static void update_graphics(gbx::Gameboy* const gb);
+static bool InitSDL();
+static void QuitSDL();
+static void UpdateGraphics(const gbx::Gameboy* const gb);
 
 static SDL_Event event;
 
@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	static gbx::Gameboy* const gameboy = gbx::create_gameboy();
+	gbx::Gameboy* const gameboy = gbx::create_gameboy();
 	
 	if (!gameboy)
 		return EXIT_FAILURE;
@@ -39,32 +39,27 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 
 
-	if (!init_sdl())
+	if (!InitSDL())
 		return EXIT_FAILURE;
 
 
 	const auto sdl_guard = utix::MakeScopeExit([] {
-		quit_sdl();
+		QuitSDL();
 	});
 
-
-	bool need_update = true;
 	while (true) {
-
 		if (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT)
+			if (event.type == SDL_QUIT) 
 				break;
-
-		if (need_update) {
+		do {
 			gameboy->Step();
 			gameboy->UpdateGPU();
 			gameboy->UpdateInterrupts();
+		} while (gameboy->cpu.GetClock() < 71000);
 
-			if (gameboy->cpu.GetPC() == 0x2800) {
-				update_graphics(gameboy);
-				need_update = false;
-			}
-		}
+		gameboy->cpu.SetClock(0);
+		UpdateGraphics(gameboy);
+		SDL_Delay(10);
 	}
 
 	return EXIT_SUCCESS;
@@ -80,10 +75,30 @@ int main(int argc, char** argv)
 
 namespace {
 
+
+enum Color : Uint32
+{
+	BLACK = 0x00000000,
+	WHITE = 0xFFFFFF00,
+	LIGHT_GREY = 0xD3D3D300,
+	DARK_GREY = 0xA9A9A900,
+};
+
+
 struct Tile
 {
 	uint8_t data[16];
 };
+
+
+struct SpriteAttributes
+{
+	uint8_t ypos;
+	uint8_t xpos;
+	uint8_t pattern;
+	uint8_t attr;
+};
+
 
 
 constexpr const int WIN_WIDTH = 160;
@@ -97,25 +112,90 @@ static SDL_Renderer* renderer;
 static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
 
 
+static void DrawSprites(const gbx::Gameboy* const gb);
+static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y);
+inline void DrawTileMap(const Tile* tiles, const uint8_t* tile_map, const uint8_t bgp, 
+                         const uint8_t screen_x, const uint8_t screen_y);
 
 
 
-static void draw_tile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y)
+static void UpdateGraphics(const gbx::Gameboy* const gb)
 {
-	// TODO: endiannes check
-	enum Pixel : Uint32
-	{
-		BLACK = 0x00000000,
-		WHITE = 0xFFFFFF00,
-		LIGHT_GREY = 0xD3D3D300,
-		DARK_GREY = 0xA9A9A900,
-	};
+	const uint8_t lcdc = gb->gpu.control;
+	const uint8_t bgp = gb->gpu.bgp;
+	const bool tile_data_bit = gbx::GetBit(lcdc, 4);
+	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb->memory.vram)
+	                                        : reinterpret_cast<const Tile*>(gb->memory.vram + 0x800);
 
-	const auto set_gfx = [](const Pixel pixel, size_t x, size_t y) {
+	if (gbx::GetBit(lcdc, 0)) {
+		const uint8_t scy = gb->gpu.scy;
+		const uint8_t scx = gb->gpu.scx;
+		const uint8_t* tile_map = gbx::GetBit(lcdc, 3) ? gb->memory.vram + 0x1C00 : gb->memory.vram + 0x1800;
+		DrawTileMap(tiles, tile_map, bgp, scx, scy);
+	}
+	else {
+		SDL_RenderClear(renderer);
+	}
+
+	if (gbx::GetBit(lcdc, 5)) {
+		const uint8_t wy = gb->gpu.wy;
+		const uint8_t wx = gb->gpu.wx - 7;
+		const uint8_t* tile_map = gbx::GetBit(lcdc, 6) ? gb->memory.vram + 0x1C00 : gb->memory.vram + 0x1800;
+		DrawTileMap(tiles, tile_map, bgp, wx, wy);
+	}
+
+	if (gbx::GetBit(lcdc, 1))
+		DrawSprites(gb);
+
+	SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
+	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+	SDL_RenderPresent(renderer);
+}
+
+
+
+
+static void DrawSprites(const gbx::Gameboy* const gb)
+{
+	const auto bgp = gb->gpu.bgp;
+	const Tile* tiles = reinterpret_cast<const Tile*>(gb->memory.vram);
+	const SpriteAttributes* sprites_attr = reinterpret_cast<const SpriteAttributes*>(gb->memory.oam);
+	for (uint8_t i = 0; i < 40; ++i) {
+		const uint8_t pattern = sprites_attr[i].pattern;
+		if (pattern != 0) {
+			const uint8_t ypos = sprites_attr[i].ypos - 16;
+			const uint8_t xpos = sprites_attr[i].xpos - 8;
+			if (xpos<160 && ypos <144)
+				DrawTile(tiles[pattern], bgp, xpos, ypos);
+		}
+	}
+}
+
+
+
+
+inline void DrawTileMap(const Tile* const tiles, const uint8_t* const tile_map, const uint8_t bgp, 
+                         const uint8_t screen_x, const uint8_t screen_y) 
+{
+	for (uint8_t y = 0; y < 18; ++y)
+		for (uint8_t x = 0; x < 20; ++x)
+			DrawTile(tiles[tile_map[(y + screen_x) * 32 + (x + screen_y)]], bgp, x * 8, y * 8);
+}
+
+
+
+
+
+
+
+static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y)
+{
+
+	const auto set_gfx = [](const Color pixel, size_t x, size_t y) {
 		gfx_buffer[(y*WIN_WIDTH) + x] = pixel;
 	};
 
-	const auto get_color = [](const uint8_t val) -> Pixel {
+	const auto get_color = [](const uint8_t val) -> Color {
 		switch (val) {
 		case 0x00: return WHITE;
 		case 0x01: return LIGHT_GREY;
@@ -124,7 +204,7 @@ static void draw_tile(const Tile& tile, const uint8_t bgp, const size_t win_x, c
 		};
 	};
 
-	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) -> Pixel {
+	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) -> Color {
 		const bool up_bit = (tile.data[y] & (0x80 >> x)) != 0;
 		const bool down_bit = (tile.data[y + 1] & (0x80 >> x)) != 0;
 		if (up_bit && down_bit)
@@ -150,20 +230,6 @@ static void draw_tile(const Tile& tile, const uint8_t bgp, const size_t win_x, c
 
 
 
-static void update_graphics(gbx::Gameboy* const gb)
-{
-	const Tile* tiles = reinterpret_cast<Tile*>(gb->memory.vram);
-	const uint8_t bgp = gb->gpu.bgp;
-
-	for (size_t y = 0; y < 18; ++y)
-		for (size_t x = 0; x < 20; ++x)
-			draw_tile(*tiles++, bgp, x * 8, y * 8);
-
-	SDL_RenderClear(renderer);
-	SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
-	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-	SDL_RenderPresent(renderer);
-}
 
 
 
@@ -172,7 +238,19 @@ static void update_graphics(gbx::Gameboy* const gb)
 
 
 
-static bool init_sdl()
+
+
+
+
+
+
+
+
+
+
+
+
+static bool InitSDL()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		fprintf(stderr, "failed to init SDL2: %s\n", SDL_GetError());
@@ -224,7 +302,7 @@ free_sdl:
 
 
 
-static void quit_sdl()
+static void QuitSDL()
 {
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);

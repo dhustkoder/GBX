@@ -10,11 +10,10 @@ namespace gbx {
 struct CPU;
 struct Gameboy;
 
-using main_instruction_t = void(* const)(Gameboy* const);
-using cb_instruction_t = void(* const)(CPU* const);
+using instruction_table_t = void(* const)(Gameboy* const);
 
-extern const main_instruction_t main_table[256];
-extern const cb_instruction_t cb_table[256];
+extern const instruction_table_t main_table[256];
+extern const instruction_table_t cb_table[256];
 
 extern const uint8_t clock_table[256];
 

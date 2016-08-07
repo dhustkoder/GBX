@@ -83,7 +83,7 @@ bool Gameboy::Reset()
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
 	
-
+	memset(memory.oam, 0, sizeof(memory.oam));
 	WriteU8(0xFF05, 0x00); // TIMA
 	WriteU8(0xFF06, 0x00); // TMA
 	WriteU8(0xFF07, 0x00); // TAC

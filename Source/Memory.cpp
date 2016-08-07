@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <Utix/Assert.h>
+#include "Debug.hpp"
 #include "Gameboy.hpp"
 #include "Memory.hpp"
 
@@ -48,7 +49,7 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 		case 0xFF4A: return gpu.wy;
 		case 0xFF4B: return gpu.wx;
 		default:
-			fprintf(stderr, "required hardware io address: %4x\n", address);
+			debug_printf("required hardware io address: %4x\n", address);
 			break;
 		};
 	}
@@ -122,7 +123,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			gpu.wx = value;
 			break;
 		default:
-			fprintf(stderr, "required hardware io address: %4x\n", address);
+			debug_printf("required hardware io address: %4x\n", address);
 			break;
 		};
 	}
@@ -141,7 +142,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		memory.vram[address - 0x8000] = value;
 	}
 	else {
-		fprintf(stderr, "write at %4x required\n", address);
+		debug_printf("required hardware io address: %4x\n", address);
 	}
 
 }
@@ -227,7 +228,7 @@ uint16_t Gameboy::PopStack16()
 
 static void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
-	uint16_t source_addrs = value * 100;
+	uint16_t source_addrs = value * 0x100;
 	for (size_t i = 0; i < 0xA0; ++i, ++source_addrs)
 		gb->memory.oam[i] = gb->ReadU8(source_addrs);
 }

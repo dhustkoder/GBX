@@ -76,8 +76,9 @@ struct CPU
 	uint8_t AND(const uint8_t first, const uint8_t second);
 	uint8_t XOR(const uint8_t first, const uint8_t second);
 	
+	uint8_t SLA(const uint8_t value);
 	uint8_t SWAP(const uint8_t value);
-	
+	void BIT(const uint8_t bit, const uint8_t value);
 
 
 

@@ -148,8 +148,27 @@ void ld_06(Gameboy* const gb)
 
 void rlca_07(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_08(Gameboy* const gb){ ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
-void add_09(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
-void ld_0A(Gameboy* const)   { ASSERT_INSTR_IMPL();  }
+
+
+
+void add_09(Gameboy* const gb) 
+{
+	// ADD HL,BC
+	// 1  8
+	// - 0 H C
+	gb->cpu.ADDHL(gb->cpu.GetBC());
+}
+
+
+
+void ld_0A(Gameboy* const gb)
+{ 
+	// LD A, (BC)
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t bc = gb->cpu.GetBC();
+	gb->cpu.SetA(gb->ReadU8(bc));
+}
 
 
 
@@ -644,7 +663,18 @@ void inc_2C(Gameboy* const gb)
 
 
 
-void dec_2D(Gameboy* const){ ASSERT_INSTR_IMPL();  }
+void dec_2D(Gameboy* const gb) 
+{
+	// DEC L
+	// operands: 0
+	// clock cycles: 4
+	// flags affected: Z 1 H -
+	const uint8_t result = gb->cpu.DEC(gb->cpu.GetL());
+	gb->cpu.SetL(result);
+}
+
+
+
 void ld_2E(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 
 
@@ -895,9 +925,6 @@ void dec_3D(Gameboy* const gb)
 	const auto a = gb->cpu.GetA();
 	const auto result = gb->cpu.DEC(a);
 	gb->cpu.SetA(result);
-
-	
-	
 }
 
 
@@ -917,8 +944,6 @@ void ld_3E(Gameboy* const gb)
 	const auto d8 = gb->ReadU8(pc);
 	gb->cpu.SetA(d8);
 	gb->cpu.AddPC(1);
-
-	
 }
 
 
@@ -933,16 +958,32 @@ void ccf_3F(Gameboy* const){ ASSERT_INSTR_IMPL();  }
 
 
 // 0x40
-void ld_40(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_40(Gameboy* const) 
+{
+	// LD B, B
+	// nop like
+}
+
+
+
+
+
 void ld_41(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_42(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_43(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_44(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_45(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_46(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
+void ld_46(Gameboy* const gb) 
+{
+	// LD B, (HL)
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t hl = gb->cpu.GetHL();
+	gb->cpu.SetB(gb->ReadU8(hl));
+}
 
 
 
@@ -956,9 +997,6 @@ void ld_47(Gameboy* const gb)
 	// clock cycles: 4
 	const auto a = gb->cpu.GetA();
 	gb->cpu.SetB(a);
-	
-	
-	
 }
 
 
@@ -973,7 +1011,19 @@ void ld_4A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_4B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_4C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_4D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_4E(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+
+
+void ld_4E(Gameboy* const gb) 
+{
+	// LD C, (HL)
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t hl = gb->cpu.GetHL();
+	gb->cpu.SetC(gb->ReadU8(hl));
+}
 
 
 
@@ -987,9 +1037,6 @@ void ld_4F(Gameboy* const gb)
 	// clock cycles: 4
 	const auto a = gb->cpu.GetA();
 	gb->cpu.SetC(a);
-	
-	
-	
 }
 
 
@@ -1005,7 +1052,18 @@ void ld_50(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_51(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_52(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_53(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_54(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+void ld_54(Gameboy* const gb) 
+{ 
+	// LD D, H
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetD(gb->cpu.GetH());
+}
+
+
 void ld_55(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1061,7 +1119,16 @@ void ld_59(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_5A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_5B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_5C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_5D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+void ld_5D(Gameboy* const gb) 
+{ 
+	// LD E, L
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetE(gb->cpu.GetL());
+}
 
 
 
@@ -1112,7 +1179,19 @@ void ld_5F(Gameboy* const gb)
 
 
 // 0x60
-void ld_60(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_60(Gameboy* const gb) 
+{
+	// LD H, B
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetH(gb->cpu.GetB());
+}
+
+
+
+
+
+
 void ld_61(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1163,7 +1242,22 @@ void ld_67(Gameboy* const gb)
 
 
 void ld_68(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_69(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+
+
+void ld_69(Gameboy* const gb) {
+	// LD L, C
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetL(gb->cpu.GetC());
+}
+
+
+
+
+
 void ld_6A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1193,7 +1287,12 @@ void ld_6B(Gameboy* const gb)
 
 
 
-void ld_6C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_6C(Gameboy* const gb) 
+{
+	// LD L, H
+	gb->cpu.SetL(gb->cpu.GetH());
+
+}
 void ld_6D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1216,7 +1315,13 @@ void ld_6E(Gameboy* const gb)
 
 
 
-void ld_6F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_6F(Gameboy* const gb)
+{ 
+	// LD L, A
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetL(gb->cpu.GetA());
+}
 
 
 
@@ -1266,15 +1371,43 @@ void ld_71(Gameboy* const gb)
 
 
 
+void ld_72(Gameboy* const gb) 
+{
+	// LD (HL), D
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t hl = gb->cpu.GetHL();
+	gb->WriteU8(hl, gb->cpu.GetD());
+}
 
 
 
-void ld_72(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_73(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_73(Gameboy* const gb)
+{
+	// LD (HL), E
+	// operands: 0
+	// clock cycles: 8
+	const uint16_t hl = gb->cpu.GetHL();
+	gb->WriteU8(hl, gb->cpu.GetE());
+}
+
+
+
+
 void ld_74(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_75(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void halt_76(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_77(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+void ld_77(Gameboy* const gb) { 
+	// LD (HL), A
+	// store a in mem pointed by hl
+	// operands: 0
+	// cycles 4
+	const uint16_t hl = gb->cpu.GetHL();
+	gb->WriteU8(hl, gb->cpu.GetA());
+}
 
 
 
@@ -1341,7 +1474,13 @@ void ld_7A(Gameboy* const gb)
 
 
 
-void ld_7B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_7B(Gameboy* const gb)
+{ 
+	// LD A,E
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetA(gb->cpu.GetE());
+}
 
 
 
@@ -1363,11 +1502,13 @@ void ld_7C(Gameboy* const gb)
 
 
 
-
-
-
-
-void ld_7D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_7D(Gameboy* const gb)
+{ 
+	// LD A, L
+	// operands: 0
+	// clock cycles: 4
+	gb->cpu.SetA(gb->cpu.GetL());
+}
 
 
 
@@ -1409,7 +1550,21 @@ void add_81(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void add_82(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void add_83(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void add_84(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void add_85(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+
+void add_85(Gameboy* const gb)
+{
+	// ADD A, L
+	// operands: 0
+	// clock cycles: 4
+	// flags affected: Z 0 H C
+	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetL());
+	gb->cpu.SetA(result);
+}
+
+
+
 void add_86(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1698,7 +1853,21 @@ void cp_BA(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void cp_BB(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void cp_BC(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void cp_BD(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void cp_BE(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+void cp_BE(Gameboy* const gb)
+{ 
+	// CP (HL)
+	// operands: 0
+	// clock cycles: 8
+	// Z 1 H C
+	const uint16_t hl = gb->cpu.GetHL();
+	gb->cpu.SUB(gb->cpu.GetA(), gb->ReadU8(hl));
+
+}
+
+
+
 void cp_BF(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1752,7 +1921,21 @@ void pop_C1(Gameboy* const gb)
 
 
 
-void jp_C2(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void jp_C2(Gameboy* const gb) 
+{
+	// JP NZ,a16
+	// operands: 2  
+	// clock cycles: 16/12
+
+	if (!gb->cpu.GetFlags(CPU::FLAG_Z)) {
+		const uint16_t addr = gb->ReadU16(gb->cpu.GetPC());
+		gb->cpu.SetPC(addr);
+		gb->cpu.AddCycles(4);
+	}
+	else {
+		gb->cpu.AddPC(2);
+	}
+}
 
 
 
@@ -1803,9 +1986,20 @@ void push_C5(Gameboy* const gb)
 
 
 
+void add_C6(Gameboy* const gb)
+{ 
+	// ADD A, d8
+	// operands: 1
+	// clock cycles: 8
+	// flags affected: Z 0 H C
+	const uint8_t d8 = gb->ReadU8(gb->cpu.GetPC());
+	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), d8);
+	gb->cpu.SetA(result);
+	gb->cpu.AddPC(1);
+}
 
 
-void add_C6(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
+
 void rst_C7(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
 
 
@@ -1823,12 +2017,8 @@ void ret_C8(Gameboy* const gb)
 	if(gb->cpu.GetFlags(CPU::FLAG_Z)) {
 		const auto address = gb->PopStack16();
 		gb->cpu.SetPC(address);
+		gb->cpu.AddCycles(12);
 	}
-	else {
-		
-	}
-	
-	
 }
 
 
@@ -1889,7 +2079,7 @@ void PREFIX_CB(Gameboy* const gb)
 	gb->cpu.AddPC(1);
 	
 
-	cb_table[cb_opcode](&gb->cpu);
+	cb_table[cb_opcode](gb);
 	
 	const uint8_t lownibble = GetLowNibble(cb_opcode);
 	if (lownibble == 0x06 || lownibble == 0x0E)
@@ -1917,9 +2107,8 @@ void call_CD(Gameboy* const gb)
 	// stack grows backwards ?
 	// operands: 2
 	// clock cycles: 24
-	const auto pc = gb->cpu.GetPC();
-	const auto a16 = gb->ReadU16(pc);
-
+	const uint16_t pc = gb->cpu.GetPC();
+	const uint16_t a16 = gb->ReadU16(pc);
 	gb->PushStack16(pc + 2);
 	gb->cpu.SetPC(a16);
 
@@ -2059,13 +2248,10 @@ void ldh_E0(Gameboy* const gb)
 	// store value in A into memory address 0xFF00 + a8
 	// operands: 1
 	// clock cycles: 12
-	const auto a = gb->cpu.GetA();
-	const auto pc = gb->cpu.GetPC();
-	const auto a8 = gb->ReadU8(pc);
+	const uint8_t a = gb->cpu.GetA();
+	const uint8_t a8 = gb->ReadU8(gb->cpu.GetPC());
 	gb->WriteU8(0xFF00 + a8, a);
 	gb->cpu.AddPC(1);
-
-	
 }
 
 
@@ -2084,9 +2270,6 @@ void pop_E1(Gameboy* const gb)
 	// clock cycles: 12
 	const auto value = gb->PopStack16();
 	gb->cpu.SetHL(value);
-	
-
-	
 }
 
 
@@ -2105,7 +2288,6 @@ void ld_E2(Gameboy* const gb)
 	const auto c = gb->cpu.GetC();
 	const auto a = gb->cpu.GetA();
 	gb->WriteU8(0xFF00 + c, a);
-	
 }
 
 
@@ -2369,10 +2551,20 @@ void push_F5(Gameboy* const gb)
 
 
 
+void or_F6(Gameboy* const gb) 
+{ 
+	// OR d8
+	// operands: 1
+	// clock cycles: 8
+	// flags affected: Z 0 0 0
+	const uint8_t d8 = gb->ReadU8(gb->cpu.GetPC());
+	const uint8_t result = gb->cpu.OR(gb->cpu.GetA(), d8);
+	gb->cpu.SetA(result);
+	gb->cpu.AddPC(1); 
+}
 
 
 
-void or_F6(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 void rst_F7(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_F8(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
 void ld_F9(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
@@ -2390,22 +2582,17 @@ void ld_FA(Gameboy* const gb)
 	// value in address pointe immediate 16 bit value is stored into A
 	// operands: 2
 	// clock cycles: 16
-	const auto pc = gb->cpu.GetPC();
-	const auto a16 = gb->ReadU16(pc);
+	const auto a16 = gb->ReadU16(gb->cpu.GetPC());
 	const auto value = gb->ReadU8(a16);
 	gb->cpu.SetA(value);
 	gb->cpu.AddPC(2);
-
-	
 }
 
 
 void ei_FB(Gameboy* const gb)
 { 
-	// EI
-	// enable interrupts
-	gb->hwstate.EnableIntMaster();
-	
+	// EI ( enable interrupts )
+	gb->hwstate.EnableIntMaster();	
 }
 
 
@@ -2452,7 +2639,7 @@ void unknown(Gameboy* const gb)
 
 
 
-const main_instruction_t main_table[256] = {
+const instruction_table_t main_table[256] = {
 /*        0        1        2        3        4        5        6        7        8        9        A        B        C        D        E        F      */
 /*0*/  nop_00,   ld_01,   ld_02,  inc_03,  inc_04,  dec_05,   ld_06, rlca_07,   ld_08,  add_09,   ld_0A,  dec_0B,  inc_0C,  dec_0D,   ld_0E, rrca_0F,
 /*1*/ stop_10,   ld_11,   ld_12,  inc_13,  inc_14,  dec_15,   ld_16,  rla_17,   jr_18,  add_19,   ld_1A,  dec_1B,  inc_1C,  dec_1D,   ld_1E,  rra_1F,

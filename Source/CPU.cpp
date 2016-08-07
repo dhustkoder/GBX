@@ -192,7 +192,14 @@ uint8_t CPU::XOR(const uint8_t first, const uint8_t second)
 
 
 
-
+uint8_t CPU::SLA(const uint8_t value)
+{
+	// flags  effect: Z 0 0 C
+	const uint8_t carry = (value & 0x80) ? FLAG_C : 0;
+	const uint8_t result = value << 1;
+	SetF(CheckZ(result) | carry);
+	return result;
+}
 
 
 uint8_t CPU::SWAP(const uint8_t value) 
@@ -207,10 +214,11 @@ uint8_t CPU::SWAP(const uint8_t value)
 
 
 
-
-
-
-
+void CPU::BIT(const uint8_t bit, const uint8_t value)
+{
+	// flags effect: Z 0 1 -
+	SetFlags(CheckZ(value & (1 << bit)) | FLAG_H);
+}
 
 
 

@@ -32,6 +32,7 @@
     <ClInclude Include="..\..\Source\Cartridge.hpp" />
     <ClInclude Include="..\..\Source\Common.hpp" />
     <ClInclude Include="..\..\Source\CPU.hpp" />
+    <ClInclude Include="..\..\Source\Debug.hpp" />
     <ClInclude Include="..\..\Source\Gameboy.hpp" />
     <ClInclude Include="..\..\Source\GPU.hpp" />
     <ClInclude Include="..\..\Source\HWState.hpp" />

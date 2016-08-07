@@ -14,24 +14,11 @@ enum StatusMask : uint8_t
 };
 
 
-enum ControlMask : uint8_t
-{
-	LCD_ON_OFF = 0x80,
-	WIN_TILE_MAP_SELECT = 0x40,
-	WIN_ON_OFF = 0x20,
-	BG_WIN_TILE_MAP_SELECT = 0x10,
-	BG_TILE_MAP_SELECT = 0x08,
-	OBJ_SIZE = 0x04,
-	OBJ_ON_OFF = 0x02,
-	BG_ON_OFF = 0x01
-};
-
-
 
 
 void Gameboy::UpdateGPU()
 {
-	if (!(gpu.control & LCD_ON_OFF)) {
+	if (!(gpu.control & GPU::LCD_ON_OFF)) {
 		gpu.clock = 0;
 		gpu.ly = 0;
 		gpu.SetMode(GPU::Mode::VBLANK);

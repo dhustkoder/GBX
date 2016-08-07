@@ -18,6 +18,18 @@ struct GPU
 		TRANSFER = 0x03
 	};
 
+	enum Control : uint8_t
+	{
+		LCD_ON_OFF = 0x80,
+		WIN_TILE_MAP_SELECT = 0x40,
+		WIN_ON_OFF = 0x20,
+		BG_WIN_TILE_MAP_SELECT = 0x10,
+		BG_TILE_MAP_SELECT = 0x08,
+		OBJ_SIZE = 0x04,
+		OBJ_ON_OFF = 0x02,
+		BG_ON_OFF = 0x01
+	};
+
 	Mode GetMode() const;
 	void SetMode(const Mode mode);
 
