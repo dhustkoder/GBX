@@ -192,6 +192,25 @@ uint8_t CPU::XOR(const uint8_t first, const uint8_t second)
 
 
 
+
+
+
+uint8_t CPU::RLC(const uint8_t value)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t carry = ( value & 0x80 ) ? FLAG_C : 0;
+	uint8_t result = value << 1;
+	if (carry)
+		++result;
+
+	SetF(CheckZ(result) | carry);
+	return result;
+}
+
+
+
+
+
 uint8_t CPU::SLA(const uint8_t value)
 {
 	// flags  effect: Z 0 0 C
@@ -200,6 +219,18 @@ uint8_t CPU::SLA(const uint8_t value)
 	SetF(CheckZ(result) | carry);
 	return result;
 }
+
+
+
+uint8_t CPU::SRL(const uint8_t value)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t carry = ( value & 0x01 ) ? FLAG_C : 0;
+	const uint8_t result = value >> 1;
+	SetF(CheckZ(result) | carry);
+	return result;
+}
+
 
 
 uint8_t CPU::SWAP(const uint8_t value) 
