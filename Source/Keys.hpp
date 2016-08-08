@@ -22,8 +22,8 @@ struct Keys
 			uint8_t start : 1;
 		}bit;
 
-		uint8_t buttons;
-	};
+		uint8_t all;
+	}pad;
 
 	uint8_t value;
 };

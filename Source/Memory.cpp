@@ -88,9 +88,9 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		switch (address) {
 		case 0xFF00:
 			if ((value & 0x30) == 0x10)
-				keys.value = 0xD0 | (keys.buttons >> 4);
+				keys.value = 0xD0 | (keys.pad.all >> 4);
 			else if ((value & 0x30) == 0x20)
-				keys.value = 0xE0 | (keys.buttons & 0x0f);
+				keys.value = 0xE0 | (keys.pad.all & 0x0f);
 			else
 				keys.value = 0xFF;
 			break;

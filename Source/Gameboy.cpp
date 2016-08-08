@@ -78,13 +78,14 @@ bool Gameboy::Reset()
 	gpu.clock = 0;
 
 	keys.value = 0xCF;
-	keys.buttons = 0xff;
+	keys.pad.all = 0xff;
 
 	hwstate.flags = 0x00;
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
 	
-	memset(memory.oam, 0, sizeof(memory.oam));
+//	memset(memory.oam, 0, sizeof(memory.oam));
+
 	WriteU8(0xFF05, 0x00); // TIMA
 	WriteU8(0xFF06, 0x00); // TMA
 	WriteU8(0xFF07, 0x00); // TAC

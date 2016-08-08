@@ -244,14 +244,15 @@ static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, co
 static void UpdateKey(const uint8_t val, const SDL_Scancode kcode, gbx::Keys* const keys)
 {
 	switch (kcode) {
-	case SDL_SCANCODE_Z: keys->bit.a = val; break;
-	case SDL_SCANCODE_X: keys->bit.b = val; break;
-	case SDL_SCANCODE_C: keys->bit.select = val; break;
-	case SDL_SCANCODE_V: keys->bit.start = val; break;
-	case SDL_SCANCODE_RIGHT: keys->bit.right = val; break;
-	case SDL_SCANCODE_LEFT: keys->bit.left = val; break;
-	case SDL_SCANCODE_UP: keys->bit.up = val; break;
-	case SDL_SCANCODE_DOWN: keys->bit.down = val; break;
+	case SDL_SCANCODE_Z: keys->pad.bit.a = val; break;
+	case SDL_SCANCODE_X: keys->pad.bit.b = val; break;
+	case SDL_SCANCODE_C: keys->pad.bit.select = val; break;
+	case SDL_SCANCODE_V: keys->pad.bit.start = val; break;
+	case SDL_SCANCODE_RIGHT: keys->pad.bit.right = val; break;
+	case SDL_SCANCODE_LEFT: keys->pad.bit.left = val; break;
+	case SDL_SCANCODE_UP: keys->pad.bit.up = val; break;
+	case SDL_SCANCODE_DOWN: keys->pad.bit.down = val; break;
+	default: break;
 	}
 }
 
