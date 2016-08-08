@@ -133,7 +133,7 @@ void Gameboy::Step()
 
 	debug_printf("PC: %4x | OP: %4x\n", pc, opcode);
 
-	main_table[opcode](this);
+	main_instructions[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
 	cpu.AddCycles(cycles);
 	gpu.clock += cycles;

@@ -72,7 +72,8 @@ struct CPU
 	uint8_t ADD(const uint8_t first, const uint8_t second);
 	uint8_t SUB(const uint8_t first, const uint8_t second);
 	void ADD_HL(const uint16_t reg_pair);
-	
+	void CP(const uint8_t value);
+
 	uint8_t OR(const uint8_t first, const uint8_t second);
 	uint8_t AND(const uint8_t first, const uint8_t second);
 	uint8_t XOR(const uint8_t first, const uint8_t second);

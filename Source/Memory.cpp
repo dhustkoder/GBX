@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <Utix/Assert.h>
 #include "Debug.hpp"
 #include "Gameboy.hpp"
@@ -234,8 +235,13 @@ uint16_t Gameboy::PopStack16()
 static void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
 	uint16_t source_addrs = value * 0x100;
-	for (size_t i = 0; i < 0xA0; ++i, ++source_addrs)
-		gb->memory.oam[i] = gb->ReadU8(source_addrs);
+	if ((source_addrs + 0xA0) <= 0x8000) {
+		const size_t nbytes = sizeof(uint8_t) * 0xA0;
+		memcpy(gb->memory.oam, gb->memory.home + source_addrs, nbytes);
+	} else {
+		for (size_t i = 0; i < 0xA0; ++i, ++source_addrs)
+			gb->memory.oam[i] = gb->ReadU8(source_addrs);
+	}
 }
 
 

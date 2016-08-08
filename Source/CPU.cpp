@@ -152,6 +152,17 @@ uint8_t CPU::DEC(const uint8_t first)
 
 
 
+void CPU::CP(const uint8_t value)
+{
+	// flags effect: Z 1 H C
+	const uint8_t a = GetA();
+	const uint16_t result = a - value;
+	const Flags zhc = CheckZ(result) | 
+	                  CheckH_borrow(a, value) | 
+	                  CheckC_borrow(a, value);
+
+	SetF(zhc | FLAG_N);
+}
 
 
 
