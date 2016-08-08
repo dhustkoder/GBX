@@ -52,13 +52,14 @@ int main(int argc, char** argv)
 	while (true) {
 
 		if (SDL_PollEvent(&event)) {
-			auto etype = event.type;
-			if (etype == SDL_QUIT) {
+			if (event.type == SDL_QUIT)
 				break;
-			}
-			else if (etype == SDL_KEYDOWN || etype == SDL_KEYUP) {
-				const auto state = etype == SDL_KEYUP ? gbx::KeyState::UP : gbx::KeyState::DOWN;
+
+			while (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+				const auto state = event.type == SDL_KEYUP ? gbx::KeyState::UP : gbx::KeyState::DOWN;
 				UpdateKey(state, event.key.keysym.scancode, &gameboy->keys);
+				if (!SDL_PollEvent(&event))
+					break;
 			}
 		}
 
