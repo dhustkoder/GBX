@@ -112,16 +112,13 @@ struct SpriteAttributes
 };
 
 
-
 constexpr const int WIN_WIDTH = 160;
 constexpr const int WIN_HEIGHT = 144;
-constexpr const int PITCH = WIN_WIDTH * sizeof(Uint32);
-constexpr const int GFX_BUFFER_SIZE = WIN_WIDTH * WIN_HEIGHT;
 
 static SDL_Window* window;
 static SDL_Texture* texture;
 static SDL_Renderer* renderer;
-static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
+static Uint32* gfx_buffer;
 
 
 static void DrawSprites(const gbx::Gameboy& gb);
@@ -143,7 +140,9 @@ static void UpdateGraphics(const gbx::Gameboy& gb)
 	const bool tile_data_bit = gbx::GetBit(lcdc, 4);
 	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb.memory.vram)
 	                                        : reinterpret_cast<const Tile*>(gb.memory.vram + 0x800);
+	int pitch;
 	SDL_RenderClear(renderer);
+	SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch);
 
 	if (gbx::GetBit(lcdc, 0)) {
 		const uint8_t scy = gb.gpu.scy;
@@ -162,7 +161,8 @@ static void UpdateGraphics(const gbx::Gameboy& gb)
 	if (gbx::GetBit(lcdc, 1))
 		DrawSprites(gb);
 
-	SDL_UpdateTexture(texture, nullptr, gfx_buffer, PITCH);
+
+	SDL_UnlockTexture(texture);
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
@@ -301,7 +301,7 @@ static bool InitSDL()
 
 	texture = SDL_CreateTexture(renderer,
 		SDL_PIXELFORMAT_RGBA8888,
-		SDL_TEXTUREACCESS_TARGET,
+		SDL_TEXTUREACCESS_STREAMING,
 		WIN_WIDTH, WIN_HEIGHT);
 
 	if (!texture) {

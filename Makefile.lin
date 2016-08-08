@@ -1,7 +1,7 @@
 			
 BUILD_MODE :=
 INCLUDE_DIRS := -I./Dependencies/Utix/Utix/include/ -I./Source/
-SOURCE_FILES := ./Source/*.cpp ./Source/SDL/main.cpp
+SOURCE_FILES := ./Source/*.cpp ./Source/SDL/sdl_main.cpp
 LINK_PATHS :=
 LINK_LIBS := -lc -lSDL2
 CXX_FLAGS := $(SOURCE_FILES) \
