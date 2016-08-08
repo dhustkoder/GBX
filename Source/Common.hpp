@@ -29,6 +29,28 @@ constexpr bool GetBit(const uint16_t value, const uint8_t bit) {
 }
 
 
+constexpr uint16_t SetBit(const uint16_t value, const uint8_t bit) {
+	return (value | (1 << bit));
+}
+
+
+constexpr uint16_t ResBit(const uint16_t value, const uint8_t bit) {
+	return (value & ~(1 << bit));
+}
+
+
+constexpr uint8_t SetBit(const uint8_t value, const uint8_t bit) {
+	return static_cast<uint8_t>(SetBit(static_cast<uint16_t>(value), bit));
+}
+
+
+constexpr uint8_t ResBit(const uint8_t value, const uint8_t bit) {
+	return static_cast<uint8_t>(ResBit(static_cast<uint16_t>(value), bit));
+}
+
+
+
+
 constexpr uint8_t GetLowByte(const uint16_t value) {
 	return value & 0x00FF;
 }

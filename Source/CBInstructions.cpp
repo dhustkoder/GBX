@@ -389,7 +389,7 @@ void res_86(Gameboy* const gb)
 	// clock cycles: 16
 	const uint16_t hl = gb->cpu.GetHL();
 	const uint8_t value = gb->ReadU8(hl);
-	const uint8_t result = value & 0xfb;
+	const uint8_t result = ResBit(value, 2);
 	gb->WriteU8(hl, result);
 }
 
@@ -405,7 +405,7 @@ void res_87(Gameboy* const gb)
 	// bytes: 2
 	// clock cycles: 8
 	const auto a = gb->cpu.GetA();
-	const uint8_t result = a & 0xfe;
+	const uint8_t result = ResBit(a, 0);
 	gb->cpu.SetA(result);
 }
 
@@ -563,7 +563,15 @@ void set_FA(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_FB(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_FC(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_FD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void set_FE(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+
+
+void set_FE(Gameboy* const)
+{ 
+	// SET
+}
+
+
 void set_FF(Gameboy* const) { ASSERT_INSTR_IMPL(); }
     
     

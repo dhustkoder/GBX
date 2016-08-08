@@ -10,6 +10,7 @@ namespace {
 
 static bool InitSDL();
 static void QuitSDL();
+static void UpdateKey(const uint8_t val, const SDL_Scancode kcode, gbx::Keys* const keys);
 static void UpdateGraphics(const gbx::Gameboy* const gb);
 
 static SDL_Event event;
@@ -48,15 +49,25 @@ int main(int argc, char** argv)
 	});
 
 	while (true) {
-		if (SDL_PollEvent(&event))
-			if (event.type == SDL_QUIT) 
+
+		if (SDL_PollEvent(&event)) {
+			auto etype = event.type;
+			if (etype == SDL_QUIT)
 				break;
+			while (etype == SDL_KEYDOWN || etype == SDL_KEYUP) {
+				UpdateKey(etype == SDL_KEYDOWN ? 0 : 1, 
+				          event.key.keysym.scancode, &gameboy->keys);
+				if (!SDL_PollEvent(&event))
+					break;
+				etype = event.type;
+			}
+		}
+
 		do {
 			gameboy->Step();
 			gameboy->UpdateGPU();
 			gameboy->UpdateInterrupts();
 		} while (gameboy->cpu.GetClock() < 71000);
-
 		gameboy->cpu.SetClock(0);
 		UpdateGraphics(gameboy);
 		SDL_Delay(10);
@@ -126,15 +137,13 @@ static void UpdateGraphics(const gbx::Gameboy* const gb)
 	const bool tile_data_bit = gbx::GetBit(lcdc, 4);
 	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb->memory.vram)
 	                                        : reinterpret_cast<const Tile*>(gb->memory.vram + 0x800);
+	SDL_RenderClear(renderer);
 
 	if (gbx::GetBit(lcdc, 0)) {
 		const uint8_t scy = gb->gpu.scy;
 		const uint8_t scx = gb->gpu.scx;
 		const uint8_t* tile_map = gbx::GetBit(lcdc, 3) ? gb->memory.vram + 0x1C00 : gb->memory.vram + 0x1800;
 		DrawTileMap(tiles, tile_map, bgp, scx, scy);
-	}
-	else {
-		SDL_RenderClear(renderer);
 	}
 
 	if (gbx::GetBit(lcdc, 5)) {
@@ -234,7 +243,19 @@ static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, co
 
 
 
-
+static void UpdateKey(const uint8_t val, const SDL_Scancode kcode, gbx::Keys* const keys)
+{
+	switch (kcode) {
+	case SDL_SCANCODE_Z: keys->bit.a = val; break;
+	case SDL_SCANCODE_X: keys->bit.b = val; break;
+	case SDL_SCANCODE_C: keys->bit.select = val; break;
+	case SDL_SCANCODE_V: keys->bit.start = val; break;
+	case SDL_SCANCODE_RIGHT: keys->bit.right = val; break;
+	case SDL_SCANCODE_LEFT: keys->bit.left = val; break;
+	case SDL_SCANCODE_UP: keys->bit.up = val; break;
+	case SDL_SCANCODE_DOWN: keys->bit.down = val; break;
+	}
+}
 
 
 
@@ -284,9 +305,7 @@ static bool InitSDL()
 		goto free_renderer;
 	}
 
-
 	return true;
-
 free_renderer:
 	SDL_DestroyRenderer(renderer);
 free_window:

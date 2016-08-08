@@ -91,35 +91,24 @@ void ld_06(Gameboy* const gb)
 
 void rlca_07(Gameboy* const gb)
 {
-	// RLCA
-	// Rotate A left. Old bit 7 to Carry flag.
-	// operands: 0
-	// clock cycles: 4
+	// RLCA ( Rotate A left. Old bit 7 to Carry flag )
 	// flags effect: 0 0 0 C
 	const uint8_t a = gb->cpu.GetA();
-	const uint8_t carry = (a & 0x80) ? CPU::FLAG_C : 0;
-	uint8_t result = a << 1;
-	if (carry)
-		++result;
-	gb->cpu.SetA(result);
-	gb->cpu.SetFlags(carry);
+	const CPU::Flags carry = static_cast<CPU::Flags>((a & 0x80) >> 3);
+	const uint8_t result = a << 1;
+	gb->cpu.SetA(carry ? result+1 : result);
+	gb->cpu.SetF(carry);
 }
 
 
 
-void ld_08(Gameboy* const gb)
-{
-	ASSERT_INSTR_IMPL(); 
-	gb->cpu.AddPC(2);
-}
+void ld_08(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
 
 
 void add_09(Gameboy* const gb) 
 {
-	// ADD HL,BC
-	// 1  8
-	// - 0 H C
+	// ADD HL,BC ( flags effect: - 0 H C )
 	gb->cpu.ADDHL(gb->cpu.GetBC());
 }
 
@@ -586,10 +575,8 @@ void daa_27(Gameboy* const gb)
 	}
 
 	gb->cpu.SetA(static_cast<uint8_t>(bcd));
-	gb->cpu.ClearFlags(CPU::FLAG_H);
-	gb->cpu.SetFlags(CheckZ(bcd));
-	if (bcd >= 0x100)
-		gb->cpu.SetFlags(CPU::FLAG_C);
+	const uint8_t carry_flag = bcd >= 100 ? CPU::FLAG_C : 0;
+	gb->cpu.SetF(CheckZ(bcd) | gb->cpu.GetFlags(CPU::FLAG_N) | carry_flag);
 }
 
 
@@ -718,12 +705,9 @@ void ld_2E(Gameboy* const gb)
 
 void cpl_2F(Gameboy* const gb) 
 {
-	// CPL
-	// Complement A register, flip all bits
-	// operands: 0
-	// clock cycles: 4
+	// CPL ( Complement A register, flip all bits )
 	// flags affected: - 1 1 -
-	const auto a = gb->cpu.GetA();
+	const uint8_t a = gb->cpu.GetA();
 	const uint8_t result = ~a;
 	gb->cpu.SetA(result);
 	gb->cpu.SetFlags(CPU::FLAG_N | CPU::FLAG_H);
@@ -1770,19 +1754,12 @@ void and_A0(Gameboy* const gb)
 
 void and_A1(Gameboy* const gb) 
 {
-	// AND B
-	// logical AND on B with A, result in A
-	// operands: 0
-	// clock cycles: 4
+	// AND C ( logical AND on C with A, result in A )
 	// flags affected: Z 0 1 0
-	const auto b = gb->cpu.GetB();
-	const auto a = gb->cpu.GetA();
-	const auto result = gb->cpu.AND(b, a);
+	const uint8_t c = gb->cpu.GetC();
+	const uint8_t a = gb->cpu.GetA();
+	const auto result = gb->cpu.AND(c, a);
 	gb->cpu.SetA(result);
-	
-	
-	
-	
 }
 
 
@@ -2502,14 +2479,10 @@ void and_E6(Gameboy* const gb)
 	// clock cycles: 8
 	// flags affected: Z 0 1 0
 	const auto a = gb->cpu.GetA();
-	const auto pc = gb->cpu.GetPC();
-	const auto d8 = gb->ReadU8(pc);
+	const auto d8 = gb->ReadU8(gb->cpu.GetPC());
 	const auto result = gb->cpu.AND(d8, a);
 	gb->cpu.SetA(result);
 	gb->cpu.AddPC(1);
-	
-	
-	
 }
 
 
@@ -2648,17 +2621,10 @@ void ldh_F0(Gameboy* const gb)
 {
 	// LDH A, (a8)
 	// put content of memory address  (0xFF00 + immediate 8 bit value(a8)) into A
-	// operands: 1
-	// clock cycles: 12
-	const auto pc = gb->cpu.GetPC();
-	const auto a8 = gb->ReadU8(pc);
-	const uint16_t evaluated_address = 0xFF00 + a8;
-	const auto value = gb->ReadU8(evaluated_address);
+	const uint8_t a8 = gb->ReadU8(gb->cpu.GetPC());
+	const uint8_t value = gb->ReadU8(0xFF00 + a8);
 	gb->cpu.SetA(value);
 	gb->cpu.AddPC(1);
-
-
-	
 }
 
 

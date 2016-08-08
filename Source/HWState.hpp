@@ -17,25 +17,28 @@ enum Interrupt : uint8_t
 struct HWState
 {
 
-	enum HWFlags : uint8_t
+	enum Flags : uint8_t
 	{
 		INTERRUPT_MASTER_ENABLED = 0x01,
-		INTERRUPT_MASTER_ACTIVE = 0x02
+		INTERRUPT_MASTER_ACTIVE = 0x02,
 	};
 
 
 	bool GetIntMaster() const;
 	bool GetIntActive() const;
+	Flags GetFlags(Flags hwflags) const;
 	uint8_t GetPendentInts() const;
 	void EnableIntMaster();
 	void EnableIntActive();
 	void DisableIntMaster();
 
+	void SetFlags(Flags hwflags);
+	void ClearFlags(Flags hwflags);
+
 	void EnableInt(const Interrupt intrr);
 	void DisableInt(const Interrupt interr);
 	void RequestInt(const Interrupt interr);
 	void ClearInt(const Interrupt interr);
-
 
 
 	uint8_t flags;
@@ -48,12 +51,18 @@ struct HWState
 
 inline bool HWState::GetIntMaster() const 
 {
-	return (flags & HWFlags::INTERRUPT_MASTER_ENABLED) != 0;
+	return (flags & INTERRUPT_MASTER_ENABLED) != 0;
 }
 
 inline bool HWState::GetIntActive() const 
 {
-	return (flags & HWFlags::INTERRUPT_MASTER_ACTIVE) != 0;
+	return (flags & INTERRUPT_MASTER_ACTIVE) != 0;
+}
+
+
+inline HWState::Flags HWState::GetFlags(Flags hwflags) const
+{
+	return static_cast<Flags>(flags & hwflags);
 }
 
 
@@ -64,22 +73,35 @@ inline uint8_t HWState::GetPendentInts() const
 
 
 
+
+
+
 inline void HWState::EnableIntMaster() 
 {
-	flags |= HWFlags::INTERRUPT_MASTER_ENABLED;
+	flags |= INTERRUPT_MASTER_ENABLED;
 }
 
 inline void HWState::EnableIntActive()
 {
-	flags |= HWFlags::INTERRUPT_MASTER_ACTIVE;
+	flags |= INTERRUPT_MASTER_ACTIVE;
 }
 
 inline void HWState::DisableIntMaster() 
 {
-	flags &= ~(HWFlags::INTERRUPT_MASTER_ENABLED 
-	           | HWFlags::INTERRUPT_MASTER_ACTIVE);
+	flags &= ~(INTERRUPT_MASTER_ENABLED 
+	           | INTERRUPT_MASTER_ACTIVE);
 }
 
+
+inline void HWState::SetFlags(Flags hwflags)
+{
+	flags |= hwflags;
+}
+
+inline void HWState::ClearFlags(Flags hwflags)
+{
+	flags &= ~hwflags;
+}
 
 
 

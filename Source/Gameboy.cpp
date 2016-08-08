@@ -78,6 +78,7 @@ bool Gameboy::Reset()
 	gpu.clock = 0;
 
 	keys.value = 0xCF;
+	keys.buttons = 0xff;
 
 	hwstate.flags = 0x00;
 	hwstate.interrupt_enable = 0x00;
