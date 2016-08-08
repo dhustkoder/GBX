@@ -11,9 +11,7 @@ namespace {
 static bool InitSDL();
 static void QuitSDL();
 static void UpdateKey(const uint8_t val, const SDL_Scancode kcode, gbx::Keys* const keys);
-static void UpdateGraphics(const gbx::Gameboy* const gb);
-
-static SDL_Event event;
+static void UpdateGraphics(const gbx::Gameboy& gb);
 
 }
 
@@ -48,19 +46,17 @@ int main(int argc, char** argv)
 		QuitSDL();
 	});
 
+	SDL_Event event;
+
 	while (true) {
 
 		if (SDL_PollEvent(&event)) {
 			auto etype = event.type;
 			if (etype == SDL_QUIT)
 				break;
-			while (etype == SDL_KEYDOWN || etype == SDL_KEYUP) {
-				UpdateKey(etype == SDL_KEYDOWN ? 0 : 1, 
+			else if (etype == SDL_KEYDOWN || etype == SDL_KEYUP)
+				UpdateKey(etype == SDL_KEYDOWN ? 0 : 1,
 				          event.key.keysym.scancode, &gameboy->keys);
-				if (!SDL_PollEvent(&event))
-					break;
-				etype = event.type;
-			}
 		}
 
 		do {
@@ -68,8 +64,9 @@ int main(int argc, char** argv)
 			gameboy->UpdateGPU();
 			gameboy->UpdateInterrupts();
 		} while (gameboy->cpu.GetClock() < 71000);
+
 		gameboy->cpu.SetClock(0);
-		UpdateGraphics(gameboy);
+		UpdateGraphics(*gameboy);
 		SDL_Delay(10);
 	}
 
@@ -91,8 +88,8 @@ enum Color : Uint32
 {
 	BLACK = 0x00000000,
 	WHITE = 0xFFFFFF00,
-	LIGHT_GREY = 0xD3D3D300,
-	DARK_GREY = 0xA9A9A900,
+	LIGHT_GREY = 0xD0D0D000,
+	DARK_GREY = 0xA0A0A000,
 };
 
 
@@ -123,33 +120,33 @@ static SDL_Renderer* renderer;
 static Uint32 gfx_buffer[GFX_BUFFER_SIZE] = { 0 };
 
 
-static void DrawSprites(const gbx::Gameboy* const gb);
+static void DrawSprites(const gbx::Gameboy& gb);
 static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y);
 inline void DrawTileMap(const Tile* tiles, const uint8_t* tile_map, const uint8_t bgp, 
                          const uint8_t screen_x, const uint8_t screen_y);
 
 
 
-static void UpdateGraphics(const gbx::Gameboy* const gb)
+static void UpdateGraphics(const gbx::Gameboy& gb)
 {
-	const uint8_t lcdc = gb->gpu.control;
-	const uint8_t bgp = gb->gpu.bgp;
+	const uint8_t lcdc = gb.gpu.control;
+	const uint8_t bgp = gb.gpu.bgp;
 	const bool tile_data_bit = gbx::GetBit(lcdc, 4);
-	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb->memory.vram)
-	                                        : reinterpret_cast<const Tile*>(gb->memory.vram + 0x800);
+	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb.memory.vram)
+	                                        : reinterpret_cast<const Tile*>(gb.memory.vram + 0x800);
 	SDL_RenderClear(renderer);
 
 	if (gbx::GetBit(lcdc, 0)) {
-		const uint8_t scy = gb->gpu.scy;
-		const uint8_t scx = gb->gpu.scx;
-		const uint8_t* tile_map = gbx::GetBit(lcdc, 3) ? gb->memory.vram + 0x1C00 : gb->memory.vram + 0x1800;
+		const uint8_t scy = gb.gpu.scy;
+		const uint8_t scx = gb.gpu.scx;
+		const uint8_t* tile_map = gbx::GetBit(lcdc, 3) ? gb.memory.vram + 0x1C00 : gb.memory.vram + 0x1800;
 		DrawTileMap(tiles, tile_map, bgp, scx, scy);
 	}
 
 	if (gbx::GetBit(lcdc, 5)) {
-		const uint8_t wy = gb->gpu.wy;
-		const uint8_t wx = gb->gpu.wx - 7;
-		const uint8_t* tile_map = gbx::GetBit(lcdc, 6) ? gb->memory.vram + 0x1C00 : gb->memory.vram + 0x1800;
+		const uint8_t wy = gb.gpu.wy;
+		const uint8_t wx = gb.gpu.wx - 7;
+		const uint8_t* tile_map = gbx::GetBit(lcdc, 6) ? gb.memory.vram + 0x1C00 : gb.memory.vram + 0x1800;
 		DrawTileMap(tiles, tile_map, bgp, wx, wy);
 	}
 
@@ -164,17 +161,18 @@ static void UpdateGraphics(const gbx::Gameboy* const gb)
 
 
 
-static void DrawSprites(const gbx::Gameboy* const gb)
+static void DrawSprites(const gbx::Gameboy& gb)
 {
-	const auto bgp = gb->gpu.bgp;
-	const Tile* tiles = reinterpret_cast<const Tile*>(gb->memory.vram);
-	const SpriteAttributes* sprites_attr = reinterpret_cast<const SpriteAttributes*>(gb->memory.oam);
+	const auto bgp = gb.gpu.bgp;
+	const Tile* tiles = reinterpret_cast<const Tile*>(gb.memory.vram);
+	const SpriteAttributes* sprites_attr = reinterpret_cast<const SpriteAttributes*>(gb.memory.oam);
+
 	for (uint8_t i = 0; i < 40; ++i) {
 		const uint8_t pattern = sprites_attr[i].pattern;
 		if (pattern != 0) {
 			const uint8_t ypos = sprites_attr[i].ypos - 16;
 			const uint8_t xpos = sprites_attr[i].xpos - 8;
-			if (xpos<160 && ypos <144)
+			if (xpos < 160 && ypos < 144)
 				DrawTile(tiles[pattern], bgp, xpos, ypos);
 		}
 	}
@@ -282,6 +280,7 @@ static bool InitSDL()
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		WIN_WIDTH * 2, WIN_HEIGHT * 2, 0);
+
 	if (!window) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n", SDL_GetError());
 		goto free_sdl;
@@ -306,6 +305,7 @@ static bool InitSDL()
 	}
 
 	return true;
+
 free_renderer:
 	SDL_DestroyRenderer(renderer);
 free_window:
