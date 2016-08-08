@@ -11,7 +11,8 @@ struct CPU
 		FLAG_Z = 0x80, 
 		FLAG_N = 0x40, 
 		FLAG_H = 0x20, 
-		FLAG_C = 0x10
+		FLAG_C = 0x10,
+		FLAG_NULL = 0x00
 	};
 
 	uint8_t GetA() const;

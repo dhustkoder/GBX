@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "Gameboy.hpp"
 #include "Instructions.hpp"
+
+
 namespace gbx {
 
 
@@ -33,11 +35,7 @@ void nop_00(Gameboy* const)
 void ld_01(Gameboy* const gb) 
 {
 	// LD BC, d16
-	// load immediate 16 bits value into BC
-	// operands: 2
-	// clock cyles: 10 or 12 ?
-	const uint16_t pc = gb->cpu.GetPC();
-	const uint16_t d16 = gb->ReadU16(pc);
+	const uint16_t d16 = gb->ReadU16(gb->cpu.GetPC());
 	gb->cpu.SetBC(d16);
 	gb->cpu.AddPC(2);
 }
@@ -45,85 +43,37 @@ void ld_01(Gameboy* const gb)
 
 
 
-
-
-
-
 void ld_02(Gameboy* const gb) 
 {
 	// LD (BC), A
-	// value in register A is stored in memory location pointed by BC
-	// operands: 0
-	// clock cycles: 7 or 8 ?
-	const auto bc = gb->cpu.GetBC();
-	const auto a = gb->cpu.GetA();
-	gb->WriteU8(bc, a);
-	
-	
+	gb->WriteU8(gb->cpu.GetBC(), gb->cpu.GetA());
 }
-
-
-
-
 
 
 
 void inc_03(Gameboy* const gb) 
 {
-	// INC BC
-	// adds one to BC
-	// operands: 0
-	// clock cyles: 6 or 8 ?
-	const auto bc = gb->cpu.GetBC();
-	const uint16_t result = bc + 1;
-	gb->cpu.SetBC(result);	
-
-	
+	// INC BC ( no flags effect )
+	gb->cpu.SetBC( gb->cpu.GetBC() + 1 );	
 }
-
-
-
-
-
 
 
 
 void inc_04(Gameboy* const gb) 
 { 
-	// INC B
-	// adds one to B
-	// operands: 0
-	// clock cyles: 4
-	// flags affected Z 0 H -
-	const auto b = gb->cpu.GetB();
-	const auto result = gb->cpu.INC(b);
-	gb->cpu.SetB(result);
-	
-
-	
-	
+	// INC B (flags affected Z 0 H - )
+	const uint8_t b = gb->cpu.GetB();
+	gb->cpu.SetB( gb->cpu.INC(b) );
 }
-
-
-
-
 
 
 
 void dec_05(Gameboy* const gb) 
 {
-	// DEC B
-	// decrement B by 1
-	// operands: 0
-	// clock cycles: 4
-	// flags affected Z 1 H -
-	const auto b = gb->cpu.GetB();
-	const auto result = gb->cpu.DEC(b);
-	gb->cpu.SetB(result);
-	
+	// DEC B ( flags affected Z 1 H - )
+	const uint8_t b = gb->cpu.GetB();
+	gb->cpu.SetB( gb->cpu.DEC(b) );
 }
-
-
 
 
 
@@ -131,17 +81,10 @@ void dec_05(Gameboy* const gb)
 void ld_06(Gameboy* const gb) 
 {
 	// LD B, d8
-	// loads immediate 8 bit value into B
-	// operands: 1
-	// clock cycles: 7 or 8 ?
-	const auto pc = gb->cpu.GetPC();
-	const auto d8 = gb->ReadU8(pc);
+	const uint8_t d8 = gb->ReadU8(gb->cpu.GetPC());
 	gb->cpu.SetB(d8);
 	gb->cpu.AddPC(1);
-	
 }
-
-
 
 
 
@@ -153,17 +96,22 @@ void rlca_07(Gameboy* const gb)
 	// operands: 0
 	// clock cycles: 4
 	// flags effect: 0 0 0 C
-	const uint8_t carry = (gb->cpu.GetA() & 0x80) ? CPU::FLAG_C : 0;
-	uint8_t result = gb->cpu.GetA() << 1;
+	const uint8_t a = gb->cpu.GetA();
+	const uint8_t carry = (a & 0x80) ? CPU::FLAG_C : 0;
+	uint8_t result = a << 1;
 	if (carry)
 		++result;
 	gb->cpu.SetA(result);
-	gb->cpu.SetF(carry);
+	gb->cpu.SetFlags(carry);
 }
 
 
 
-void ld_08(Gameboy* const gb){ ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void ld_08(Gameboy* const gb)
+{
+	ASSERT_INSTR_IMPL(); 
+	gb->cpu.AddPC(2);
+}
 
 
 
