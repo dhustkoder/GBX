@@ -40,7 +40,7 @@ void CPU::PrintRegisters() const
 
 
 
-void CPU::ADDHL(const uint16_t second) 
+void CPU::ADD_HL(const uint16_t second) 
 {
 	// flags effect: - 0 H C
 	const auto first = GetHL();

@@ -133,9 +133,8 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		};
 	}
 	else if (address >= 0xFE00) {
-		if (address < 0xFEA0) {
+		if (address < 0xFEA0)
 			memory.oam[address - 0xFE00] = value;
-		}
 	}
 	else if (address >= 0xC000) {
 		if (address < 0xE000)

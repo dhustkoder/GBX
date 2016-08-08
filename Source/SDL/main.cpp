@@ -10,8 +10,9 @@ namespace {
 
 static bool InitSDL();
 static void QuitSDL();
-static void UpdateKey(const uint8_t val, const SDL_Scancode kcode, gbx::Keys* const keys);
+static void UpdateKey(const gbx::KeyState state, const SDL_Scancode kcode, gbx::Keys* const keys);
 static void UpdateGraphics(const gbx::Gameboy& gb);
+
 
 }
 
@@ -52,11 +53,13 @@ int main(int argc, char** argv)
 
 		if (SDL_PollEvent(&event)) {
 			auto etype = event.type;
-			if (etype == SDL_QUIT)
+			if (etype == SDL_QUIT) {
 				break;
-			else if (etype == SDL_KEYDOWN || etype == SDL_KEYUP)
-				UpdateKey(etype == SDL_KEYDOWN ? 0 : 1,
-				          event.key.keysym.scancode, &gameboy->keys);
+			}
+			else if (etype == SDL_KEYDOWN || etype == SDL_KEYUP) {
+				const auto state = etype == SDL_KEYUP ? gbx::KeyState::UP : gbx::KeyState::DOWN;
+				UpdateKey(state, event.key.keysym.scancode, &gameboy->keys);
+			}
 		}
 
 		do {
@@ -124,6 +127,11 @@ static void DrawSprites(const gbx::Gameboy& gb);
 static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y);
 inline void DrawTileMap(const Tile* tiles, const uint8_t* tile_map, const uint8_t bgp, 
                          const uint8_t screen_x, const uint8_t screen_y);
+
+
+
+
+
 
 
 
@@ -214,13 +222,8 @@ static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, co
 	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) -> Color {
 		const bool up_bit = (tile.data[y] & (0x80 >> x)) != 0;
 		const bool down_bit = (tile.data[y + 1] & (0x80 >> x)) != 0;
-		if (up_bit && down_bit)
-			return get_color(bgp >> 6);
-		else if (up_bit && !down_bit)
-			return get_color((bgp & 0x30) >> 4);
-		else if (!up_bit && down_bit)
-			return get_color((bgp & 0x0C) >> 2);
-		return get_color((bgp & 0x03));
+		return up_bit ? down_bit ? get_color(bgp >> 6) : get_color((bgp & 0x30) >> 4) 
+		       : down_bit ? get_color((bgp & 0x0C) >> 2) : get_color((bgp & 0x03));
 	};
 
 	for (size_t tile_y = 0; tile_y < 8; ++tile_y) {
@@ -241,17 +244,17 @@ static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, co
 
 
 
-static void UpdateKey(const uint8_t val, const SDL_Scancode kcode, gbx::Keys* const keys)
+static void UpdateKey(gbx::KeyState state, const SDL_Scancode kcode, gbx::Keys* const keys)
 {
 	switch (kcode) {
-	case SDL_SCANCODE_Z: keys->pad.bit.a = val; break;
-	case SDL_SCANCODE_X: keys->pad.bit.b = val; break;
-	case SDL_SCANCODE_C: keys->pad.bit.select = val; break;
-	case SDL_SCANCODE_V: keys->pad.bit.start = val; break;
-	case SDL_SCANCODE_RIGHT: keys->pad.bit.right = val; break;
-	case SDL_SCANCODE_LEFT: keys->pad.bit.left = val; break;
-	case SDL_SCANCODE_UP: keys->pad.bit.up = val; break;
-	case SDL_SCANCODE_DOWN: keys->pad.bit.down = val; break;
+	case SDL_SCANCODE_Z: keys->pad.bit.a = state; break;
+	case SDL_SCANCODE_X: keys->pad.bit.b = state; break;
+	case SDL_SCANCODE_C: keys->pad.bit.select = state; break;
+	case SDL_SCANCODE_V: keys->pad.bit.start = state; break;
+	case SDL_SCANCODE_RIGHT: keys->pad.bit.right = state; break;
+	case SDL_SCANCODE_LEFT: keys->pad.bit.left = state; break;
+	case SDL_SCANCODE_UP: keys->pad.bit.up = state; break;
+	case SDL_SCANCODE_DOWN: keys->pad.bit.down = state; break;
 	default: break;
 	}
 }

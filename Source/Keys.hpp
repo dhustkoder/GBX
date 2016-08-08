@@ -5,6 +5,14 @@
 
 namespace gbx {
 
+enum KeyState : uint8_t
+{
+	DOWN = 0x00,
+	UP = 0x01
+};
+
+
+
 struct Keys
 {
 	union

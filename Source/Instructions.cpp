@@ -109,7 +109,7 @@ void ld_08(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 void add_09(Gameboy* const gb) 
 {
 	// ADD HL,BC ( flags effect: - 0 H C )
-	gb->cpu.ADDHL(gb->cpu.GetBC());
+	gb->cpu.ADD_HL(gb->cpu.GetBC());
 }
 
 
@@ -354,7 +354,7 @@ void add_19(Gameboy* const gb)
 	// clock cycles: 8
 	// flags affected: - 0 H C
 	const auto de = gb->cpu.GetDE();
-	gb->cpu.ADDHL(de);
+	gb->cpu.ADD_HL(de);
 }
 
 
