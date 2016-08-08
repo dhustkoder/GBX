@@ -141,7 +141,6 @@ static void UpdateGraphics(const gbx::Gameboy& gb)
 	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb.memory.vram)
 	                                        : reinterpret_cast<const Tile*>(gb.memory.vram + 0x800);
 	int pitch;
-	SDL_RenderClear(renderer);
 	SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch);
 
 	if (gbx::GetBit(lcdc, 0)) {
@@ -281,7 +280,7 @@ static bool InitSDL()
 		return false;
 	}
 
-	window = SDL_CreateWindow("SDL2",
+	window = SDL_CreateWindow("GBX",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		WIN_WIDTH * 2, WIN_HEIGHT * 2, 0);
@@ -308,6 +307,7 @@ static bool InitSDL()
 		fprintf(stderr, "failed to create SDL_Texture: %s\n", SDL_GetError());
 		goto free_renderer;
 	}
+
 
 	return true;
 

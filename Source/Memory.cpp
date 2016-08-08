@@ -39,6 +39,7 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 	else if (address >= 0xFF00) {
 		switch (address) {
 		case 0xFF00: return keys.value;
+		case 0xFF04: return static_cast<uint8_t>(rand());
 		case 0xFF0F: return hwstate.interrupt_flags;
 		case 0xFF40: return gpu.control;
 		case 0xFF41: return gpu.status;

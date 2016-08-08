@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <Utix/Alloc_t.h>
 #include "Debug.hpp"
 #include "Instructions.hpp"
@@ -58,6 +59,7 @@ bool Gameboy::Reset()
 	}
 
 	// init the system, Gameboy mode
+	srand(static_cast<unsigned int>(time(0)));
 	cpu.SetPC(CARTRIDGE_ENTRY_ADDR);
 	cpu.SetSP(0xfffe);
 	cpu.SetAF(0x01B0);
