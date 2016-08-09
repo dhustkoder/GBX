@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 				break;
 
 			while (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-				const auto state = event.type == SDL_KEYUP ? gbx::KeyState::UP : gbx::KeyState::DOWN;
+				const auto state = event.type == SDL_KEYUP ? gbx::KEYUP : gbx::KEYDOWN;
 				UpdateKey(state, event.key.keysym.scancode, &gameboy->keys);
 				if (!SDL_PollEvent(&event))
 					break;
