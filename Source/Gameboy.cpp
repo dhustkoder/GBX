@@ -59,7 +59,6 @@ bool Gameboy::Reset()
 	}
 
 	// init the system, Gameboy mode
-	srand(static_cast<unsigned int>(time(0)));
 	cpu.SetPC(CARTRIDGE_ENTRY_ADDR);
 	cpu.SetSP(0xfffe);
 	cpu.SetAF(0x01B0);
@@ -83,6 +82,7 @@ bool Gameboy::Reset()
 	keys.pad.all = 0xff;
 
 	hwstate.flags = 0x00;
+	hwstate.divider = 0x00;
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
 	
@@ -132,9 +132,7 @@ void Gameboy::Step()
 	const uint16_t pc = cpu.GetPC();
 	const uint8_t opcode = ReadU8(pc);
 	cpu.AddPC(1);
-
 	debug_printf("PC: %4x | OP: %4x\n", pc, opcode);
-
 	main_instructions[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
 	cpu.AddCycles(cycles);
@@ -207,8 +205,25 @@ void Gameboy::UpdateInterrupts()
 
 
 
+// just avoiding mod
+void Gameboy::Run(const uint32_t cycles)
+{
+	uint32_t last_cycles = 0x00;
+	uint32_t clock = 0x00;
+	do {
+		Step();
+		UpdateGPU();
+		UpdateInterrupts();
+		clock = cpu.GetClock();
+		if ((clock - last_cycles) > 0xff) {
+			++hwstate.divider;
+			last_cycles = clock;
+		}
 
+	} while (clock < cycles);
 
+	cpu.SetClock(0);
+}
 
 
 

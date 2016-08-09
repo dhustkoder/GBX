@@ -10,8 +10,8 @@ namespace {
 
 static bool InitSDL();
 static void QuitSDL();
-static void UpdateKey(const gbx::KeyState state, const SDL_Scancode kcode, gbx::Keys* const keys);
-static void UpdateGraphics(const gbx::Gameboy& gb);
+static void UpdateKey(const gbx::KeyState state, const SDL_Scancode keycode, gbx::Keys* const keys);
+static void RenderGraphics(const gbx::Gameboy& gb);
 
 
 }
@@ -63,14 +63,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-		do {
-			gameboy->Step();
-			gameboy->UpdateGPU();
-			gameboy->UpdateInterrupts();
-		} while (gameboy->cpu.GetClock() < 71000);
-
-		gameboy->cpu.SetClock(0);
-		UpdateGraphics(*gameboy);
+		gameboy->Run(69888);
+		RenderGraphics(*gameboy);
 		SDL_Delay(10);
 	}
 
@@ -133,7 +127,7 @@ inline void DrawTileMap(const Tile* tiles, const uint8_t* tile_map, const uint8_
 
 
 
-static void UpdateGraphics(const gbx::Gameboy& gb)
+static void RenderGraphics(const gbx::Gameboy& gb)
 {
 	const uint8_t lcdc = gb.gpu.control;
 	const uint8_t bgp = gb.gpu.bgp;
@@ -244,9 +238,9 @@ static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, co
 
 
 
-static void UpdateKey(gbx::KeyState state, const SDL_Scancode kcode, gbx::Keys* const keys)
+static void UpdateKey(const gbx::KeyState state, const SDL_Scancode keycode, gbx::Keys* const keys)
 {
-	switch (kcode) {
+	switch (keycode) {
 	case SDL_SCANCODE_Z: keys->pad.bit.a = state; break;
 	case SDL_SCANCODE_X: keys->pad.bit.b = state; break;
 	case SDL_SCANCODE_C: keys->pad.bit.select = state; break;

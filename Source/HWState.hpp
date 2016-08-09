@@ -42,6 +42,7 @@ struct HWState
 
 
 	uint8_t flags;
+	uint8_t divider;
 	uint8_t interrupt_enable;
 	uint8_t interrupt_flags;
 };
