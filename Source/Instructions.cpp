@@ -1707,8 +1707,7 @@ void rst_EF(Gameboy* const gb)
 // 0XF0
 void ldh_F0(Gameboy* const gb) 
 {
-	// LDH A, (a8)
-	// put content of memory address  (0xFF00 + immediate 8 bit value(a8)) into A
+	// LDH A, (a8) ( put content of memory address  (0xFF00 + immediate 8 bit value(a8)) into A )
 	gb->cpu.SetA(gb->ReadU8(get_a8(gb)));
 }
 

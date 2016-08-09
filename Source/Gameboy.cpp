@@ -202,9 +202,6 @@ void Gameboy::UpdateInterrupts()
 
 
 
-
-
-
 // just avoiding mod
 void Gameboy::Run(const uint32_t cycles)
 {
@@ -224,6 +221,12 @@ void Gameboy::Run(const uint32_t cycles)
 
 	cpu.SetClock(0);
 }
+
+
+
+
+
+
 
 
 

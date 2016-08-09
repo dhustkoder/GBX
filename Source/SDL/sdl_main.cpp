@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		gameboy->Run(69888);
+		gameboy->Run(69000);
 		RenderGraphics(*gameboy);
 		SDL_Delay(10);
 	}
