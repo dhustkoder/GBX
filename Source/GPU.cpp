@@ -18,7 +18,7 @@ enum StatusMask : uint8_t
 
 void Gameboy::UpdateGPU()
 {
-	if (!(gpu.control & GPU::LCD_ON_OFF)) {
+	if (!(gpu.lcdc & GPU::LCD_ON_OFF)) {
 		gpu.clock = 0;
 		gpu.ly = 0;
 		gpu.SetMode(GPU::Mode::VBLANK);
@@ -27,19 +27,19 @@ void Gameboy::UpdateGPU()
 
 	const auto compare_ly = [this]() {
 		if (gpu.ly != gpu.lyc) {
-			if (gpu.status & COINCIDENCE_FLAG)
-				gpu.status &= ~COINCIDENCE_FLAG;
+			if (gpu.stat & COINCIDENCE_FLAG)
+				gpu.stat &= ~COINCIDENCE_FLAG;
 		} else {
-			if (!(gpu.status & COINCIDENCE_FLAG))
-				gpu.status |= COINCIDENCE_FLAG;
-			if (gpu.status & INTERRUPT_ON_COINCIDENCE)
+			if (!(gpu.stat & COINCIDENCE_FLAG))
+				gpu.stat |= COINCIDENCE_FLAG;
+			if (gpu.stat & INTERRUPT_ON_COINCIDENCE)
 				hwstate.RequestInt(INTERRUPT_LCD_STAT);
 		}
 	};
 
 	const auto set_mode_and_check_stat = [this](GPU::Mode mode, StatusMask interrupt_on) {
 		gpu.SetMode(mode);
-		if (gpu.status & interrupt_on)
+		if (gpu.stat & interrupt_on)
 			hwstate.RequestInt(INTERRUPT_LCD_STAT);
 	};
 

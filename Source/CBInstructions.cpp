@@ -424,7 +424,7 @@ void res_86(Gameboy* const gb)
 	// clock cycles: 16
 	const uint16_t hl = gb->cpu.GetHL();
 	const uint8_t value = gb->ReadU8(hl);
-	const uint8_t result = ResBit(value, 2);
+	const uint8_t result = ResBit(2, value);
 	gb->WriteU8(hl, result);
 }
 
@@ -440,7 +440,7 @@ void res_87(Gameboy* const gb)
 	// bytes: 2
 	// clock cycles: 8
 	const auto a = gb->cpu.GetA();
-	const uint8_t result = ResBit(a, 0);
+	const uint8_t result = ResBit(0, a);
 	gb->cpu.SetA(result);
 }
 
@@ -524,7 +524,7 @@ void res_BE(Gameboy* const gb)
 	// RES 7, (HL)
 	const uint16_t hl = gb->cpu.GetHL();
 	const uint8_t val = gb->ReadU8(gb->cpu.GetHL());
-	gb->WriteU8(hl, ResBit(val, 7));
+	gb->WriteU8(hl, ResBit(7, val));
 }
 
 
@@ -566,7 +566,7 @@ void set_D7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D8(Gameboy* const gb)
 { 
 	// SET 3, B
-	gb->cpu.SetB(SetBit(gb->cpu.GetB(), 3));
+	gb->cpu.SetB(SetBit(3, gb->cpu.GetB()));
 }
 
 void set_D9(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -612,7 +612,7 @@ void set_F7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_F8(Gameboy* const gb)
 { 
 	// SET 7, B
-	gb->cpu.SetB(SetBit(gb->cpu.GetB(), 7));
+	gb->cpu.SetB(SetBit(7, gb->cpu.GetB()));
 }
 
 void set_F9(Gameboy* const) { ASSERT_INSTR_IMPL(); }

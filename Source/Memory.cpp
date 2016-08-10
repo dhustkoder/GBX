@@ -41,8 +41,8 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 		case 0xFF00: return keys.value;
 		case 0xFF04: return hwstate.divider;
 		case 0xFF0F: return hwstate.interrupt_flags;
-		case 0xFF40: return gpu.control;
-		case 0xFF41: return gpu.status;
+		case 0xFF40: return gpu.lcdc;
+		case 0xFF41: return gpu.stat;
 		case 0xFF42: return gpu.scy;
 		case 0xFF43: return gpu.scx;
 		case 0xFF44: return gpu.ly;
@@ -103,10 +103,10 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			hwstate.interrupt_flags = value; 
 			break;
 		case 0xFF40:
-			gpu.control = value; 
+			gpu.lcdc = value; 
 			break;
 		case 0xFF41:
-			gpu.status = (value & 0xF8) | (gpu.status & 0x07);
+			gpu.stat = (value & 0xF8) | (gpu.stat & 0x07);
 			break;
 		case 0xFF42:
 			gpu.scy = value;

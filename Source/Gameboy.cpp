@@ -67,8 +67,8 @@ bool Gameboy::Reset()
 	cpu.SetHL(0x014D);
 	cpu.SetClock(0);
 
-	gpu.control = 0x91;
-	gpu.status = 0x00;
+	gpu.lcdc = 0x91;
+	gpu.stat = 0x00;
 	gpu.ly = 0x00;
 	gpu.lyc = 0x00;
 	gpu.scx = 0x00;

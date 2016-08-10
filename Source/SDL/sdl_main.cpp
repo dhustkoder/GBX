@@ -10,8 +10,8 @@ namespace {
 
 static bool InitSDL();
 static void QuitSDL();
-static void UpdateKey(const gbx::KeyState state, const SDL_Scancode keycode, gbx::Keys* const keys);
-static void RenderGraphics(const gbx::Gameboy& gb);
+static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
+static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
 
 
 }
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 		}
 
 		gameboy->Run(69000);
-		RenderGraphics(*gameboy);
+		RenderGraphics(gameboy->gpu, gameboy->memory);
 		SDL_Delay(10);
 	}
 
@@ -81,6 +81,7 @@ int main(int argc, char** argv)
 
 namespace {
 
+// TODO: endiannes checks, this is little endian only
 
 enum Color : Uint32
 {
@@ -91,18 +92,23 @@ enum Color : Uint32
 };
 
 
-struct Tile
+struct TileMap
 {
-	uint8_t data[16];
+	uint8_t data[32][32];
 };
 
-
-struct SpriteAttributes
+struct SpriteAttr
 {
 	uint8_t ypos;
 	uint8_t xpos;
-	uint8_t pattern;
-	uint8_t attr;
+	uint8_t tile_id;
+	uint8_t flags;
+};
+
+
+struct Tile
+{
+	uint8_t data[8][2];
 };
 
 
@@ -114,45 +120,45 @@ static SDL_Texture* texture;
 static SDL_Renderer* renderer;
 static Uint32* gfx_buffer;
 
-
-static void DrawSprites(const gbx::Gameboy& gb);
-static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y);
-inline void DrawTileMap(const Tile* tiles, const uint8_t* tile_map, const uint8_t bgp, 
-                         const uint8_t screen_x, const uint8_t screen_y);
-
-
-
-
+inline Color CheckPixel(uint8_t x, uint8_t y);
+inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
+static void DrawBG(const gbx::GPU& gpu, const gbx::Memory& memory);
+static void DrawWIN(const gbx::GPU& gpu, const gbx::Memory& memory);
+static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
+static void DrawTileMap(const Tile* tiles, const TileMap* map, bool unsigned_map);
+static void DrawTile(const Tile& tile, uint8_t x, uint8_t y);
 
 
 
 
-static void RenderGraphics(const gbx::Gameboy& gb)
+
+
+
+
+static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
-	const uint8_t lcdc = gb.gpu.control;
-	const uint8_t bgp = gb.gpu.bgp;
-	const bool tile_data_bit = gbx::GetBit(lcdc, 4);
-	const Tile* const tiles = tile_data_bit ? reinterpret_cast<const Tile*>(gb.memory.vram)
-	                                        : reinterpret_cast<const Tile*>(gb.memory.vram + 0x800);
+	SDL_RenderClear(renderer);
+	
+	if (!gpu.BitLCDC(gbx::GPU::LCD_ON_OFF)) {
+		SDL_RenderPresent(renderer);
+		return;
+	}
+	
 	int pitch;
-	SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch);
-
-	if (gbx::GetBit(lcdc, 0)) {
-		const uint8_t scy = gb.gpu.scy;
-		const uint8_t scx = gb.gpu.scx;
-		const uint8_t* tile_map = gbx::GetBit(lcdc, 3) ? gb.memory.vram + 0x1C00 : gb.memory.vram + 0x1800;
-		DrawTileMap(tiles, tile_map, bgp, scx, scy);
+	
+	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
+		fprintf(stderr, "failed to lock texture");
+		return;
 	}
 
-	if (gbx::GetBit(lcdc, 5)) {
-		const uint8_t wy = gb.gpu.wy;
-		const uint8_t wx = gb.gpu.wx - 7;
-		const uint8_t* tile_map = gbx::GetBit(lcdc, 6) ? gb.memory.vram + 0x1C00 : gb.memory.vram + 0x1800;
-		DrawTileMap(tiles, tile_map, bgp, wx, wy);
-	}
+	if (gpu.BitLCDC(gbx::GPU::BG_ON_OFF))
+		DrawBG(gpu, memory);
 
-	if (gbx::GetBit(lcdc, 1))
-		DrawSprites(gb);
+	if (gpu.BitLCDC(gbx::GPU::WIN_ON_OFF))
+		DrawWIN(gpu, memory);
+
+	if (gpu.BitLCDC(gbx::GPU::OBJ_ON_OFF))
+		DrawOBJ(gpu, memory);
 
 
 	SDL_UnlockTexture(texture);
@@ -162,20 +168,49 @@ static void RenderGraphics(const gbx::Gameboy& gb)
 
 
 
-
-static void DrawSprites(const gbx::Gameboy& gb)
+static void DrawBG(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
-	const auto bgp = gb.gpu.bgp;
-	const Tile* tiles = reinterpret_cast<const Tile*>(gb.memory.vram);
-	const SpriteAttributes* sprites_attr = reinterpret_cast<const SpriteAttributes*>(gb.memory.oam);
+	const bool tile_data_select = gpu.BitLCDC(gbx::GPU::BG_WIN_TILE_DATA_SELECT);
+	const bool tile_map_select = gpu.BitLCDC(gbx::GPU::BG_TILE_MAP_SELECT);
+	
+	auto tiles = tile_data_select ? reinterpret_cast<const Tile*>(memory.vram)
+	                              : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
+
+	auto map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
+		                       : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
+
+	DrawTileMap(tiles, map, tile_data_select);
+}
+
+
+
+static void DrawWIN(const gbx::GPU& gpu, const gbx::Memory& memory)
+{
+	const bool tile_data_select = gpu.BitLCDC(gbx::GPU::BG_WIN_TILE_DATA_SELECT);
+	const bool tile_map_select = gpu.BitLCDC(gbx::GPU::WIN_TILE_MAP_SELECT);
+
+	auto tiles = tile_data_select ? reinterpret_cast<const Tile*>(memory.vram)
+	                              : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
+
+	auto map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
+	                           : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
+
+	DrawTileMap(tiles, map, tile_data_select);
+}
+
+
+
+static void DrawOBJ(const gbx::GPU&, const gbx::Memory& memory)
+{
+	auto sprite_attr = reinterpret_cast<const SpriteAttr*>(memory.oam);
+	auto tiles = reinterpret_cast<const Tile*>(memory.vram);
 
 	for (uint8_t i = 0; i < 40; ++i) {
-		const uint8_t pattern = sprites_attr[i].pattern;
-		if (pattern != 0) {
-			const uint8_t ypos = sprites_attr[i].ypos - 16;
-			const uint8_t xpos = sprites_attr[i].xpos - 8;
-			if (xpos < 160 && ypos < 144)
-				DrawTile(tiles[pattern], bgp, xpos, ypos);
+		const auto tile_id = sprite_attr[i].tile_id;
+		if (tile_id != 0) {
+			const uint8_t xpos = sprite_attr[i].xpos - 8;
+			const uint8_t ypos = sprite_attr[i].ypos - 16;
+			DrawTile(tiles[tile_id], xpos, ypos);
 		}
 	}
 }
@@ -183,62 +218,56 @@ static void DrawSprites(const gbx::Gameboy& gb)
 
 
 
-inline void DrawTileMap(const Tile* const tiles, const uint8_t* const tile_map, const uint8_t bgp, 
-                         const uint8_t screen_x, const uint8_t screen_y) 
+static void DrawTileMap(const Tile* tiles, const TileMap* map, bool unsigned_map)
 {
-	for (uint8_t y = 0; y < 18; ++y)
-		for (uint8_t x = 0; x < 20; ++x)
-			DrawTile(tiles[tile_map[(y + screen_x) * 32 + (x + screen_y)]], bgp, x * 8, y * 8);
+	if (unsigned_map) {
+		for (uint8_t y = 0; y < 18; ++y)
+			for (uint8_t x = 0; x < 20; ++x)
+				DrawTile(tiles[map->data[y][x]], x * 8, y * 8);
+	}
+	else {
+		for (uint8_t y = 0; y < 18; ++y)
+			for (uint8_t x = 0; x < 20; ++x)
+				DrawTile(tiles[(int8_t)map->data[y][x]], x * 8, y * 8);
+	}
 }
 
 
-
-
-
-
-
-static void DrawTile(const Tile& tile, const uint8_t bgp, const size_t win_x, const size_t win_y)
+static void DrawTile(const Tile& tile, uint8_t x, uint8_t y)
 {
-
-	const auto set_gfx = [](const Color pixel, size_t x, size_t y) {
-		gfx_buffer[(y*WIN_WIDTH) + x] = pixel;
+	const auto solve_color = [](const Tile& tile, uint8_t y, uint8_t bit) -> Color {
+		const bool up_bit = (tile.data[y][0] & (0x80 >> bit)) != 0;
+		const bool down_bit = (tile.data[y][1] & (0x80 >> bit)) != 0;
+		return up_bit ? down_bit ? BLACK : DARK_GREY :
+			down_bit ? LIGHT_GREY : WHITE;
 	};
 
-	const auto get_color = [](const uint8_t val) -> Color {
-		switch (val) {
-		case 0x00: return WHITE;
-		case 0x01: return LIGHT_GREY;
-		case 0x02: return DARK_GREY;
-		default: return BLACK;
-		};
-	};
-
-	const auto get_pixel = [=](const Tile& tile, size_t x, size_t y) -> Color {
-		const bool up_bit = (tile.data[y] & (0x80 >> x)) != 0;
-		const bool down_bit = (tile.data[y + 1] & (0x80 >> x)) != 0;
-		return up_bit ? down_bit ? get_color(bgp >> 6) : get_color((bgp & 0x30) >> 4) 
-		       : down_bit ? get_color((bgp & 0x0C) >> 2) : get_color((bgp & 0x03));
-	};
-
-	for (size_t tile_y = 0; tile_y < 8; ++tile_y) {
-		for (size_t tile_x = 0; tile_x < 8; ++tile_x) {
-			const auto pixel = get_pixel(tile, tile_x, tile_y * 2);
-			set_gfx(pixel, win_x + tile_x, win_y + tile_y);
+	for (uint8_t tile_y = 0; tile_y < 8; ++tile_y) {
+		for (uint8_t bit = 0; bit < 8; ++bit) {
+			const auto pixel = solve_color(tile, tile_y, bit);
+			DrawPixel(pixel, x + bit, y + tile_y);
 		}
 	}
 }
 
 
 
+inline Color CheckPixel(uint8_t x, uint8_t y)
+{
+	return static_cast<Color>(gfx_buffer[(y * WIN_WIDTH) + x]);
+}
+
+
+inline void DrawPixel(Color pixel, uint8_t x, uint8_t y)
+{
+	gfx_buffer[(y * WIN_WIDTH) + x] = pixel;
+}
 
 
 
 
 
-
-
-
-static void UpdateKey(const gbx::KeyState state, const SDL_Scancode keycode, gbx::Keys* const keys)
+static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 {
 	switch (keycode) {
 	case SDL_SCANCODE_Z: keys->pad.bit.a = state; break;
