@@ -476,7 +476,17 @@ void res_9A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_9B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_9C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_9D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void res_9E(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+
+void res_9E(Gameboy* const gb) 
+{ 
+	// RES 3, (HL)
+	const uint16_t hl = gb->cpu.GetHL();
+	const uint8_t result = ResBit(3, gb->ReadU8(hl));
+	gb->WriteU8(hl, result);
+}
+
+
 void res_9F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 
@@ -554,7 +564,13 @@ void set_CF(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 
 // 0xD0
-void set_D0(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void set_D0(Gameboy* const gb) 
+{ 
+	// SET 2, B
+	gb->cpu.SetB(SetBit(2, gb->cpu.GetB()));
+}
+
+
 void set_D1(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D2(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D3(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -574,7 +590,17 @@ void set_DA(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_DB(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_DC(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_DD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void set_DE(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+
+void set_DE(Gameboy* const gb) 
+{ 
+	// SET 3, (HL)
+	const uint16_t hl = gb->cpu.GetHL();
+	const uint8_t result = SetBit(3, gb->ReadU8(hl));
+	gb->WriteU8(hl, result);
+}
+
+
 void set_DF(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 

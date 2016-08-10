@@ -48,6 +48,8 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 		case 0xFF44: return gpu.ly;
 		case 0xFF45: return gpu.lyc;
 		case 0xFF47: return gpu.bgp;
+		case 0xFF48: return gpu.obp0;
+		case 0xFF49: return gpu.obp1;
 		case 0xFF4A: return gpu.wy;
 		case 0xFF4B: return gpu.wx;
 		default:
@@ -125,6 +127,12 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			break;
 		case 0xFF47:
 			gpu.bgp = value;
+			break;
+		case 0xFF48:
+			gpu.obp0 = value;
+			break;
+		case 0xFF49:
+			gpu.obp1 = value;
 			break;
 		case 0xFF4A:
 			gpu.wy = value;

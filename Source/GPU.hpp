@@ -44,6 +44,8 @@ struct GPU
 	uint8_t ly;
 	uint8_t lyc;
 	uint8_t bgp;
+	uint8_t obp0;
+	uint8_t obp1;
 };
 
 

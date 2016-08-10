@@ -24,18 +24,18 @@ constexpr uint16_t ConcatBytes(const uint8_t high_byte, const uint8_t low_byte) 
 
 
 
-constexpr bool GetBit(const uint8_t bit, const uint16_t value) {
-	return (value & ( 1 << bit )) != 0;
+constexpr bool TestBit(const uint8_t bit, const uint16_t value) {
+	return (value & (0x01 << bit)) != 0;
 }
 
 
 constexpr uint16_t SetBit(const uint8_t bit, const uint16_t value) {
-	return (value | (1 << bit));
+	return (value | (0x01 << bit));
 }
 
 
 constexpr uint16_t ResBit(const uint8_t bit, const uint16_t value) {
-	return (value & ~(1 << bit));
+	return (value & ~(0x01 << bit));
 }
 
 

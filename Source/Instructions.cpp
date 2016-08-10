@@ -97,7 +97,25 @@ inline void ret_nn(const bool cond, Gameboy* const gb)
 	}
 }
 
+inline void call_nn(const bool cond, Gameboy* const gb)
+{
+	if (cond) {
+		const uint16_t addr = get_a16(gb);
+		gb->PushStack16(gb->cpu.GetPC());
+		gb->cpu.SetPC(addr);
+	}
+	else {
+		gb->cpu.AddPC(2);
+	}
+}
 
+
+
+inline void rst_nn(const uint16_t addr, Gameboy* const gb)
+{
+	gb->PushStack16(gb->cpu.GetPC());
+	gb->cpu.SetPC(addr);
+}
 
 
 
@@ -980,7 +998,7 @@ void ld_73(Gameboy* const gb)
 
 void ld_74(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_75(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void halt_76(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void halt_76(Gameboy* const) { debug_puts("halt required"); }
 
 
 
@@ -1425,7 +1443,11 @@ void jp_C3(Gameboy* const gb)
 }
 
 
-void call_C4(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void call_C4(Gameboy* const gb) 
+{ 
+	// CALL NZ, a16
+	call_nn(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
+}
 
 
 void push_C5(Gameboy* const gb) 
@@ -1512,7 +1534,13 @@ void call_CD(Gameboy* const gb)
 
 
 void adc_CE(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
-void rst_CF(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
+
+
+void rst_CF(Gameboy* const gb)
+{ 
+	// RST 08h
+	rst_nn(0x08, gb);
+}
 
 
 
@@ -1698,8 +1726,7 @@ void xor_EE(Gameboy* const gb)
 void rst_EF(Gameboy* const gb) 
 {
 	// RST 28H
-	gb->PushStack16(gb->cpu.GetPC());
-	gb->cpu.SetPC(0x0028);
+	rst_nn(0x28, gb);
 }
 
 

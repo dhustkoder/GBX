@@ -18,7 +18,7 @@ Gameboy* create_gameboy()
 		perror("Couldn't allocate memory");
 		return nullptr;
 	}
-
+	memset(&gb->memory, 0, sizeof(gbx::Memory));
 	return gb;
 }
 
@@ -75,18 +75,18 @@ bool Gameboy::Reset()
 	gpu.scy = 0x00;
 	gpu.wy = 0x00;
 	gpu.wx = 0x00;
-	gpu.bgp = 0x00;
+	gpu.bgp = 0xfc;
+	gpu.obp0 = 0xff;
+	gpu.obp1 = 0xff;
 	gpu.clock = 0;
 
-	keys.value = 0xCF;
+	keys.value = 0xcf;
 	keys.pad.all = 0xff;
 
 	hwstate.flags = 0x00;
 	hwstate.divider = 0x00;
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
-	
-//	memset(memory.oam, 0, sizeof(memory.oam));
 
 	WriteU8(0xFF05, 0x00); // TIMA
 	WriteU8(0xFF06, 0x00); // TMA
@@ -114,8 +114,8 @@ bool Gameboy::Reset()
 	// WriteU8(0xFF43, 0x00); // SCX, in GPU
 	// WriteU8(0xFF45, 0x00); // LYC, in GPU
 	// WriteU8(0xFF47, 0xFC); // BGP, in GPU
-	WriteU8(0xFF48, 0xFF); // OBP0
-	WriteU8(0xFF49, 0xFF); // OBP1
+	// WriteU8(0xFF48, 0xFF); // OBP0, in GPU
+	// WriteU8(0xFF49, 0xFF); // OBP1, in GPU
 	// WriteU8(0xFF4A, 0x00); // WY, in GPU
 	// WriteU8(0xFF4B, 0x00); // WX, in GPU
 
