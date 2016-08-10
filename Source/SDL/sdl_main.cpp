@@ -278,8 +278,7 @@ static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::
 					continue;
 
 			const auto pixel = SolvePallete(sprite, row, bit, pallete);
-			if (pixel != WHITE)
-				DrawPixel(pixel, abs_xpos, abs_ypos);
+			DrawPixel(pixel, abs_xpos, abs_ypos);
 		}
 	}
 }
@@ -298,14 +297,14 @@ static Color SolvePallete(const Tile& tile, uint8_t row, uint8_t bit, uint8_t pa
 		};
 	};
 
-	const uint8_t upperbit = (tile.data[row][0] & (0x80 >> bit)) ? 1 : 0;
-	const uint8_t downbit = (tile.data[row][1] & (0x80 >> bit)) ? 1 : 0;
+	const uint8_t downbit = (tile.data[row][0] & (0x80 >> bit)) ? 1 : 0;
+	const uint8_t upperbit = (tile.data[row][1] & (0x80 >> bit)) ? 1 : 0;
 
 	const uint8_t value = (upperbit << 1) | downbit;
 
 	switch (value) {
 	case 0x00: return get_color(pallete & 0x03);
-	case 0x01: return get_color((pallete & 0x0c) >> 2);
+	case 0x01: return get_color((pallete & 0x0C) >> 2);
 	case 0x02: return get_color((pallete & 0x30) >> 4);
 	default: return get_color((pallete & 0xC0) >> 6);
 	}
