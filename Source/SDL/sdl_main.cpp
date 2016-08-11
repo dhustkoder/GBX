@@ -70,12 +70,13 @@ int main(int argc, char** argv)
 			}
 		}
 
-		gameboy->Run(70224);
-		RenderGraphics(gameboy->gpu, gameboy->memory);
-		SDL_Delay(15);
+		gameboy->Run(69905);
+		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK)
+			RenderGraphics(gameboy->gpu, gameboy->memory);
+
+		SDL_Delay(16);
 
 		const auto ticks = SDL_GetTicks();
-		
 		if (ticks > (last_ticks + 1000)) {
 			printf("ITR: %zu\n", itr);
 			itr = 0;
@@ -83,6 +84,8 @@ int main(int argc, char** argv)
 		}
 
 		++itr;
+
+		
 	}
 
 
@@ -169,18 +172,19 @@ inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
 
 
-static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
+void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
 	using gbx::GPU;
 
 	const uint8_t lcdc = gpu.lcdc;
 
+	SDL_RenderClear(renderer);
+
 	if (!(lcdc & GPU::LCD_ON_OFF)) {
-		SDL_RenderClear(renderer);
 		SDL_RenderPresent(renderer);
 		return;
 	}
-	
+
 	int pitch;
 	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
 		fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
@@ -189,8 +193,6 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 	if (lcdc & GPU::BG_ON_OFF)
 		DrawBG(gpu, memory);
-	else
-		SDL_RenderClear(renderer);
 
 	if (lcdc & GPU::WIN_ON_OFF)
 		DrawWIN(gpu, memory);
@@ -203,6 +205,10 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
+
+
+
+
 
 
 
@@ -448,7 +454,7 @@ static bool InitSDL()
 		goto free_renderer;
 	}
 
-
+	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
 	return true;
 
 free_renderer:
