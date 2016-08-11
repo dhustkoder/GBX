@@ -51,19 +51,24 @@ int main(int argc, char** argv)
 	size_t itr = 0;
 
 	while (true) {
-
-		if (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT)
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_KEYDOWN:
+				UpdateKey(gbx::KEYDOWN,
+					event.key.keysym.scancode,
+					&gameboy->keys);
 				break;
-
-			while (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-				const auto state = event.type == SDL_KEYUP ? gbx::KEYUP : gbx::KEYDOWN;
-				UpdateKey(state, event.key.keysym.scancode, &gameboy->keys);
-				if (!SDL_PollEvent(&event))
-					break;
+			case SDL_KEYUP:
+				UpdateKey(gbx::KEYUP,
+					event.key.keysym.scancode,
+					&gameboy->keys);
+				break;
+			case SDL_QUIT:
+				goto SDL_QUIT_EVENT;
+			default:
+				break;
 			}
 		}
-
 
 		gameboy->Run(70224);
 		
@@ -82,6 +87,10 @@ int main(int argc, char** argv)
 
 		SDL_Delay(16);
 	}
+
+
+SDL_QUIT_EVENT:
+
 
 	return EXIT_SUCCESS;
 }
@@ -148,6 +157,8 @@ static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, 
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y);
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu);
 static Color SolvePallete(uint16_t color_number, uint8_t bit, uint8_t pallete);
+inline uint16_t SolveColorNumber(const Tile& tile, uint8_t row);
+inline uint16_t SolveColorNumber(const Sprite& tile, uint8_t row);
 inline Color CheckPixel(uint8_t x, uint8_t y);
 inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
@@ -261,7 +272,7 @@ static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, 
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 {
 	for (uint8_t row = 0; row < 8; ++row) {
-		const uint16_t color_number = (tile.data[row][1] << 8) | tile.data[row][0];
+		const uint16_t color_number = SolveColorNumber(tile, row);
 		for (uint8_t bit = 0; bit < 8; ++bit) {
 			const auto pixel = SolvePallete(color_number, bit, pallete);
 			DrawPixel(pixel, x + bit, y + row);
@@ -272,31 +283,34 @@ static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 
 
 
-
+// need to implement XFLIP and YFLIP
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu)
 {
-	const uint8_t pallete = 0xfc & ( gbx::TestBit(4, attr.flags) ? gpu.obp1 : gpu.obp0 );
+	const uint8_t attrflags = attr.flags;
+	const uint8_t pallete = 0xfc & ( gbx::TestBit(4, attrflags) ? gpu.obp1 : gpu.obp0 );
 	
-	const bool priority = gbx::TestBit(7, attr.flags) != 0;
+	const bool priority = gbx::TestBit(7, attrflags) != 0;
+
 	ASSERT_MSG(!gbx::TestBit(6, attr.flags), "NEED YFLIP");
 	ASSERT_MSG(!gbx::TestBit(5, attr.flags), "NEED XFLIP");
 
 	const uint8_t xpos = attr.xpos - 8;
 	const uint8_t ypos = attr.ypos - 16;
 	
-	if (xpos >= 160 && ypos >= 144)
+	if (xpos >= WIN_WIDTH && ypos >= WIN_HEIGHT)
 		return;
 
 	for (uint8_t row = 0; row < 8; ++row) {
 		const uint8_t abs_ypos = ypos + row;
-		if (abs_ypos >= WIN_WIDTH)
+		
+		if (abs_ypos >= WIN_HEIGHT)
 			break;
 
-		const uint16_t color_number = (sprite.data[row][1] << 8) | sprite.data[row][0];
+		const uint16_t color_number = SolveColorNumber(sprite, row);
 		
 		for (uint8_t bit = 0; bit < 8; ++bit) {
 			const uint8_t abs_xpos = xpos + bit;
-			if (abs_xpos >= 160)
+			if (abs_xpos >= WIN_WIDTH)
 				break;
 			else if (priority && CheckPixel(abs_xpos, abs_ypos) != WHITE)
 					continue;
@@ -327,7 +341,6 @@ static Color SolvePallete(const uint16_t color_number, uint8_t bit, uint8_t pall
 
 	const uint8_t downbit = (color_number & (0x80 >> bit)) ? 1 : 0;
 	const uint8_t upperbit = ((color_number>>8) & (0x80 >> bit)) ? 1 : 0;
-
 	const uint8_t value = (upperbit << 1) | downbit;
 
 	switch (value) {
@@ -339,6 +352,18 @@ static Color SolvePallete(const uint16_t color_number, uint8_t bit, uint8_t pall
 }
 
 
+
+
+
+inline uint16_t SolveColorNumber(const Tile& tile, uint8_t row)
+{
+	return (tile.data[row][1] << 8) | tile.data[row][0];
+}
+
+inline uint16_t SolveColorNumber(const Sprite& sprite, uint8_t row)
+{
+	return (sprite.data[row][1] << 8) | sprite.data[row][0];
+}
 
 
 inline Color CheckPixel(uint8_t x, uint8_t y)
