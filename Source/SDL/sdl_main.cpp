@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <SDL2/SDL.h>
 #include <Utix/Assert.h>
 #include <Utix/ScopeExit.h>
@@ -48,8 +47,9 @@ int main(int argc, char** argv)
 	});
 
 	SDL_Event event;
-	decltype(SDL_GetTicks()) last_ticks = 0;
+	Uint32 last_ticks = 0;
 	size_t itr = 0;
+
 	while (true) {
 
 		if (SDL_PollEvent(&event)) {
@@ -69,17 +69,18 @@ int main(int argc, char** argv)
 		
 		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK) {
 			RenderGraphics(gameboy->gpu, gameboy->memory);
-			SDL_Delay(1000 / 60);
 			++itr;
 		}
 
-		
 		const auto ticks = SDL_GetTicks();
+		
 		if (ticks > (last_ticks + 1000)) {
 			printf("ITR: %zu\n", itr);
 			itr = 0;
 			last_ticks = ticks;
 		}
+
+		SDL_Delay(16);
 	}
 
 	return EXIT_SUCCESS;
@@ -95,13 +96,13 @@ int main(int argc, char** argv)
 
 namespace {
 
-// TODO: endiannes checks, this is little endian only
+// TODO: endian checks
 
 enum Color : Uint32
 {
 	BLACK = 0x00000000,
 	WHITE = 0xFFFFFF00,
-	LIGHT_GREY = 0xA0A0A000,
+	LIGHT_GREY = 0x90909000,
 	DARK_GREY = 0x55555500,
 };
 
@@ -146,8 +147,7 @@ static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
 static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map);
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y);
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu);
-static Color SolvePallete(const Tile& tile, uint8_t row, uint8_t bit, uint8_t pallete);
-inline Color SolvePallete(const Sprite& sprite, uint8_t row, uint8_t bit, uint8_t pallete);
+static Color SolvePallete(uint16_t color_number, uint8_t bit, uint8_t pallete);
 inline Color CheckPixel(uint8_t x, uint8_t y);
 inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
@@ -157,28 +157,31 @@ inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
 static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
-	if (!gpu.BitLCDC(gbx::GPU::LCD_ON_OFF)) {
+	using gbx::GPU;
+
+	const uint8_t lcdc = gpu.lcdc;
+
+	if (!(lcdc & GPU::LCD_ON_OFF)) {
 		SDL_RenderClear(renderer);
 		SDL_RenderPresent(renderer);
 		return;
 	}
 	
 	int pitch;
-	
 	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
-		fprintf(stderr, "failed to lock texture");
+		fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
 		return;
 	}
 
-	if (gpu.BitLCDC(gbx::GPU::BG_ON_OFF))
+	if (lcdc & GPU::BG_ON_OFF)
 		DrawBG(gpu, memory);
 	else
 		SDL_RenderClear(renderer);
 
-	if (gpu.BitLCDC(gbx::GPU::WIN_ON_OFF))
+	if (lcdc & GPU::WIN_ON_OFF)
 		DrawWIN(gpu, memory);
 
-	if (gpu.BitLCDC(gbx::GPU::OBJ_ON_OFF))
+	if (lcdc & GPU::OBJ_ON_OFF)
 		DrawOBJ(gpu, memory);
 
 
@@ -257,19 +260,22 @@ static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, 
 
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 {
-	for (uint8_t tile_y = 0; tile_y < 8; ++tile_y) {
+	for (uint8_t row = 0; row < 8; ++row) {
+		const uint16_t color_number = (tile.data[row][1] << 8) | tile.data[row][0];
 		for (uint8_t bit = 0; bit < 8; ++bit) {
-			const auto pixel = SolvePallete(tile, tile_y, bit, pallete);
-			DrawPixel(pixel, x + bit, y + tile_y);
+			const auto pixel = SolvePallete(color_number, bit, pallete);
+			DrawPixel(pixel, x + bit, y + row);
 		}
 	}
 }
 
 
 
+
+
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu)
 {
-	const uint8_t pallete = gbx::TestBit(4, attr.flags) ? gpu.obp1 : gpu.obp0;
+	const uint8_t pallete = 0xfc & ( gbx::TestBit(4, attr.flags) ? gpu.obp1 : gpu.obp0 );
 	
 	const bool priority = gbx::TestBit(7, attr.flags) != 0;
 	ASSERT_MSG(!gbx::TestBit(6, attr.flags), "NEED YFLIP");
@@ -277,15 +283,17 @@ static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::
 
 	const uint8_t xpos = attr.xpos - 8;
 	const uint8_t ypos = attr.ypos - 16;
+	
 	if (xpos >= 160 && ypos >= 144)
 		return;
-
 
 	for (uint8_t row = 0; row < 8; ++row) {
 		const uint8_t abs_ypos = ypos + row;
 		if (abs_ypos >= WIN_WIDTH)
 			break;
 
+		const uint16_t color_number = (sprite.data[row][1] << 8) | sprite.data[row][0];
+		
 		for (uint8_t bit = 0; bit < 8; ++bit) {
 			const uint8_t abs_xpos = xpos + bit;
 			if (abs_xpos >= 160)
@@ -293,8 +301,9 @@ static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::
 			else if (priority && CheckPixel(abs_xpos, abs_ypos) != WHITE)
 					continue;
 
-			const auto pixel = SolvePallete(sprite, row, bit, pallete);
-			DrawPixel(pixel, abs_xpos, abs_ypos);
+			const auto pixel = SolvePallete(color_number, bit, pallete);
+			if (pixel != WHITE)
+				DrawPixel(pixel, abs_xpos, abs_ypos);
 		}
 	}
 }
@@ -302,7 +311,10 @@ static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::
 
 
 
-static Color SolvePallete(const Tile& tile, uint8_t row, uint8_t bit, uint8_t pallete)
+
+
+
+static Color SolvePallete(const uint16_t color_number, uint8_t bit, uint8_t pallete)
 {
 	const auto get_color = [=](uint8_t pallete_value) {
 		switch (pallete_value) {
@@ -313,8 +325,8 @@ static Color SolvePallete(const Tile& tile, uint8_t row, uint8_t bit, uint8_t pa
 		};
 	};
 
-	const uint8_t downbit = (tile.data[row][0] & (0x80 >> bit)) ? 1 : 0;
-	const uint8_t upperbit = (tile.data[row][1] & (0x80 >> bit)) ? 1 : 0;
+	const uint8_t downbit = (color_number & (0x80 >> bit)) ? 1 : 0;
+	const uint8_t upperbit = ((color_number>>8) & (0x80 >> bit)) ? 1 : 0;
 
 	const uint8_t value = (upperbit << 1) | downbit;
 
@@ -327,10 +339,6 @@ static Color SolvePallete(const Tile& tile, uint8_t row, uint8_t bit, uint8_t pa
 }
 
 
-inline Color SolvePallete(const Sprite& sprite, uint8_t row, uint8_t bit, uint8_t pallete)
-{
-	return SolvePallete(reinterpret_cast<const Tile&>(sprite), row, bit, pallete);
-}
 
 
 inline Color CheckPixel(uint8_t x, uint8_t y)
@@ -339,10 +347,13 @@ inline Color CheckPixel(uint8_t x, uint8_t y)
 }
 
 
+
 inline void DrawPixel(Color pixel, uint8_t x, uint8_t y)
 {
 	gfx_buffer[(y * WIN_WIDTH) + x] = pixel;
 }
+
+
 
 
 static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)

@@ -55,7 +55,7 @@ struct CPU
 	void SetHL(const uint16_t val);
 	void SetClock(const uint32_t cycles);
 
-	void AddCycles(const uint8_t cycles);
+	void AddCycles(const uint16_t cycles);
 	void AddPC(const uint16_t val);
 	void SetFlags(const CPU::Flags flags);
 	void ClearFlags(const CPU::Flags flags);
@@ -220,7 +220,7 @@ inline void CPU::SetBC(const uint16_t val) { bc.pair = val; }
 inline void CPU::SetDE(const uint16_t val) { de.pair = val; }
 inline void CPU::SetHL(const uint16_t val) { hl.pair = val; }
 inline void CPU::SetClock(const uint32_t cycles) { clock = cycles; }
-inline void CPU::AddCycles(const uint8_t value) { clock += value; }
+inline void CPU::AddCycles(const uint16_t value) { clock += value; }
 inline void CPU::AddPC(const uint16_t val) { pc += val; }
 
 inline void CPU::SetFlags(const CPU::Flags flags)

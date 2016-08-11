@@ -243,14 +243,17 @@ uint16_t Gameboy::PopStack16()
 
 static void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
-	uint16_t source_addrs = value * 0x100;
-	if ((source_addrs + 0xA0) <= 0x8000) {
-		const size_t nbytes = sizeof(uint8_t) * 0xA0;
-		memcpy(gb->memory.oam, gb->memory.home + source_addrs, nbytes);
+	uint16_t source_addr = value * 0x100;
+	const uint8_t nbytes = 0xA0;
+	if (source_addr == 0xC000) {
+		memcpy(gb->memory.oam, gb->memory.wram, sizeof(uint8_t) * nbytes);
+	}
+	else if (source_addr == 0x8000) {
+		memcpy(gb->memory.oam, gb->memory.vram, sizeof(uint8_t) * nbytes);
 	}
 	else {
-		for (size_t i = 0; i < 0xA0; ++i, ++source_addrs)
-			gb->memory.oam[i] = gb->ReadU8(source_addrs);
+		for (size_t i = 0; i < nbytes; ++i)
+			gb->memory.oam[i] = gb->ReadU8(source_addr++);
 	}
 }
 
