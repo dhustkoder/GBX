@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <SDL2/SDL.h>
 #include <Utix/Assert.h>
 #include <Utix/ScopeExit.h>
@@ -47,7 +48,8 @@ int main(int argc, char** argv)
 	});
 
 	SDL_Event event;
-
+	clock_t clk = clock();
+	size_t itr = 0;
 	while (true) {
 
 		if (SDL_PollEvent(&event)) {
@@ -62,9 +64,22 @@ int main(int argc, char** argv)
 			}
 		}
 
-		gameboy->Run(69000);
-		RenderGraphics(gameboy->gpu, gameboy->memory);
-		SDL_Delay(10);
+
+		gameboy->Run(71072);
+		gameboy->cpu.SetClock(0);
+		if (gameboy->hwstate.GetFlags(gbx::HWState::NEED_RENDER)) {
+			RenderGraphics(gameboy->gpu, gameboy->memory);
+			gameboy->hwstate.ClearFlags(gbx::HWState::NEED_RENDER);
+			SDL_Delay(1000 / 60);
+			++itr;
+		}
+
+		if ((clock() - clk) >= CLOCKS_PER_SEC) {
+			printf("ITR: %zu\n", itr);
+			itr = 0;
+			clk = clock();
+		}
+
 	}
 
 	return EXIT_SUCCESS;

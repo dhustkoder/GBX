@@ -65,7 +65,7 @@ inline bool GPU::BitLCDC(LcdcFlags cflags) const
 
 inline void GPU::SetMode(const Mode mode) 
 {
-	stat &= 0xfc; // clean mode
+	stat &= 0xfc;
 	stat |= static_cast<uint8_t>(mode);
 }
 
