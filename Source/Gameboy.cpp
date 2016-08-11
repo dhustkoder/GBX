@@ -132,7 +132,7 @@ void Gameboy::Step()
 	const uint16_t pc = cpu.GetPC();
 	const uint8_t opcode = ReadU8(pc);
 	cpu.AddPC(1);
-	debug_printf("PC: %4x | OP: %4x\n", pc, opcode);
+	// debug_printf("PC: %4x | OP: %4x\n", pc, opcode);
 	main_instructions[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
 	cpu.AddCycles(cycles);
