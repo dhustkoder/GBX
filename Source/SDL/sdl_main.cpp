@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
 
 		gameboy->Run(70224);
-		gameboy->cpu.SetClock(0);
+		
 		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK) {
 			RenderGraphics(gameboy->gpu, gameboy->memory);
 			SDL_Delay(1000 / 60);

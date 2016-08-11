@@ -218,6 +218,7 @@ void Gameboy::Run(const uint32_t cycles)
 		}
 
 	} while (clock < cycles);
+	cpu.SetClock(0);
 }
 
 
