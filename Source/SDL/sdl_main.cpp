@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	});
 
 	SDL_Event event;
-	clock_t clk = clock();
+	decltype(SDL_GetTicks()) last_ticks = 0;
 	size_t itr = 0;
 	while (true) {
 
@@ -65,21 +65,21 @@ int main(int argc, char** argv)
 		}
 
 
-		gameboy->Run(71072);
+		gameboy->Run(70224);
 		gameboy->cpu.SetClock(0);
-		if (gameboy->hwstate.GetFlags(gbx::HWState::NEED_RENDER)) {
+		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK) {
 			RenderGraphics(gameboy->gpu, gameboy->memory);
-			gameboy->hwstate.ClearFlags(gbx::HWState::NEED_RENDER);
 			SDL_Delay(1000 / 60);
 			++itr;
 		}
 
-		if ((clock() - clk) >= CLOCKS_PER_SEC) {
+		
+		const auto ticks = SDL_GetTicks();
+		if (ticks > (last_ticks + 1000)) {
 			printf("ITR: %zu\n", itr);
 			itr = 0;
-			clk = clock();
+			last_ticks = ticks;
 		}
-
 	}
 
 	return EXIT_SUCCESS;
@@ -157,9 +157,8 @@ inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
 static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
-	SDL_RenderClear(renderer);
-	
 	if (!gpu.BitLCDC(gbx::GPU::LCD_ON_OFF)) {
+		SDL_RenderClear(renderer);
 		SDL_RenderPresent(renderer);
 		return;
 	}
@@ -173,6 +172,8 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 	if (gpu.BitLCDC(gbx::GPU::BG_ON_OFF))
 		DrawBG(gpu, memory);
+	else
+		SDL_RenderClear(renderer);
 
 	if (gpu.BitLCDC(gbx::GPU::WIN_ON_OFF))
 		DrawWIN(gpu, memory);

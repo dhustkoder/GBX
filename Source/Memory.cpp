@@ -9,8 +9,6 @@
 namespace gbx {
 
 static void dma_transfer(const uint8_t value, Gameboy* const gb);
-static void set_need_render(Gameboy* const gb);
-
 
 
 
@@ -105,19 +103,15 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			break;
 		case 0xFF40:
 			gpu.lcdc = value;
-			set_need_render(this);
 			break;
 		case 0xFF41:
 			gpu.stat = (value & 0xF8) | (gpu.stat & 0x07);
-			set_need_render(this);
 			break;
 		case 0xFF42:
 			gpu.scy = value;
-			set_need_render(this);
 			break;
 		case 0xFF43:
 			gpu.scx = value;
-			set_need_render(this);
 			break;
 		case 0xFF44: 
 			gpu.ly = 0;
@@ -130,23 +124,18 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			break;
 		case 0xFF47:
 			gpu.bgp = value;
-			set_need_render(this);
 			break;
 		case 0xFF48:
 			gpu.obp0 = value;
-			set_need_render(this);
 			break;
 		case 0xFF49:
 			gpu.obp1 = value;
-			set_need_render(this);
 			break;
 		case 0xFF4A:
 			gpu.wy = value;
-			set_need_render(this);
 			break;
 		case 0xFF4B:
 			gpu.wx = value;
-			set_need_render(this);
 			break;
 		default:
 			debug_printf("required hardware io address: %4x\n", address);
@@ -154,10 +143,8 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		};
 	}
 	else if (address >= 0xFE00) {
-		if (address < 0xFEA0) {
+		if (address < 0xFEA0)
 			memory.oam[address - 0xFE00] = value;
-			set_need_render(this);
-		}
 	}
 	else if (address >= 0xC000) {
 		if (address < 0xE000)
@@ -168,7 +155,6 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 	}
 	else if (address >= 0x8000) {
 		memory.vram[address - 0x8000] = value;
-		set_need_render(this);
 	}
 	else {
 		debug_printf("required hardware io address: %4x\n", address);
@@ -266,14 +252,14 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb)
 		for (size_t i = 0; i < 0xA0; ++i, ++source_addrs)
 			gb->memory.oam[i] = gb->ReadU8(source_addrs);
 	}
-	set_need_render(gb);
 }
 
 
-static void set_need_render(Gameboy* const gb)
-{
-	if (gb->hwstate.GetFlags(HWState::NEED_RENDER) == 0)
-		gb->hwstate.SetFlags(HWState::NEED_RENDER);
-}
+
+
+
+
+
+
 
 }
