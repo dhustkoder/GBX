@@ -5,12 +5,12 @@
 #include <Utix/ScopeExit.h>
 #include "Gameboy.hpp"
 
-namespace {
+namespace gbx {
 
 static bool InitSDL();
 static void QuitSDL();
 static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
-static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
+void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
 
 
 }
@@ -38,12 +38,12 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 
 
-	if (!InitSDL())
+	if (!gbx::InitSDL())
 		return EXIT_FAILURE;
 
 
 	const auto sdl_guard = utix::MakeScopeExit([] {
-		QuitSDL();
+		gbx::QuitSDL();
 	});
 
 	SDL_Event event;
@@ -71,10 +71,7 @@ int main(int argc, char** argv)
 		}
 
 		gameboy->Run(69905);
-		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK)
-			RenderGraphics(gameboy->gpu, gameboy->memory);
-
-		SDL_Delay(16);
+//		SDL_Delay(16);
 
 		const auto ticks = SDL_GetTicks();
 		if (ticks > (last_ticks + 1000)) {
@@ -103,7 +100,7 @@ SDL_QUIT_EVENT:
 
 
 
-namespace {
+namespace gbx {
 
 // TODO: endian checks
 
