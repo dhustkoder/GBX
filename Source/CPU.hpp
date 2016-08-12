@@ -140,25 +140,25 @@ constexpr CPU::Flags CheckZ(const uint32_t result) {
 
 
 
-constexpr CPU::Flags CheckH_3th_bit(const uint8_t first, const uint8_t second) {
+constexpr CPU::Flags CheckH_bit3(const uint8_t first, const uint8_t second) {
 	return (((first&0x0f) + (second&0x0f)) & 0x10) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckH_11th_bit(const uint16_t first, const uint16_t second) {
+constexpr CPU::Flags CheckH_bit11(const uint16_t first, const uint16_t second) {
 	return (((first&0xf00) + (second&0xf00)) & 0x1000) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckC_11th_bit(const uint16_t result) {
+constexpr CPU::Flags CheckC_bit7(const uint16_t result) {
 	return (result & 0xff00) ? CPU::FLAG_C : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckC_15th_bit(const uint32_t result) {
+constexpr CPU::Flags CheckC_bit15(const uint32_t result) {
 	return (result & 0xffff0000) ? CPU::FLAG_C : static_cast<CPU::Flags>(0);
 }
 

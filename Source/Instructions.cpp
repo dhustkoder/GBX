@@ -1686,7 +1686,7 @@ void add_E8(Gameboy* const gb)
 	const auto sp = gb->cpu.GetSP();
 	const auto r8 = get_r8(gb);
 	const uint32_t result = sp + r8;
-	const CPU::Flags hc = CheckH_11th_bit(sp, r8) | CheckC_15th_bit(result);
+	const CPU::Flags hc = CheckH_bit11(sp, r8) | CheckC_bit15(result);
 	gb->cpu.SetF(hc);
 	gb->cpu.SetSP(static_cast<uint16_t>(result));
 }
