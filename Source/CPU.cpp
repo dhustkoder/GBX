@@ -266,7 +266,8 @@ uint8_t CPU::SWAP(const uint8_t value)
 void CPU::BIT(const uint8_t bit, const uint8_t value)
 {
 	// flags effect: Z 0 1 -
-	SetF(CheckZ(value & (0x01 << bit)) | FLAG_H);
+	const auto z = CheckZ(value & (0x01 << bit));
+	SetF(z | FLAG_H | GetFlags(FLAG_C));
 }
 
 
