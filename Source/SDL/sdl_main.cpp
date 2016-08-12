@@ -5,7 +5,7 @@
 #include <Utix/ScopeExit.h>
 #include "Gameboy.hpp"
 
-namespace gbx {
+namespace {
 
 static bool InitSDL();
 static void QuitSDL();
@@ -38,12 +38,12 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 
 
-	if (!gbx::InitSDL())
+	if (!InitSDL())
 		return EXIT_FAILURE;
 
 
 	const auto sdl_guard = utix::MakeScopeExit([] {
-		gbx::QuitSDL();
+		QuitSDL();
 	});
 
 	SDL_Event event;
@@ -71,7 +71,10 @@ int main(int argc, char** argv)
 		}
 
 		gameboy->Run(69905);
-//		SDL_Delay(16);
+		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK)
+			RenderGraphics(gameboy->gpu, gameboy->memory);
+
+		SDL_Delay(16);
 
 		const auto ticks = SDL_GetTicks();
 		if (ticks > (last_ticks + 1000)) {
@@ -100,7 +103,7 @@ SDL_QUIT_EVENT:
 
 
 
-namespace gbx {
+namespace {
 
 // TODO: endian checks
 
@@ -177,11 +180,6 @@ void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 	SDL_RenderClear(renderer);
 
-	if (!(lcdc & GPU::LCD_ON_OFF)) {
-		SDL_RenderPresent(renderer);
-		return;
-	}
-
 	int pitch;
 	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
 		fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
@@ -218,7 +216,7 @@ static void DrawBG(const gbx::GPU& gpu, const gbx::Memory& memory)
 	                              : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
 
 	auto map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
-                               : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
+	                           : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
 
 	DrawTileMap(tiles, map, gpu.bgp, tile_data_select);
 }

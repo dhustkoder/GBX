@@ -21,7 +21,7 @@ enum StatusMask : uint8_t
 };
 
 
-extern void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
+
 
 void Gameboy::UpdateGPU()
 {
@@ -60,7 +60,6 @@ void Gameboy::UpdateGPU()
 			if (gpu.ly == 144) {
 				hwstate.interrupt_flags |= INTERRUPT_VBLANK;
 				set_mode_and_check_stat(GPU::Mode::VBLANK, INTERRUPT_ON_VBLANK);
-				RenderGraphics(gpu, memory);
 			} else {
 				set_mode_and_check_stat(GPU::Mode::OAM, INTERRUPT_ON_OAM);
 			}
