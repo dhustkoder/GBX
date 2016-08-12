@@ -73,8 +73,7 @@ int main(int argc, char** argv)
 		gameboy->Run(69905);
 		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK)
 			RenderGraphics(gameboy->gpu, gameboy->memory);
-
-		SDL_Delay(16);
+		SDL_Delay(15);
 
 		const auto ticks = SDL_GetTicks();
 		if (ticks > (last_ticks + 1000)) {
@@ -156,8 +155,6 @@ static SDL_Texture* texture;
 static SDL_Renderer* renderer;
 static Uint32* gfx_buffer;
 
-static void DrawBG(const gbx::GPU& gpu, const gbx::Memory& memory);
-static void DrawWIN(const gbx::GPU& gpu, const gbx::Memory& memory);
 static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
 static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map);
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y);
@@ -180,17 +177,32 @@ void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 	SDL_RenderClear(renderer);
 
+
 	int pitch;
 	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
 		fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
 		return;
 	}
 
-	if (lcdc & GPU::BG_ON_OFF)
-		DrawBG(gpu, memory);
+	const uint8_t bgp = gpu.bgp;
+	const bool unsigned_tiles = (lcdc & GPU::BG_WIN_TILE_DATA_SELECT) != 0;
+	auto tile_data = unsigned_tiles ? reinterpret_cast<const Tile*>(memory.vram)
+	                                : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
 
-	if (lcdc & GPU::WIN_ON_OFF)
-		DrawWIN(gpu, memory);
+
+	if (lcdc & GPU::BG_ON_OFF) {
+		const bool tile_map_select = (lcdc & GPU::BG_TILE_MAP_SELECT) != 0;
+		auto tile_map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
+		                                : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
+		DrawTileMap(tile_data, tile_map, bgp, unsigned_tiles);
+	}
+
+	if (lcdc & GPU::WIN_ON_OFF) {
+		const bool tile_map_select = (lcdc & GPU::WIN_TILE_MAP_SELECT) != 0;
+		auto tile_map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
+		                                : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
+		DrawTileMap(tile_data, tile_map, bgp, unsigned_tiles);
+	}
 
 	if (lcdc & GPU::OBJ_ON_OFF)
 		DrawOBJ(gpu, memory);
@@ -200,43 +212,6 @@ void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
-
-
-
-
-
-
-
-static void DrawBG(const gbx::GPU& gpu, const gbx::Memory& memory)
-{
-	const bool tile_data_select = gpu.BitLCDC(gbx::GPU::BG_WIN_TILE_DATA_SELECT);
-	const bool tile_map_select = gpu.BitLCDC(gbx::GPU::BG_TILE_MAP_SELECT);
-
-	auto tiles = tile_data_select ? reinterpret_cast<const Tile*>(memory.vram)
-	                              : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
-
-	auto map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
-	                           : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
-
-	DrawTileMap(tiles, map, gpu.bgp, tile_data_select);
-}
-
-
-
-static void DrawWIN(const gbx::GPU& gpu, const gbx::Memory& memory)
-{
-	const bool tile_data_select = gpu.BitLCDC(gbx::GPU::BG_WIN_TILE_DATA_SELECT);
-	const bool tile_map_select = gpu.BitLCDC(gbx::GPU::WIN_TILE_MAP_SELECT);
-
-	auto tiles = tile_data_select ? reinterpret_cast<const Tile*>(memory.vram)
-	                              : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
-
-	auto map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
-	                           : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
-
-	DrawTileMap(tiles, map, gpu.bgp, tile_data_select);
-}
-
 
 
 static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory)
@@ -256,14 +231,20 @@ static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory)
 static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map)
 {
 	if (unsigned_map) {
-		for (uint8_t y = 0; y < 18; ++y)
-			for (uint8_t x = 0; x < 20; ++x)
-				DrawTile(tiles[map->data[y][x]], pallete, x * 8, y * 8);
+		for (uint8_t y = 0; y < 18; ++y) {
+			for (uint8_t x = 0; x < 20; ++x) {
+				const auto tile_id = map->data[y][x];
+				DrawTile(tiles[tile_id], pallete, x * 8, y * 8);
+			}
+		}
 	}
 	else {
-		for (uint8_t y = 0; y < 18; ++y)
-			for (uint8_t x = 0; x < 20; ++x)
-				DrawTile(tiles[(int8_t)map->data[y][x]], pallete, x * 8, y * 8);
+		for (uint8_t y = 0; y < 18; ++y) {
+			for (uint8_t x = 0; x < 20; ++x) {
+				const auto tile_id = static_cast<int8_t>(map->data[y][x]);
+				DrawTile(tiles[tile_id], pallete, x * 8, y * 8);
+			}
+		}
 	}
 }
 
@@ -290,6 +271,14 @@ static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 // need to implement XFLIP and YFLIP
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu)
 {
+
+	const uint8_t xpos = attr.xpos - 8;
+	const uint8_t ypos = attr.ypos - 16;
+	
+	if (xpos >= WIN_WIDTH && ypos >= WIN_HEIGHT)
+		return;
+
+	
 	const uint8_t attrflags = attr.flags;
 	const uint8_t pallete = 0xfc & ( gbx::TestBit(4, attrflags) ? gpu.obp1 : gpu.obp0 );
 	
@@ -297,12 +286,6 @@ static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::
 
 	ASSERT_MSG(!gbx::TestBit(6, attr.flags), "NEED YFLIP");
 	ASSERT_MSG(!gbx::TestBit(5, attr.flags), "NEED XFLIP");
-
-	const uint8_t xpos = attr.xpos - 8;
-	const uint8_t ypos = attr.ypos - 16;
-	
-	if (xpos >= WIN_WIDTH && ypos >= WIN_HEIGHT)
-		return;
 
 	for (uint8_t row = 0; row < 8; ++row) {
 		const uint8_t abs_ypos = ypos + row;
