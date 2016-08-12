@@ -1206,7 +1206,7 @@ void sub_96(Gameboy* const gb)
 	// SUB (HL) ( Z 1 H C )
 	const uint16_t hl = gb->cpu.GetHL();
 	const uint8_t result = gb->cpu.SUB(gb->cpu.GetA(), gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	gb->cpu.SetA(result);
 }
 
 
