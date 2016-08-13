@@ -5,6 +5,8 @@
 #include <Utix/ScopeExit.h>
 #include "Gameboy.hpp"
 
+
+
 namespace {
 
 static bool InitSDL();
@@ -14,6 +16,9 @@ void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
 
 
 }
+
+
+
 
 
 
