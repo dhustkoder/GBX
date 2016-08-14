@@ -185,7 +185,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		memory.vram[address - 0x8000] = value;
 	}
 	else {
-		debug_printf("required hardware io address: %4x\n", address);
+		debug_printf("required write to address: %4x\n", address);
 	}
 
 }
