@@ -210,7 +210,12 @@ void bit_4B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_4C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_4D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_4E(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void bit_4F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void bit_4F(Gameboy* const gb)
+{ 
+	// BIT 1, A
+	gb->cpu.BIT(1, gb->cpu.GetA());
+}
 
 
 
@@ -319,7 +324,13 @@ void bit_6A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_6B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_6C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_6D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void bit_6E(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void bit_6E(Gameboy* const gb)
+{
+	// BIT 5, (HL)
+	const auto value = gb->ReadU8(gb->cpu.GetHL());
+	gb->cpu.BIT(5, value);
+}
 
 void bit_6F(Gameboy* const gb)
 { 
@@ -351,15 +362,19 @@ void bit_72(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_73(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_74(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_75(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void bit_76(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void bit_76(Gameboy* const gb) 
+{
+	// BIT 6, (HL)
+	const auto value = gb->ReadU8(gb->cpu.GetHL());
+	gb->cpu.BIT(6, value);
+}
 
 
 
 void bit_77(Gameboy* const gb)
 { 
 	// BIT 6, A ( Z 0 1 - )
-	// clock cycles: 8
-	// Z 0 1 -
 	gb->cpu.BIT(6, gb->cpu.GetA());
 }
 
@@ -576,7 +591,15 @@ void set_D2(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D3(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D4(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void set_D6(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void set_D6(Gameboy* const gb)
+{
+	// SET 2, (HL)
+	const uint16_t hl = gb->cpu.GetHL();
+	const uint8_t result = SetBit(2, gb->ReadU8(hl));
+	gb->WriteU8(hl, result);
+}
+
 void set_D7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void set_D8(Gameboy* const gb)
@@ -626,7 +649,12 @@ void set_EF(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 
 // 0xF0
-void set_F0(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void set_F0(Gameboy* const gb)
+{ 
+	// SET 6, B
+	gb->cpu.SetB(SetBit(6, gb->cpu.GetB()));
+}
+
 void set_F1(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_F2(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_F3(Gameboy* const) { ASSERT_INSTR_IMPL(); }

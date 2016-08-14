@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 	SDL_Event event;
 	Uint32 last_ticks = 0;
 	size_t itr = 0;
-
+	
 	while (true) {
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -78,6 +78,7 @@ int main(int argc, char** argv)
 		gameboy->Run(69905);
 		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK)
 			RenderGraphics(gameboy->gpu, gameboy->memory);
+		
 		SDL_Delay(15);
 
 		const auto ticks = SDL_GetTicks();
@@ -148,7 +149,7 @@ struct Sprite
 	uint8_t data[8][2];
 };
 
-
+Uint32 sdl_joypad[8];
 
 constexpr const int WIN_WIDTH = 160;
 constexpr const int WIN_HEIGHT = 144;
@@ -274,38 +275,32 @@ static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 // need to implement XFLIP and YFLIP
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu)
 {
-
 	const uint8_t xpos = attr.xpos - 8;
 	const uint8_t ypos = attr.ypos - 16;
-	
-	if (xpos >= WIN_WIDTH && ypos >= WIN_HEIGHT)
-		return;
-
 	
 	const uint8_t attrflags = attr.flags;
 	const uint8_t pallete = 0xfc & ( gbx::TestBit(4, attrflags) ? gpu.obp1 : gpu.obp0 );
 	
+	const bool yflip = gbx::TestBit(6, attr.flags);
+	const bool xflip = gbx::TestBit(5, attrflags);
 	const bool priority = gbx::TestBit(7, attrflags) != 0;
-
-	ASSERT_MSG(!gbx::TestBit(6, attr.flags), "NEED YFLIP");
-	ASSERT_MSG(!gbx::TestBit(5, attr.flags), "NEED XFLIP");
 
 	for (uint8_t row = 0; row < 8; ++row) {
 		const uint8_t abs_ypos = ypos + row;
-		
 		if (abs_ypos >= WIN_HEIGHT)
-			break;
+			continue;
 
-		const auto color_number = SolveColorNumber(sprite, row);
+		const auto color_number = SolveColorNumber(sprite, yflip ? 7 - row : row);
 		
 		for (uint8_t bit = 0; bit < 8; ++bit) {
 			const uint8_t abs_xpos = xpos + bit;
 			if (abs_xpos >= WIN_WIDTH)
 				break;
-			else if (priority && CheckPixel(abs_xpos, abs_ypos) != WHITE)
-					continue;
+			
+			if (priority && CheckPixel(abs_xpos, abs_ypos) != WHITE)
+				continue;
 
-			const auto pixel = SolvePallete(color_number, bit, pallete);
+			const auto pixel = SolvePallete(color_number, xflip ? 7 - bit : bit, pallete);
 			if (pixel != WHITE)
 				DrawPixel(pixel, abs_xpos, abs_ypos);
 		}

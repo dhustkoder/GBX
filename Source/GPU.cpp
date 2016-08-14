@@ -28,7 +28,7 @@ void Gameboy::UpdateGPU()
 	if (!(gpu.lcdc & GPU::LCD_ON_OFF)) {
 		gpu.clock = 0;
 		gpu.ly = 0;
-		gpu.SetMode(GPU::Mode::VBLANK);
+		gpu.SetMode(GPU::Mode::HBLANK);
 		return;
 	}
 

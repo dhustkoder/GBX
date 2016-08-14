@@ -716,7 +716,13 @@ void ld_40(Gameboy* const)
 
 void ld_41(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_42(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_43(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+void ld_43(Gameboy* const gb)
+{ 
+	// LD B, E
+	gb->cpu.SetB(gb->cpu.GetE());
+}
+
 void ld_44(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_45(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
@@ -748,7 +754,13 @@ void ld_47(Gameboy* const gb)
 void ld_48(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_49(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_4A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_4B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+void ld_4B(Gameboy* const gb)
+{
+	// LD C, E
+	gb->cpu.SetC(gb->cpu.GetE());
+}
+
 void ld_4C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_4D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
@@ -998,7 +1010,17 @@ void ld_73(Gameboy* const gb)
 
 void ld_74(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_75(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void halt_76(Gameboy* const) { debug_puts("halt required"); }
+
+
+void halt_76(Gameboy* const gb)
+{
+	if (gb->hwstate.GetIntMaster()) {
+		if (gb->hwstate.GetFlags(HWState::HALTING) == 0)
+			gb->hwstate.SetFlags(HWState::HALTING);
+
+		gb->cpu.SetPC(gb->cpu.GetPC() - 1);
+	}
+}
 
 
 
@@ -1089,7 +1111,12 @@ void add_80(Gameboy* const gb)
 
 
 
-void add_81(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void add_81(Gameboy* const gb)
+{ 
+	// ADD A, C
+	const auto result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetC());
+	gb->cpu.SetA(result);
+}
 
 
 void add_82(Gameboy* const gb) 
@@ -1100,7 +1127,13 @@ void add_82(Gameboy* const gb)
 }
 
 
-void add_83(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void add_83(Gameboy* const gb)
+{ 
+	// ADD A, E
+	const auto result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetE());
+	gb->cpu.SetA(result);
+}
+
 void add_84(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -1193,9 +1226,22 @@ void sub_90(Gameboy* const gb)
 
 
 
-void sub_91(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void sub_91(Gameboy* const gb)
+{ 
+	// SUB C
+	const auto result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetC());
+	gb->cpu.SetA(result);
+}
+
 void sub_92(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void sub_93(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+void sub_93(Gameboy* const gb)
+{
+	// SUB E
+	const auto result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetE());
+	gb->cpu.SetA(result);
+}
+
 void sub_94(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void sub_95(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
@@ -1563,7 +1609,12 @@ void pop_D1(Gameboy* const gb)
 
 
 
-void jp_D2(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void jp_D2(Gameboy* const gb) 
+{ 
+	// JP NC, a16
+	jp_nn(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
+}
+
 // MISSING D3 ----
 void call_D4(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 
@@ -1620,7 +1671,11 @@ void sbc_DE(Gameboy* const gb)
 }
 
 
-void rst_DF(Gameboy* const)     { ASSERT_INSTR_IMPL();  }
+void rst_DF(Gameboy* const gb)
+{ 
+	// RST 18h
+	rst_nn(0x18, gb);
+}
 
 
 
