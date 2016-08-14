@@ -12,7 +12,7 @@ namespace {
 static bool InitSDL();
 static void QuitSDL();
 static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
-void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
+static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
 
 
 }
@@ -149,7 +149,6 @@ struct Sprite
 	uint8_t data[8][2];
 };
 
-Uint32 sdl_joypad[8];
 
 constexpr const int WIN_WIDTH = 160;
 constexpr const int WIN_HEIGHT = 144;
@@ -173,7 +172,7 @@ inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
 
 
-void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
+static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
 	using gbx::GPU;
 

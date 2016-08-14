@@ -1014,7 +1014,7 @@ void ld_75(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void halt_76(Gameboy* const gb)
 {
-	if (gb->hwstate.GetIntMaster()) {
+	if (gb->hwstate.GetIntMaster() && gb->hwstate.interrupt_enable) {
 		if (gb->hwstate.GetFlags(HWState::HALTING) == 0)
 			gb->hwstate.SetFlags(HWState::HALTING);
 

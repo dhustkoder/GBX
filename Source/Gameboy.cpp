@@ -80,17 +80,24 @@ bool Gameboy::Reset()
 	gpu.obp1 = 0xff;
 	gpu.clock = 0;
 
-	keys.value = 0xcf;
-	keys.pad.all = 0xff;
-
+	hwstate.div_clock = 0x00;
+	hwstate.tima_clock = 0x00;
+	hwstate.tima_clock_limit = 0x400;
 	hwstate.flags = 0x00;
-	hwstate.divider = 0x00;
+	hwstate.div = 0x00;
+	hwstate.tima = 0x00;
+	hwstate.tma = 0x00;
+	hwstate.tac = 0x00;
 	hwstate.interrupt_enable = 0x00;
 	hwstate.interrupt_flags = 0x00;
 
-	WriteU8(0xFF05, 0x00); // TIMA
-	WriteU8(0xFF06, 0x00); // TMA
-	WriteU8(0xFF07, 0x00); // TAC
+
+	keys.value = 0xcf;
+	keys.pad.all = 0xff;
+
+	// WriteU8(0xFF05, 0x00); // TIMA, in HWState
+	// WriteU8(0xFF06, 0x00); // TMA, in HWState
+	// WriteU8(0xFF07, 0x00); // TAC, in HWState
 	WriteU8(0xFF10, 0x80); // NR10
 	WriteU8(0xFF11, 0xBF); // NR11
 	WriteU8(0xFF12, 0xF3); // NR12
@@ -137,96 +144,21 @@ void Gameboy::Step()
 	const uint8_t cycles = clock_table[opcode];
 	cpu.AddCycles(cycles);
 	gpu.clock += cycles;
+	hwstate.div_clock += cycles;
+	hwstate.tima_clock += cycles;
 }
 
 
 
 
-void Gameboy::UpdateInterrupts()
-
-{
-	if (!hwstate.GetIntMaster()) {
-		return;
-	} 
-	else if(!hwstate.GetIntActive()) {
-		hwstate.EnableIntActive();
-		return;
-	}
-
-	const uint8_t pendents = hwstate.GetPendentInts();
-
-	if (!pendents)
-		return;
-
-	hwstate.DisableIntMaster();
-
-	const auto push_pc = [this] {
-		if (hwstate.GetFlags(HWState::HALTING)) {
-			PushStack16(cpu.GetPC() + 1);
-			hwstate.ClearFlags(HWState::HALTING);
-		}
-		else {
-			PushStack16(cpu.GetPC());
-		}
-	};
-
-	if (pendents & INTERRUPT_VBLANK) {
-		hwstate.ClearInt(INTERRUPT_VBLANK);
-		push_pc();
-		cpu.SetPC(INTERRUPT_VBLANK_ADDR);
-		cpu.AddCycles(12);
-	}
-
-	if (pendents & INTERRUPT_LCD_STAT) {
-		hwstate.ClearInt(INTERRUPT_LCD_STAT);
-		push_pc();
-		cpu.SetPC(INTERRUPT_LCD_STAT_ADDR);
-		cpu.AddCycles(12);
-	}
-
-	if (pendents & INTERRUPT_TIMER) {
-		hwstate.ClearInt(INTERRUPT_TIMER);
-		push_pc();
-		cpu.SetPC(INTERRUPT_TIMER_ADDR);
-		cpu.AddCycles(12);
-	}
-
-	if (pendents & INTERRUPT_SERIAL) {
-		hwstate.ClearInt(INTERRUPT_SERIAL);
-		push_pc();
-		cpu.SetPC(INTERRUPT_SERIAL_ADDR);
-		cpu.AddCycles(12);
-	}
-
-	if (pendents & INTERRUPT_JOYPAD) {
-		hwstate.ClearInt(INTERRUPT_JOYPAD);
-		push_pc();
-		cpu.SetPC(INTERRUPT_JOYPAD_ADDR);
-		cpu.AddCycles(12);
-	}
-}
-
-
-
-
-
-
-// just avoiding mod
 void Gameboy::Run(const uint32_t cycles)
 {
-	uint32_t last_cycles = 0x00;
-	uint32_t clock = 0x00;
 	do {
 		Step();
 		UpdateGPU();
+		UpdateHWState();
 		UpdateInterrupts();
-		clock = cpu.GetClock();
-		if ((clock - last_cycles) > 0xff) {
-			++hwstate.divider;
-			last_cycles = clock;
-		}
-
-	} while (clock < cycles);
+	} while (cpu.GetClock() < cycles);
 	cpu.SetClock(0);
 }
 

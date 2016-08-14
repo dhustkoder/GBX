@@ -36,7 +36,10 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 	else if (address >= 0xFF00) {
 		switch (address) {
 		case 0xFF00: return keys.value;
-		case 0xFF04: return hwstate.divider;
+		case 0xFF04: return hwstate.div;
+		case 0xFF05: return hwstate.tima;
+		case 0xFF06: return hwstate.tma;
+		case 0xFF07: return hwstate.tac;
 		case 0xFF0F: return hwstate.interrupt_flags;
 		case 0xFF40: return gpu.lcdc;
 		case 0xFF41: return gpu.stat;
@@ -96,7 +99,25 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 				keys.value = 0xFF;
 			break;
 		case 0xFF04: 
-			hwstate.divider = 0x00;
+			hwstate.div = 0x00;
+			break;
+		case 0xFF05:
+			hwstate.tima = value;
+			break;
+		case 0xFF06:
+			hwstate.tma = value;
+			break;
+		case 0xFF07:
+			hwstate.tac = value;
+			if ((value&0x03) == 0x00)
+				hwstate.tima_clock_limit = 0x400;
+			else if ((value&0x03) == 0x01)
+				hwstate.tima_clock_limit = 0x10;
+			else if ((value&0x03) == 0x02)
+				hwstate.tima_clock_limit = 0x40;
+			else if ((value&0x03) == 0x03)
+				hwstate.tima_clock_limit = 0x100;
+
 			break;
 		case 0xFF0F:
 			hwstate.interrupt_flags = value; 

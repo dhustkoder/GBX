@@ -28,6 +28,7 @@ struct Gameboy
 	void Run(const uint32_t cycles);
 	void Step();
 	void UpdateGPU();
+	void UpdateHWState();
 	void UpdateInterrupts();
 
 	int8_t ReadS8(const uint16_t address) const;
