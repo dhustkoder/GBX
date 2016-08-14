@@ -23,7 +23,7 @@ enum StatusMask : uint8_t
 
 
 
-void Gameboy::UpdateGPU()
+void Gameboy::UpdateGPU(const uint8_t cycles)
 {
 	if (!(gpu.lcdc & GPU::LCD_ON_OFF)) {
 		gpu.clock = 0;
@@ -51,6 +51,7 @@ void Gameboy::UpdateGPU()
 	};
 
 
+	gpu.clock += cycles;
 
 	switch (gpu.GetMode()) {
 	case GPU::Mode::HBLANK:

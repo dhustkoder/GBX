@@ -1014,9 +1014,10 @@ void ld_75(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void halt_76(Gameboy* const gb)
 {
+	// halt cpu until interrupt occurs
 	if (gb->hwstate.GetIntMaster() && gb->hwstate.interrupt_enable) {
-		if (gb->hwstate.GetFlags(HWState::HALTING) == 0)
-			gb->hwstate.SetFlags(HWState::HALTING);
+		if (gb->hwstate.GetFlags(HWState::CPU_HALT) == 0)
+			gb->hwstate.SetFlags(HWState::CPU_HALT);
 
 		gb->cpu.SetPC(gb->cpu.GetPC() - 1);
 	}

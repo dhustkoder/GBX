@@ -134,18 +134,15 @@ bool Gameboy::Reset()
 
 
 
-void Gameboy::Step()
+uint8_t Gameboy::Step()
 {
 	const uint16_t pc = cpu.GetPC();
 	const uint8_t opcode = ReadU8(pc);
 	cpu.AddPC(1);
-	//debug_printf("PC: %4x | OP: %4x\n", pc, opcode);
 	main_instructions[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
 	cpu.AddCycles(cycles);
-	gpu.clock += cycles;
-	hwstate.div_clock += cycles;
-	hwstate.tima_clock += cycles;
+	return cycles;
 }
 
 
@@ -154,9 +151,9 @@ void Gameboy::Step()
 void Gameboy::Run(const uint32_t cycles)
 {
 	do {
-		Step();
-		UpdateGPU();
-		UpdateHWState();
+		const uint8_t step_cycles = Step();
+		UpdateGPU(step_cycles);
+		UpdateHWState(step_cycles);
 		UpdateInterrupts();
 	} while (cpu.GetClock() < cycles);
 	cpu.SetClock(0);

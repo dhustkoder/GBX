@@ -4,20 +4,27 @@
 namespace gbx {
 
 
-void Gameboy::UpdateHWState()
+void Gameboy::UpdateHWState(const uint8_t cycles)
 {
+	hwstate.div_clock += cycles;
 	if (hwstate.div_clock >= 0x100) {
 		++hwstate.div;
 		hwstate.div_clock -= 0x100;
 	}
 
-	if (hwstate.tima_clock >= hwstate.tima_clock_limit) {
-		if (hwstate.tima < 0xff)
-			++hwstate.tima;
-		else
-			hwstate.tima = hwstate.tma;
+	if (!hwstate.GetFlags(HWState::TIMER_STOP)) {
+		hwstate.tima_clock += cycles;
+		if (hwstate.tima_clock >= hwstate.tima_clock_limit) {
+			if (hwstate.tima < 0xff) {
+				++hwstate.tima;
+			}
+			else {
+				hwstate.tima = hwstate.tma;
+				hwstate.RequestInt(INTERRUPT_TIMER);
+			}
 
-		hwstate.tima_clock -= hwstate.tima_clock_limit;
+			hwstate.tima_clock -= hwstate.tima_clock_limit;
+		}
 	}
 }
 
@@ -46,9 +53,9 @@ void Gameboy::UpdateInterrupts()
 	hwstate.DisableIntMaster();
 
 	const auto push_pc = [this] {
-		if (hwstate.GetFlags(HWState::HALTING)) {
+		if (hwstate.GetFlags(HWState::CPU_HALT)) {
 			PushStack16(cpu.GetPC() + 1);
-			hwstate.ClearFlags(HWState::HALTING);
+			hwstate.ClearFlags(HWState::CPU_HALT);
 		}
 		else {
 			PushStack16(cpu.GetPC());

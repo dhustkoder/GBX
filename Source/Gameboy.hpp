@@ -26,9 +26,9 @@ struct Gameboy
 	bool LoadRom(const char* file);
 	bool Reset();
 	void Run(const uint32_t cycles);
-	void Step();
-	void UpdateGPU();
-	void UpdateHWState();
+	uint8_t Step();
+	void UpdateGPU(const uint8_t cycles);
+	void UpdateHWState(const uint8_t cycles);
 	void UpdateInterrupts();
 
 	int8_t ReadS8(const uint16_t address) const;

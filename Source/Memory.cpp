@@ -117,6 +117,13 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 				hwstate.tima_clock_limit = 0x40;
 			else if ((value&0x03) == 0x03)
 				hwstate.tima_clock_limit = 0x100;
+			if ((value & 0x04) == 0x04) {
+				hwstate.ClearFlags(HWState::TIMER_STOP);
+				hwstate.tima = hwstate.tma;
+			}
+			else {
+				hwstate.SetFlags(HWState::TIMER_STOP);
+			}
 
 			break;
 		case 0xFF0F:

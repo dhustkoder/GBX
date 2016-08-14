@@ -42,6 +42,9 @@
     <ClCompile Include="..\..\Source\SDL\sdl_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\HWState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Source\Cartridge.hpp">
