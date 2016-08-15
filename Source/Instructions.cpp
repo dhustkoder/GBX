@@ -723,7 +723,12 @@ void ld_43(Gameboy* const gb)
 	gb->cpu.SetB(gb->cpu.GetE());
 }
 
-void ld_44(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_44(Gameboy* const gb)
+{ 
+	// LD B, H
+	gb->cpu.SetB(gb->cpu.GetH());
+}
+
 void ld_45(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
@@ -751,7 +756,12 @@ void ld_47(Gameboy* const gb)
 
 
 
-void ld_48(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_48(Gameboy* const gb)
+{ 
+	// LD C, B
+	gb->cpu.SetC(gb->cpu.GetB());
+}
+
 void ld_49(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_4A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
@@ -762,7 +772,13 @@ void ld_4B(Gameboy* const gb)
 }
 
 void ld_4C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_4D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+void ld_4D(Gameboy* const gb)
+{ 
+	// LD C, L
+	gb->cpu.SetC(gb->cpu.GetL());
+}
 
 
 

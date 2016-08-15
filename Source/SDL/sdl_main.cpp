@@ -119,12 +119,6 @@ enum Color : Uint32
 };
 
 
-struct ColorNumber
-{
-	uint8_t upper;
-	uint8_t down;
-};
-
 struct TileMap
 {
 	uint8_t data[32][32];
@@ -162,9 +156,10 @@ static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
 static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map);
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y);
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu);
-static Color SolvePallete(ColorNumber color_number, uint8_t bit, uint8_t pallete);
-inline ColorNumber SolveColorNumber(const Tile& tile, uint8_t row);
-inline ColorNumber SolveColorNumber(const Sprite& tile, uint8_t row);
+static Color SolvePallete(uint8_t color_number, uint8_t pallete);
+inline uint8_t SolveColorNumber(uint8_t upperrow, uint8_t downrow, uint8_t bit);
+inline uint8_t SolveColorNumber(const Tile& tile, uint8_t row, uint8_t bit);
+inline uint8_t SolveColorNumber(const Sprite& tile, uint8_t row, uint8_t bit);
 inline Color CheckPixel(uint8_t x, uint8_t y);
 inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
 
@@ -260,9 +255,9 @@ static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, 
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 {
 	for (uint8_t row = 0; row < 8; ++row) {
-		const auto color_number = SolveColorNumber(tile, row);
 		for (uint8_t bit = 0; bit < 8; ++bit) {
-			const auto pixel = SolvePallete(color_number, bit, pallete);
+			const auto col_num = SolveColorNumber(tile, row, bit);
+			const auto pixel = SolvePallete(col_num, pallete);
 			DrawPixel(pixel, x + bit, y + row);
 		}
 	}
@@ -271,37 +266,39 @@ static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
 
 
 
-// need to implement XFLIP and YFLIP
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu)
 {
 	const uint8_t xpos = attr.xpos - 8;
 	const uint8_t ypos = attr.ypos - 16;
 	
 	const uint8_t attrflags = attr.flags;
-	const uint8_t pallete = 0xfc & ( gbx::TestBit(4, attrflags) ? gpu.obp1 : gpu.obp0 );
-	
-	const bool yflip = gbx::TestBit(6, attr.flags);
+	const uint8_t pallete = gbx::TestBit(4, attrflags) ? gpu.obp1 : gpu.obp0;
+
+	const bool yflip = gbx::TestBit(6, attrflags);
 	const bool xflip = gbx::TestBit(5, attrflags);
-	const bool priority = gbx::TestBit(7, attrflags) != 0;
+	const bool priority = gbx::TestBit(7, attrflags);
+	const auto bg_col0 = SolvePallete(0, gpu.bgp);
 
 	for (uint8_t row = 0; row < 8; ++row) {
 		const uint8_t abs_ypos = ypos + row;
 		if (abs_ypos >= WIN_HEIGHT)
 			continue;
-
-		const auto color_number = SolveColorNumber(sprite, yflip ? 7 - row : row);
 		
 		for (uint8_t bit = 0; bit < 8; ++bit) {
 			const uint8_t abs_xpos = xpos + bit;
 			if (abs_xpos >= WIN_WIDTH)
 				break;
-			
-			if (priority && CheckPixel(abs_xpos, abs_ypos) != WHITE)
+			const auto bg_pixel = CheckPixel(abs_xpos, abs_ypos);
+			if (priority && bg_pixel != bg_col0)
 				continue;
 
-			const auto pixel = SolvePallete(color_number, xflip ? 7 - bit : bit, pallete);
-			if (pixel != WHITE)
+			const uint8_t col_row = yflip ? 7 - row : row;
+			const uint8_t col_bit = xflip ? 7 - bit : bit;
+			const uint8_t col_num = SolveColorNumber(sprite, col_row, col_bit);
+			if (col_num != 0) {
+				const auto pixel = SolvePallete(col_num, pallete);
 				DrawPixel(pixel, abs_xpos, abs_ypos);
+			}
 		}
 	}
 }
@@ -312,7 +309,7 @@ static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::
 
 
 
-static Color SolvePallete(const ColorNumber color_number, uint8_t bit, uint8_t pallete)
+static Color SolvePallete(const uint8_t color_number, const uint8_t pallete)
 {
 	const auto get_color = [=](uint8_t pallete_value) {
 		switch (pallete_value) {
@@ -323,11 +320,7 @@ static Color SolvePallete(const ColorNumber color_number, uint8_t bit, uint8_t p
 		};
 	};
 
-	const uint8_t upperbit = (color_number.upper & (0x80 >> bit)) ? 1 : 0;
-	const uint8_t downbit = (color_number.down & (0x80 >> bit)) ? 1 : 0;
-	const uint8_t value = (upperbit << 1) | downbit;
-
-	switch (value) {
+	switch (color_number) {
 	case 0x00: return get_color(pallete & 0x03);
 	case 0x01: return get_color((pallete & 0x0C) >> 2);
 	case 0x02: return get_color((pallete & 0x30) >> 4);
@@ -336,17 +329,21 @@ static Color SolvePallete(const ColorNumber color_number, uint8_t bit, uint8_t p
 }
 
 
-
-
-
-inline ColorNumber SolveColorNumber(const Tile& tile, uint8_t row)
+inline uint8_t SolveColorNumber(const uint8_t upperrow, const uint8_t downrow, const uint8_t bit)
 {
-	return { tile.data[row][1], tile.data[row][0] };
+	const uint8_t upperbit = (upperrow & (0x80 >> bit)) ? 1 : 0;
+	const uint8_t downbit = (downrow & (0x80 >> bit)) ? 1 : 0;
+	return (upperbit << 1) | downbit;
 }
 
-inline ColorNumber SolveColorNumber(const Sprite& sprite, uint8_t row)
+inline uint8_t SolveColorNumber(const Tile& tile, uint8_t row, uint8_t bit)
 {
-	return { sprite.data[row][1],  sprite.data[row][0] };
+	return SolveColorNumber(tile.data[row][1], tile.data[row][0], bit);
+}
+
+inline uint8_t SolveColorNumber(const Sprite& sprite, uint8_t row, uint8_t bit)
+{
+	return SolveColorNumber( sprite.data[row][1],  sprite.data[row][0], bit);
 }
 
 
@@ -354,8 +351,6 @@ inline Color CheckPixel(uint8_t x, uint8_t y)
 {
 	return static_cast<Color>(gfx_buffer[(y * WIN_WIDTH) + x]);
 }
-
-
 
 inline void DrawPixel(Color pixel, uint8_t x, uint8_t y)
 {
