@@ -1324,7 +1324,15 @@ void and_A2(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void and_A3(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void and_A4(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void and_A5(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void and_A6(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+void and_A6(Gameboy* const gb)
+{ 
+	// AND (HL)
+	const auto value = gb->ReadU8(gb->cpu.GetHL());
+	const auto result = gb->cpu.AND(value, gb->cpu.GetA());
+	gb->cpu.SetA(result);
+}
 
 
 
@@ -1581,7 +1589,11 @@ void PREFIX_CB(Gameboy* const gb)
 
 
 
-void call_CC(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void call_CC(Gameboy* const gb) 
+{
+	// CALL Z, a16
+	call_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+}
 
 
 
@@ -1674,7 +1686,12 @@ void reti_D9(Gameboy* const gb)
 
 
 
-void jp_DA(Gameboy* const gb)   { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
+void jp_DA(Gameboy* const gb)
+{
+	// JP Z, a16
+	jp_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+}
+
 // MISSING DB -----
 void call_DC(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(2); }
 // MISSING DD -----
