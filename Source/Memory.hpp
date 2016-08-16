@@ -34,8 +34,8 @@ constexpr const uint16_t INTERRUPT_JOYPAD_ADDR = 0x60;
 
 struct Memory
 {
-	uint8_t hram[127];
 	Cartridge cart;
+	uint8_t hram[127];
 	uint8_t vram[8_Kib];
 	uint8_t wram[8_Kib];
 	uint8_t oam[160];

@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <Utix/ScopeExit.h>
-#include <Utix/Malloc.h>
-#include "Debug.hpp"
-#include "Cartridge.hpp"
+#include "Gameboy.hpp"
 
 namespace gbx {
 
@@ -15,7 +13,7 @@ CartridgeInfo Cartridge::info;
 
 // copies the ROM file (if it is a 32_Kib ROM)
 // into the fixed_home - home in memory
-bool Cartridge::Load(const char* const file_name) 
+bool Gameboy::LoadRom(const char* const file_name) 
 {
 	{
 		FILE* const file = fopen(file_name, "r");
@@ -36,7 +34,7 @@ bool Cartridge::Load(const char* const file_name)
 		}
 
 		fseek(file, 0, SEEK_SET);
-		fread(rom_banks, sizeof(uint8_t), file_size, file);
+		fread(memory.cart.rom_banks, sizeof(uint8_t), file_size, file);
 
 		if (ferror(file)) {
 			perror("error while reading from file");
@@ -44,26 +42,14 @@ bool Cartridge::Load(const char* const file_name)
 		}
 	} // close file in the end of this scope
 
-	fill_cartridge_info(this);
-	return true;
+	fill_cartridge_info(&memory.cart);
+	return this->Reset();
 }
 
 
 
 
 
-
-uint8_t Cartridge::ReadU8(const uint16_t address) const
-{
-	return rom_banks[address];
-}
-
-
-
-void Cartridge::WriteU8(const uint16_t address, const uint8_t value)
-{
-	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
-}
 
 
 

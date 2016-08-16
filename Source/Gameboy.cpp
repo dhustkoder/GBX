@@ -27,15 +27,6 @@ void destroy_gameboy(Gameboy* const gb)
 
 
 
-bool Gameboy::LoadRom(const char* const file_name)
-{
-	if (memory.cart.Load(file_name))
-		return this->Reset();
-	return false;
-}
-
-
-
 bool Gameboy::Reset() 
 {
 	// load cartridge data into memory

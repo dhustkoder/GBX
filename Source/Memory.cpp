@@ -9,6 +9,9 @@
 namespace gbx {
 
 static void dma_transfer(const uint8_t value, Gameboy* const gb);
+static uint8_t read_rom(const uint16_t address, const Cartridge& cart);
+static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const);
+
 
 
 
@@ -27,7 +30,7 @@ int8_t Gameboy::ReadS8(const uint16_t address) const
 uint8_t Gameboy::ReadU8(const uint16_t address) const 
 {
 	if (address < 0x8000) {
-		return memory.cart.ReadU8(address);
+		return read_rom(address, memory.cart);
 	}
 	else if (address >= 0xFF80) {
 		return address != 0xFFFF ? memory.hram[address - 0xFF80]
@@ -185,9 +188,8 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		memory.vram[address - 0x8000] = value;
 	}
 	else {
-		memory.cart.WriteU8(address, value);
+		write_rom(address, value, &memory.cart);
 	}
-
 }
 
 
@@ -284,6 +286,33 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb)
 			gb->memory.oam[i] = gb->ReadU8(source_addr++);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static uint8_t read_rom(const uint16_t address, const Cartridge& cart)
+{
+	return cart.rom_banks[address];
+}
+
+
+
+static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const)
+{
+	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
+}
+
 
 
 
