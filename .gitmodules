@@ -1,6 +1,6 @@
-[submodule "Dependencies/Utix"]
-	path = Dependencies/Utix
-	url = https://github.com/dhustkoder/Utix
 [submodule "Dependencies/SDL2"]
 	path = Dependencies/SDL2
 	url = https://github.com/dhustkoder/SDL2.git
+[submodule "Dependencies/Utix"]
+	path = Dependencies/Utix
+	url = https://github.com/dhustkoder/Utix.git

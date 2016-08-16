@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <Utix/Alloc_t.h>
+#include <Utix/Malloc.h>
 #include "Instructions.hpp"
 #include "Cartridge.hpp"
 #include "Gameboy.hpp"
