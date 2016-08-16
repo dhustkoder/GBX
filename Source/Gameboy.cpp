@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <Utix/Alloc_t.h>
-#include "Debug.hpp"
 #include "Instructions.hpp"
 #include "Cartridge.hpp"
 #include "Gameboy.hpp"
@@ -18,7 +16,7 @@ Gameboy* create_gameboy()
 		perror("Couldn't allocate memory");
 		return nullptr;
 	}
-	memset(&gb->memory, 0, sizeof(gbx::Memory));
+	memset(gb, 0, sizeof(Gameboy));
 	return gb;
 }
 
@@ -29,31 +27,34 @@ void destroy_gameboy(Gameboy* const gb)
 
 
 
-
-
+bool Gameboy::LoadRom(const char* const file_name)
+{
+	if (memory.cart.Load(file_name))
+		return this->Reset();
+	return false;
+}
 
 
 
 bool Gameboy::Reset() 
 {
 	// load cartridge data into memory
-	const auto cartridge_info = get_cartridge_info(memory);
+	const auto& cart_info = memory.cart.info;
 
 	printf("Cartridge information\n"
 	       "internal name: %s\n"
 	       "internal size: %zu\n"
 	       "type code: %u\n"
 	       "system code: %u\n",
-	       cartridge_info.internal_name, cartridge_info.size, 
-	       static_cast<unsigned>(cartridge_info.type), 
-	       static_cast<unsigned>(cartridge_info.system));
+	       cart_info.internal_name, cart_info.size, 
+	       static_cast<unsigned>(cart_info.type), 
+	       static_cast<unsigned>(cart_info.system));
 
-
-	if (cartridge_info.system != System::GAMEBOY) {
+	if (cart_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;
 	} 
-	else if (cartridge_info.type != CartridgeType::ROM_ONLY) {
+	else if (cart_info.type != CartridgeType::ROM_ONLY) {
 		fprintf(stderr, "cartridge type not suppoerted!");
 		return false;
 	}
@@ -65,33 +66,13 @@ bool Gameboy::Reset()
 	cpu.SetBC(0x0013);
 	cpu.SetDE(0x00D8);
 	cpu.SetHL(0x014D);
-	cpu.SetClock(0);
 
 	gpu.lcdc = 0x91;
-	gpu.stat = 0x00;
-	gpu.ly = 0x00;
-	gpu.lyc = 0x00;
-	gpu.scx = 0x00;
-	gpu.scy = 0x00;
-	gpu.wy = 0x00;
-	gpu.wx = 0x00;
 	gpu.bgp = 0xfc;
 	gpu.obp0 = 0xff;
 	gpu.obp1 = 0xff;
-	gpu.clock = 0;
 
-	hwstate.div_clock = 0x00;
-	hwstate.tima_clock = 0x00;
 	hwstate.tima_clock_limit = 0x400;
-	hwstate.flags = 0x00;
-	hwstate.div = 0x00;
-	hwstate.tima = 0x00;
-	hwstate.tma = 0x00;
-	hwstate.tac = 0x00;
-	hwstate.interrupt_enable = 0x00;
-	hwstate.interrupt_flags = 0x00;
-
-
 	keys.value = 0xcf;
 	keys.pad.all = 0xff;
 
@@ -128,7 +109,6 @@ bool Gameboy::Reset()
 
 	return true;
 }
-
 
 
 

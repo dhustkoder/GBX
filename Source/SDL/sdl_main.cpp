@@ -108,7 +108,12 @@ SDL_QUIT_EVENT:
 
 namespace {
 
-// TODO: endian checks
+
+
+constexpr const int WIN_WIDTH = 160;
+constexpr const int WIN_HEIGHT = 144;
+
+
 
 enum Color : Uint32
 {
@@ -144,13 +149,6 @@ struct Sprite
 };
 
 
-constexpr const int WIN_WIDTH = 160;
-constexpr const int WIN_HEIGHT = 144;
-
-static SDL_Window* window;
-static SDL_Texture* texture;
-static SDL_Renderer* renderer;
-static Uint32* gfx_buffer;
 
 static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
 static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map);
@@ -160,6 +158,14 @@ static Color SolvePallete(uint8_t color_number, uint8_t pallete);
 inline uint8_t SolveColorNumber(uint8_t upperrow, uint8_t downrow, uint8_t bit);
 inline Color CheckPixel(uint8_t x, uint8_t y);
 inline void DrawPixel(Color pixel, uint8_t x, uint8_t y);
+
+
+static SDL_Window* window;
+static SDL_Texture* texture;
+static SDL_Renderer* renderer;
+static Uint32* gfx_buffer;
+
+
 
 
 

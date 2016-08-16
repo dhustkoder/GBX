@@ -1,17 +1,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <Utix/ScopeExit.h>
-#include "Memory.hpp"
-#include "Gameboy.hpp"
+#include <Utix/Alloc_t.h>
+#include "Debug.hpp"
 #include "Cartridge.hpp"
 
 namespace gbx {
 
+static void fill_cartridge_info(Cartridge* const cart);
+CartridgeInfo Cartridge::info;
+
+
+
 
 // copies the ROM file (if it is a 32_Kib ROM)
 // into the fixed_home - home in memory
-bool Gameboy::LoadRom(const char* file_name) 
-{ 
+bool Cartridge::Load(const char* const file_name) 
+{
 	{
 		FILE* const file = fopen(file_name, "r");
 		if (!file) {
@@ -31,7 +36,7 @@ bool Gameboy::LoadRom(const char* file_name)
 		}
 
 		fseek(file, 0, SEEK_SET);
-		fread(memory.home, sizeof(uint8_t), 32_Kib, file);
+		fread(rom_banks, sizeof(uint8_t), file_size, file);
 
 		if (ferror(file)) {
 			perror("error while reading from file");
@@ -39,7 +44,25 @@ bool Gameboy::LoadRom(const char* file_name)
 		}
 	} // close file in the end of this scope
 
-	return this->Reset();
+	fill_cartridge_info(this);
+	return true;
+}
+
+
+
+
+
+
+uint8_t Cartridge::ReadU8(const uint16_t address) const
+{
+	return rom_banks[address];
+}
+
+
+
+void Cartridge::WriteU8(const uint16_t address, const uint8_t value)
+{
+	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
 }
 
 
@@ -50,35 +73,29 @@ bool Gameboy::LoadRom(const char* file_name)
 
 
 
-
-
-
-
-
-
-
 // parsers ROM header for common information
-CartridgeInfo get_cartridge_info(const Memory& memory)
+static void fill_cartridge_info(Cartridge* const cart)
 {
-	CartridgeInfo cinfo;
+	auto& cinfo = cart->info;
+
 	// 0134 - 0142 game's title
-	memcpy(cinfo.internal_name, &memory.home[0x134], 16);
+	memcpy(cinfo.internal_name, &cart->rom_banks[0x134], 16);
 	cinfo.internal_name[16] = 0;
 
-	const uint8_t super_gb_check = memory.home[0x146];
+	const uint8_t super_gb_check = cart->rom_banks[0x146];
 	if (super_gb_check == 0x03) {
 		cinfo.system = System::SUPER_GAMEBOY;
 	} else {
-		const uint8_t color_check = memory.home[0x143];
+		const uint8_t color_check = cart->rom_banks[0x143];
 		cinfo.system = color_check == 0x80 ? System::GAMEBOY_COLOR : System::GAMEBOY;
 	}
 
-	cinfo.type = static_cast<CartridgeType>(memory.home[0x147]);
+	cinfo.type = static_cast<CartridgeType>(cart->rom_banks[0x147]);
 
-	const uint8_t size_code = memory.home[0x148];
+	const uint8_t size_code = cart->rom_banks[0x148];
 	switch (size_code) {
 	case 0x00: cinfo.size = 32_Kib; break;    // 2 banks
-	//case 0x01: cinfo.size = 64_Kib; break;  // 4 banks
+	case 0x01: cinfo.size = 64_Kib; break;    // 4 banks
 	//case 0x02: cinfo.size = 128_Kib; break; // 8 banks
 	//case 0x03: cinfo.size = 256_Kib; break; // 16 banks
 	//case 0x04: cinfo.size = 512_Kib; break; // 32 banks
@@ -86,8 +103,6 @@ CartridgeInfo get_cartridge_info(const Memory& memory)
 	//case 0x06: cinfo.size = 2_Mib; break;   // 128 banks
 	default: cinfo.size = 0; break;
 	}
-
-	return cinfo;
 }
 
 

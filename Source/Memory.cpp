@@ -27,7 +27,7 @@ int8_t Gameboy::ReadS8(const uint16_t address) const
 uint8_t Gameboy::ReadU8(const uint16_t address) const 
 {
 	if (address < 0x8000) {
-		return memory.home[address];
+		return memory.cart.ReadU8(address);
 	}
 	else if (address >= 0xFF80) {
 		return address != 0xFFFF ? memory.hram[address - 0xFF80]
@@ -166,7 +166,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			gpu.wx = value;
 			break;
 		default:
-			debug_printf("required hardware io address: %4x\n", address);
+			// debug_printf("required hardware io address: %4x\n", address);
 			break;
 		};
 	}
@@ -185,7 +185,7 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 		memory.vram[address - 0x8000] = value;
 	}
 	else {
-		debug_printf("required write to address: %4x\n", address);
+		memory.cart.WriteU8(address, value);
 	}
 
 }
