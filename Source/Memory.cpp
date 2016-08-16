@@ -12,6 +12,8 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb);
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb);
 static uint8_t read_rom(const uint16_t address, const Cartridge& cart);
 static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const);
+static void write_keys(const uint8_t value, Keys* const keys);
+static void write_tac(const uint8_t value, HWState* const hwstate);
 static void dma_transfer(const uint8_t value, Gameboy* const gb);
 
 
@@ -211,12 +213,7 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 {
 	switch (address) {
 	case 0xFF00:
-		if ((value & 0x30) == 0x10)
-			gb->keys.value = 0xD0 | (gb->keys.pad.all >> 4);
-		else if ((value & 0x30) == 0x20)
-			gb->keys.value = 0xE0 | (gb->keys.pad.all & 0x0f);
-		else
-			gb->keys.value = 0xFF;
+		write_keys(value, &gb->keys);
 		break;
 	case 0xFF04: 
 		gb->hwstate.div = 0x00;
@@ -228,23 +225,7 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 		gb->hwstate.tma = value;
 		break;
 	case 0xFF07:
-		gb->hwstate.tac = value;
-		if ((value&0x03) == 0x00)
-			gb->hwstate.tima_clock_limit = 0x400;
-		else if ((value&0x03) == 0x01)
-			gb->hwstate.tima_clock_limit = 0x10;
-		else if ((value&0x03) == 0x02)
-			gb->hwstate.tima_clock_limit = 0x40;
-		else if ((value&0x03) == 0x03)
-			gb->hwstate.tima_clock_limit = 0x100;
-		if ((value & 0x04) == 0x04) {
-			gb->hwstate.ClearFlags(HWState::TIMER_STOP);
-			gb->hwstate.tima = gb->hwstate.tma;
-		}
-		else {
-			gb->hwstate.SetFlags(HWState::TIMER_STOP);
-		}
-
+		write_tac(value, &gb->hwstate);
 		break;
 	case 0xFF0F:
 		gb->hwstate.interrupt_flags = value; 
@@ -311,7 +292,43 @@ static void write_rom(const uint16_t address, const uint8_t value, Cartridge* co
 
 
 
+static void write_keys(const uint8_t value, Keys* const keys)
+{
+	const uint8_t mask = ( value & 0x30 );
 
+	if (mask == 0x10)
+		keys->value = 0xD0 | (keys->pad.all >> 4);
+	else if (mask == 0x20)
+		keys->value = 0xE0 | (keys->pad.all & 0x0f);
+	else
+		keys->value = 0xFF;
+}
+
+
+static void write_tac(const uint8_t value, HWState* const hwstate)
+{
+		hwstate->tac = value;
+		const uint8_t hz_code = value & 0x03;
+		if (hz_code == 0x00)
+			hwstate->tima_clock_limit = 0x400;
+		else if (hz_code == 0x01)
+			hwstate->tima_clock_limit = 0x10;
+		else if (hz_code == 0x02)
+			hwstate->tima_clock_limit = 0x40;
+		else if (hz_code == 0x03)
+			hwstate->tima_clock_limit = 0x100;
+
+		const uint8_t stop_code = value & 0x04;
+		if (stop_code == 0x04) {
+			if (hwstate->GetFlags(HWState::TIMER_STOP)) {
+				hwstate->ClearFlags(HWState::TIMER_STOP);
+				hwstate->tima = hwstate->tma;
+			}
+		}
+		else {
+			hwstate->SetFlags(HWState::TIMER_STOP);
+		}
+}
 
 
 
