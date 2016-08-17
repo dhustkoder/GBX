@@ -203,7 +203,7 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	default:
 		     debug_printf("required hardware io address: %4x\n", address);
 		     break;
-	};
+	}
 
 	return 0;
 }
@@ -212,64 +212,28 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	switch (address) {
-	case 0xFF00:
-		write_keys(value, &gb->keys);
-		break;
-	case 0xFF04: 
-		gb->hwstate.div = 0x00;
-		break;
-	case 0xFF05:
-		gb->hwstate.tima = value;
-		break;
-	case 0xFF06:
-		gb->hwstate.tma = value;
-		break;
-	case 0xFF07:
-		write_tac(value, &gb->hwstate);
-		break;
-	case 0xFF0F:
-		gb->hwstate.interrupt_flags = value; 
-		break;
-	case 0xFF40:
-		gb->gpu.lcdc = value;
-		break;
-	case 0xFF41:
-		gb->gpu.stat = (value & 0xF8) | (gb->gpu.stat & 0x07);
-		break;
-	case 0xFF42:
-		gb->gpu.scy = value;
-		break;
-	case 0xFF43:
-		gb->gpu.scx = value;
-		break;
-	case 0xFF44: 
-		gb->gpu.ly = 0;
-		break;
-	case 0xFF45:
-		gb->gpu.lyc = value;
-		break;
-	case 0xFF46:
-		dma_transfer(value, gb);
-		break;
-	case 0xFF47:
-		gb->gpu.bgp = value;
-		break;
-	case 0xFF48:
-		gb->gpu.obp0 = value;
-		break;
-	case 0xFF49:
-		gb->gpu.obp1 = value;
-		break;
-	case 0xFF4A:
-		gb->gpu.wy = value;
-		break;
-	case 0xFF4B:
-		gb->gpu.wx = value;
-		break;
+	case 0xFF00: write_keys(value, &gb->keys); break;
+	case 0xFF04: gb->hwstate.div = 0x00; break;
+	case 0xFF05: gb->hwstate.tima = value; break;
+	case 0xFF06: gb->hwstate.tma = value; break;
+	case 0xFF07: write_tac(value, &gb->hwstate); break;
+	case 0xFF0F: gb->hwstate.interrupt_flags = value; break;
+	case 0xFF40: gb->gpu.lcdc = value; break;
+	case 0xFF41: gb->gpu.stat = (value & 0xF8) | (gb->gpu.stat & 0x07); break;
+	case 0xFF42: gb->gpu.scy = value; break;
+	case 0xFF43: gb->gpu.scx = value; break;
+	case 0xFF44: gb->gpu.ly = 0; break;
+	case 0xFF45: gb->gpu.lyc = value; break;
+	case 0xFF46: dma_transfer(value, gb); break;
+	case 0xFF47: gb->gpu.bgp = value; break;
+	case 0xFF48: gb->gpu.obp0 = value; break;
+	case 0xFF49: gb->gpu.obp1 = value; break;
+	case 0xFF4A: gb->gpu.wy = value; break;
+	case 0xFF4B: gb->gpu.wx = value; break;
 	default:
 		debug_printf("required hardware io address: %4x\n", address);
 		break;
-	};
+	}
 }
 
 
