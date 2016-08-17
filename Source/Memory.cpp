@@ -11,7 +11,7 @@ namespace gbx {
 static uint8_t read_io(const uint16_t address, const Gameboy& gb);
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb);
 static uint8_t read_rom(const uint16_t address, const Cartridge& cart);
-static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const);
+static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const cart);
 static void write_keys(const uint8_t value, Keys* const keys);
 static void write_tac(const uint8_t value, HWState* const hwstate);
 static void dma_transfer(const uint8_t value, Gameboy* const gb);
@@ -290,8 +290,6 @@ static void write_rom(const uint16_t address, const uint8_t value, Cartridge* co
 
 
 
-
-
 static void write_keys(const uint8_t value, Keys* const keys)
 {
 	const uint8_t mask = ( value & 0x30 );
@@ -305,21 +303,21 @@ static void write_keys(const uint8_t value, Keys* const keys)
 }
 
 
+
 static void write_tac(const uint8_t value, HWState* const hwstate)
 {
 		hwstate->tac = value;
-		const uint8_t hz_code = value & 0x03;
-		if (hz_code == 0x00)
-			hwstate->tima_clock_limit = 0x400;
-		else if (hz_code == 0x01)
-			hwstate->tima_clock_limit = 0x10;
-		else if (hz_code == 0x02)
-			hwstate->tima_clock_limit = 0x40;
-		else if (hz_code == 0x03)
-			hwstate->tima_clock_limit = 0x100;
 
-		const uint8_t stop_code = value & 0x04;
-		if (stop_code == 0x04) {
+		const uint8_t hz_code = value & 0x03;
+		switch (hz_code) {
+		case 0x00: hwstate->tima_clock_limit = 0x400; break;
+		case 0x01: hwstate->tima_clock_limit = 0x10; break;
+		case 0x02: hwstate->tima_clock_limit = 0x40; break;
+		case 0x03: hwstate->tima_clock_limit = 0x100; break;
+		}
+
+		const auto start_bit = TestBit(2, value);
+		if (start_bit) {
 			if (hwstate->GetFlags(HWState::TIMER_STOP)) {
 				hwstate->ClearFlags(HWState::TIMER_STOP);
 				hwstate->tima = hwstate->tma;
