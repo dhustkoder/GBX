@@ -23,29 +23,19 @@ constexpr uint16_t ConcatBytes(const uint8_t high_byte, const uint8_t low_byte) 
 
 
 
-
 constexpr bool TestBit(const uint8_t bit, const uint16_t value) {
 	return (value & (0x01 << bit)) != 0;
 }
 
 
-constexpr uint16_t SetBit(const uint8_t bit, const uint16_t value) {
+template<class T>
+constexpr T SetBit(const uint8_t bit, const T value) {
 	return (value | (0x01 << bit));
 }
 
-
-constexpr uint16_t ResBit(const uint8_t bit, const uint16_t value) {
+template<class T>
+constexpr T ResBit(const uint8_t bit, const T value) {
 	return (value & ~(0x01 << bit));
-}
-
-
-constexpr uint8_t SetBit(const uint8_t bit, const uint8_t value) {
-	return static_cast<uint8_t>(SetBit(bit, static_cast<uint16_t>(value)));
-}
-
-
-constexpr uint8_t ResBit(const uint8_t bit, const uint8_t value) {
-	return static_cast<uint8_t>(ResBit(bit, static_cast<uint16_t>(value)));
 }
 
 
@@ -70,29 +60,6 @@ constexpr uint8_t GetLowNibble(uint8_t byte) {
 
 constexpr uint8_t GetHighNibble(uint8_t byte) {
 	return byte & 0xF0;
-}
-
-
-
-
-
-inline void Split16(const uint16_t value, uint8_t* const high_byte, uint8_t* const low_byte) {
-	*high_byte = GetHighByte(value);
-	*low_byte = GetLowByte(value);
-}
-
-
-
-inline void Add16(const uint16_t val, uint8_t* const high_byte, uint8_t* const low_byte) {
-	const uint16_t result = ConcatBytes(*high_byte, *low_byte) + val;
-	Split16(result, high_byte, low_byte);
-}
-
-
-
-inline void Sub16(const uint16_t val, uint8_t* const high_byte, uint8_t* const low_byte) {
-	const uint16_t result = ConcatBytes(*high_byte, *low_byte) - val;
-	Split16(result, high_byte, low_byte);
 }
 
 

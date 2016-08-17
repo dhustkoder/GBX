@@ -180,6 +180,9 @@ uint16_t Gameboy::PopStack16()
 
 
 
+
+
+
 static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 {
 	switch (address) {
@@ -207,6 +210,12 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 
 	return 0;
 }
+
+
+
+
+
+
 
 
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
@@ -240,6 +249,8 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 
 
 
+
+
 static uint8_t read_rom(const uint16_t address, const Cartridge& cart)
 {
 	return cart.rom_banks[address];
@@ -247,10 +258,17 @@ static uint8_t read_rom(const uint16_t address, const Cartridge& cart)
 
 
 
+
+
+
+
 static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const)
 {
 	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
 }
+
+
+
 
 
 
@@ -265,6 +283,9 @@ static void write_keys(const uint8_t value, Keys* const keys)
 	else
 		keys->value = 0xFF;
 }
+
+
+
 
 
 
@@ -294,6 +315,9 @@ static void write_tac(const uint8_t value, HWState* const hwstate)
 
 
 
+
+
+
 static void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
 	uint16_t source_addr = value * 0x100;
@@ -309,6 +333,27 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb)
 			gb->memory.oam[i] = gb->ReadU8(source_addr++);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
