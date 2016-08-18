@@ -224,6 +224,20 @@ uint8_t CPU::RR(const uint8_t value)
 
 
 
+uint8_t CPU::RL(const uint8_t value)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_bit7 = value & 0x80;
+	const uint8_t old_carry = GetFlags(FLAG_C);
+	const uint8_t result = old_carry ? (value << 1) | 0x01 : (value << 1);
+	if (old_bit7)
+		SetF(CheckZ(result) | FLAG_C);
+	else
+		SetF(CheckZ(result));
+
+	return result;
+}
+
 
 uint8_t CPU::RLC(const uint8_t value)
 {

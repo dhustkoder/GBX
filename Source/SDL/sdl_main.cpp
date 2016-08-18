@@ -151,7 +151,7 @@ struct Sprite
 
 
 static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
-static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map);
+static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t sx, uint8_t sy, uint8_t pallete, bool unsigned_map);
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y);
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu);
 static Color SolvePallete(uint8_t color_number, uint8_t pallete);
@@ -193,19 +193,26 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 
 	if (lcdc & GPU::BG_ON_OFF) {
-		ASSERT_MSG(!gpu.scx && !gpu.scy, "BG SCROLL NEEDED");
+		const uint16_t to_scroll = ((gpu.scy*4)+gpu.scx);
 		const bool tile_map_select = (lcdc & GPU::BG_TILE_MAP_SELECT) != 0;
-		auto tile_map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
-		                                : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
-		DrawTileMap(tile_data, tile_map, bgp, unsigned_tiles);
+		auto tile_map = tile_map_select 
+			? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00 + to_scroll)
+			: reinterpret_cast<const TileMap*>(memory.vram + 0x1800 + to_scroll);
+
+		DrawTileMap(tile_data, tile_map, 0, 0, bgp, unsigned_tiles);
 	}
 
 	if (lcdc & GPU::WIN_ON_OFF) {
-		ASSERT_MSG(gpu.wx==7 && !gpu.wy, "WIN SCROLL NEEDED");
-		const bool tile_map_select = (lcdc & GPU::WIN_TILE_MAP_SELECT) != 0;
-		auto tile_map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
-		                                : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
-		DrawTileMap(tile_data, tile_map, bgp, unsigned_tiles);
+		const uint8_t wx = gpu.wx - 7;
+		const uint8_t wy = gpu.wy;
+		if (wx < 153 && wy < 137) {		
+			const bool tile_map_select = (lcdc & GPU::WIN_TILE_MAP_SELECT) != 0;
+			auto tile_map = tile_map_select 
+				? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
+				: reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
+
+			DrawTileMap(tile_data, tile_map, wx, wy, bgp, unsigned_tiles);
+		}
 	}
 
 	if (lcdc & GPU::OBJ_ON_OFF)
@@ -232,21 +239,35 @@ static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 
 
-static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t pallete, bool unsigned_map)
+static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t sx, uint8_t sy, uint8_t pallete, bool unsigned_map)
 {
 	if (unsigned_map) {
 		for (uint8_t y = 0; y < 18; ++y) {
+			const uint8_t ypos = ((y * 8) + sy);
+			if (ypos > 136)
+				break;
+
 			for (uint8_t x = 0; x < 20; ++x) {
 				const auto tile_id = map->data[y][x];
-				DrawTile(tiles[tile_id], pallete, x * 8, y * 8);
+				const uint8_t xpos = ((x * 8) + sx);
+				if (xpos > 152)
+					continue;
+				DrawTile(tiles[tile_id], pallete, xpos, ypos);
 			}
 		}
 	}
 	else {
 		for (uint8_t y = 0; y < 18; ++y) {
+			const uint8_t ypos = ((y * 8) + sy);
+			if (ypos > 136)
+				break;
+			
 			for (uint8_t x = 0; x < 20; ++x) {
 				const auto tile_id = static_cast<int8_t>(map->data[y][x]);
-				DrawTile(tiles[tile_id], pallete, x * 8, y * 8);
+				const uint8_t xpos = ((x * 8) + sx);
+				if (xpos > 152)
+					continue;	
+				DrawTile(tiles[tile_id], pallete, xpos, ypos);
 			}
 		}
 	}

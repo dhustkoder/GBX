@@ -208,7 +208,7 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	case 0xFF4A: return gb.gpu.wy;
 	case 0xFF4B: return gb.gpu.wx;
 	default:
-		debug_printf("required read hardware io address: %4x\n", address);
+		//debug_printf("required read hardware io address: %4x\n", address);
 		break;
 	}
 
@@ -244,7 +244,7 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 	case 0xFF4A: gb->gpu.wy = value; break;
 	case 0xFF4B: gb->gpu.wx = value; break;
 	default:
-		debug_printf("required write hardware io address: %4x\n", address);
+		//debug_printf("required write hardware io address: %4x\n", address);
 		break;
 	}
 }

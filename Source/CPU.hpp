@@ -79,6 +79,7 @@ struct CPU
 	uint8_t XOR(const uint8_t first, const uint8_t second);
 	
 	uint8_t RR(const uint8_t value);
+	uint8_t RL(const uint8_t value);
 	uint8_t RLC(const uint8_t value);
 	uint8_t SLA(const uint8_t value);
 	uint8_t SRL(const uint8_t value);
