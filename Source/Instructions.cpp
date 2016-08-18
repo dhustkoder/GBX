@@ -61,12 +61,12 @@ inline uint16_t get_a16(Gameboy* const gb)
 
 inline void jr_nn(const bool cond, Gameboy* const gb)
 {
-	if (!cond) {
-		++gb->cpu.pc;
-	} else {
+	if (cond) {
 		const int8_t r8 = get_r8(gb);
 		gb->cpu.pc += r8;
 		gb->cpu.clock += 4;
+	} else {
+		++gb->cpu.pc;
 	}
 }
 
@@ -74,11 +74,11 @@ inline void jr_nn(const bool cond, Gameboy* const gb)
 
 inline void jp_nn(const bool cond, Gameboy* const gb)
 {
-	if (!cond) {
-		gb->cpu.pc += 2;
-	} else {
+	if (cond) {
 		gb->cpu.pc = gb->ReadU16(gb->cpu.pc);
 		gb->cpu.clock += 4;
+	} else {
+		gb->cpu.pc += 2;
 	}
 }
 
@@ -94,13 +94,13 @@ inline void ret_nn(const bool cond, Gameboy* const gb)
 
 inline void call_nn(const bool cond, Gameboy* const gb)
 {
-	if (!cond) {
-		gb->cpu.pc += 2;
-	}
-	else {
+	if (cond) {
 		const uint16_t addr = get_a16(gb);
 		gb->PushStack16(gb->cpu.pc);
 		gb->cpu.pc = addr;
+	}
+	else {
+		gb->cpu.pc += 2;
 	}
 }
 
