@@ -4,6 +4,7 @@
 
 namespace gbx {
 
+
 struct CPU
 {
 	enum Flags : uint8_t 
@@ -23,15 +24,11 @@ struct CPU
 	uint8_t GetH() const;
 	uint8_t GetL() const;
 
-
-	uint16_t GetPC() const;
-	uint16_t GetSP() const;
 	uint16_t GetAF() const;
 	uint16_t GetBC() const;
 	uint16_t GetDE() const;
 	uint16_t GetHL() const;
 
-	uint32_t GetClock() const;
 
 	Flags GetFlags(const CPU::Flags flags) const;
 
@@ -47,21 +44,13 @@ struct CPU
 	void SetH(const uint8_t val);
 	void SetL(const uint8_t val);
 
-	void SetPC(const uint16_t val);
-	void SetSP(const uint16_t val);
 	void SetAF(const uint16_t val);
 	void SetBC(const uint16_t val);
 	void SetDE(const uint16_t val);
 	void SetHL(const uint16_t val);
-	void SetClock(const uint32_t cycles);
 
-	void AddCycles(const uint16_t cycles);
-	void AddPC(const uint16_t val);
 	void SetFlags(const CPU::Flags flags);
 	void ClearFlags(const CPU::Flags flags);
-
-	
-	
 
 	uint8_t INC(const uint8_t first);
 	uint8_t DEC(const uint8_t first);
@@ -87,37 +76,35 @@ struct CPU
 	void BIT(const uint8_t bit, const uint8_t value);
 
 
-private:
 	uint32_t clock;
 	uint16_t pc;
 	uint16_t sp;
 
-	// TODO: check endianess, this is only compatible with little endian
 	union {
 		struct {
 			uint8_t f, a; 
-		}bytes;
+		}ind;
 		uint16_t pair;
 	}af;
 
 	union {
 		struct {
 			uint8_t c, b; 
-		}bytes;
+		}ind;
 		uint16_t pair;
 	}bc;
 
 	union {
 		struct {
 			uint8_t e, d; 
-		}bytes;
+		}ind;
 		uint16_t pair;
 	}de;
 
 	union {
 		struct {
 			uint8_t l, h; 
-		}bytes;
+		}ind;
 		uint16_t pair;
 	}hl;
 	
@@ -181,23 +168,21 @@ constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint8_t second) {
 
 
 
-inline uint8_t CPU::GetA() const { return af.bytes.a; }
-inline uint8_t CPU::GetF() const { return af.bytes.f; }
-inline uint8_t CPU::GetB() const { return bc.bytes.b; }
-inline uint8_t CPU::GetC() const { return bc.bytes.c; }
-inline uint8_t CPU::GetD() const { return de.bytes.d; }
-inline uint8_t CPU::GetE() const { return de.bytes.e; }
-inline uint8_t CPU::GetH() const { return hl.bytes.h; }
-inline uint8_t CPU::GetL() const { return hl.bytes.l; }
+inline uint8_t CPU::GetA() const { return af.ind.a; }
+inline uint8_t CPU::GetF() const { return af.ind.f; }
+inline uint8_t CPU::GetB() const { return bc.ind.b; }
+inline uint8_t CPU::GetC() const { return bc.ind.c; }
+inline uint8_t CPU::GetD() const { return de.ind.d; }
+inline uint8_t CPU::GetE() const { return de.ind.e; }
+inline uint8_t CPU::GetH() const { return hl.ind.h; }
+inline uint8_t CPU::GetL() const { return hl.ind.l; }
 
 
-inline uint16_t CPU::GetPC() const { return pc; }
-inline uint16_t CPU::GetSP() const { return sp; }
+
 inline uint16_t CPU::GetAF() const { return af.pair; } 
 inline uint16_t CPU::GetBC() const { return bc.pair; }
 inline uint16_t CPU::GetDE() const { return de.pair; }
 inline uint16_t CPU::GetHL() const { return hl.pair; }
-inline uint32_t CPU::GetClock() const { return clock; }
 
 inline CPU::Flags CPU::GetFlags(const CPU::Flags flags) const 
 {
@@ -205,25 +190,19 @@ inline CPU::Flags CPU::GetFlags(const CPU::Flags flags) const
 }
 
 
-inline void CPU::SetA(const uint8_t val) { af.bytes.a = val; }
-inline void CPU::SetF(const uint8_t val) { af.bytes.f = val; }
-inline void CPU::SetB(const uint8_t val) { bc.bytes.b = val; }
-inline void CPU::SetC(const uint8_t val) { bc.bytes.c = val; }
-inline void CPU::SetD(const uint8_t val) { de.bytes.d = val; }
-inline void CPU::SetE(const uint8_t val) { de.bytes.e = val; }
-inline void CPU::SetH(const uint8_t val) { hl.bytes.h = val; }
-inline void CPU::SetL(const uint8_t val) { hl.bytes.l = val; }
+inline void CPU::SetA(const uint8_t val) { af.ind.a = val; }
+inline void CPU::SetF(const uint8_t val) { af.ind.f = val; }
+inline void CPU::SetB(const uint8_t val) { bc.ind.b = val; }
+inline void CPU::SetC(const uint8_t val) { bc.ind.c = val; }
+inline void CPU::SetD(const uint8_t val) { de.ind.d = val; }
+inline void CPU::SetE(const uint8_t val) { de.ind.e = val; }
+inline void CPU::SetH(const uint8_t val) { hl.ind.h = val; }
+inline void CPU::SetL(const uint8_t val) { hl.ind.l = val; }
 
-
-inline void CPU::SetPC(const uint16_t val) { pc = val; }
-inline void CPU::SetSP(const uint16_t val) { sp = val; }
 inline void CPU::SetAF(const uint16_t val) { af.pair = val; } 
 inline void CPU::SetBC(const uint16_t val) { bc.pair = val; }
 inline void CPU::SetDE(const uint16_t val) { de.pair = val; }
 inline void CPU::SetHL(const uint16_t val) { hl.pair = val; }
-inline void CPU::SetClock(const uint32_t cycles) { clock = cycles; }
-inline void CPU::AddCycles(const uint16_t value) { clock += value; }
-inline void CPU::AddPC(const uint16_t val) { pc += val; }
 
 inline void CPU::SetFlags(const CPU::Flags flags)
 {

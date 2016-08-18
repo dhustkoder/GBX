@@ -27,13 +27,13 @@ void CPU::PrintFlags() const
 
 void CPU::PrintRegisters() const 
 {
-	debug_printf("PC: %4x\n" \
-	       "SP: %4x\n" \
-	       "AF: %4x\n" \
-	       "BC: %4x\n" \
-	       "DE: %4x\n" \
-	       "HL: %4x\n", GetPC(), GetSP(), 
-	       GetAF(), GetBC(), GetDE(), GetHL());
+	debug_printf("PC: %4x\n"
+	             "SP: %4x\n"
+	             "AF: %4x\n"
+	             "BC: %4x\n"
+	             "DE: %4x\n"
+	             "HL: %4x\n", pc, sp,
+	             af.pair, bc.pair, de.pair, hl.pair);
 }
 
 

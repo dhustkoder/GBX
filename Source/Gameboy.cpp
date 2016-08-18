@@ -51,8 +51,8 @@ bool Gameboy::Reset()
 	}
 
 	// init the system, Gameboy mode
-	cpu.SetPC(CARTRIDGE_ENTRY_ADDR);
-	cpu.SetSP(0xfffe);
+	cpu.pc = CARTRIDGE_ENTRY_ADDR;
+	cpu.sp = 0xfffe;
 	cpu.SetAF(0x01B0);
 	cpu.SetBC(0x0013);
 	cpu.SetDE(0x00D8);
@@ -107,12 +107,10 @@ bool Gameboy::Reset()
 
 uint8_t Gameboy::Step()
 {
-	const uint16_t pc = cpu.GetPC();
-	const uint8_t opcode = ReadU8(pc);
-	cpu.AddPC(1);
+	const uint8_t opcode = ReadU8(cpu.pc++);
 	main_instructions[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
-	cpu.AddCycles(cycles);
+	cpu.clock += cycles;
 	return cycles;
 }
 
@@ -126,8 +124,8 @@ void Gameboy::Run(const uint32_t cycles)
 		UpdateGPU(step_cycles);
 		UpdateHWState(step_cycles);
 		UpdateInterrupts();
-	} while (cpu.GetClock() < cycles);
-	cpu.SetClock(0);
+	} while (cpu.clock < cycles);
+	cpu.clock = 0;
 }
 
 

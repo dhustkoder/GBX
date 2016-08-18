@@ -54,47 +54,47 @@ void Gameboy::UpdateInterrupts()
 
 	const auto push_pc = [this] {
 		if (hwstate.GetFlags(HWState::CPU_HALT)) {
-			PushStack16(cpu.GetPC() + 1);
+			PushStack16(cpu.pc + 1);
 			hwstate.ClearFlags(HWState::CPU_HALT);
 		}
 		else {
-			PushStack16(cpu.GetPC());
+			PushStack16(cpu.pc);
 		}
 	};
 
 	if (pendents & INTERRUPT_VBLANK) {
 		hwstate.ClearInt(INTERRUPT_VBLANK);
 		push_pc();
-		cpu.SetPC(INTERRUPT_VBLANK_ADDR);
-		cpu.AddCycles(12);
+		cpu.pc = INTERRUPT_VBLANK_ADDR;
+		cpu.clock += 12;
 	}
 
 	if (pendents & INTERRUPT_LCD_STAT) {
 		hwstate.ClearInt(INTERRUPT_LCD_STAT);
 		push_pc();
-		cpu.SetPC(INTERRUPT_LCD_STAT_ADDR);
-		cpu.AddCycles(12);
+		cpu.pc = INTERRUPT_LCD_STAT_ADDR;
+		cpu.clock += 12;
 	}
 
 	if (pendents & INTERRUPT_TIMER) {
 		hwstate.ClearInt(INTERRUPT_TIMER);
 		push_pc();
-		cpu.SetPC(INTERRUPT_TIMER_ADDR);
-		cpu.AddCycles(12);
+		cpu.pc = INTERRUPT_TIMER_ADDR;
+		cpu.clock += 12;
 	}
 
 	if (pendents & INTERRUPT_SERIAL) {
 		hwstate.ClearInt(INTERRUPT_SERIAL);
 		push_pc();
-		cpu.SetPC(INTERRUPT_SERIAL_ADDR);
-		cpu.AddCycles(12);
+		cpu.pc = INTERRUPT_SERIAL_ADDR;
+		cpu.clock += 12;
 	}
 
 	if (pendents & INTERRUPT_JOYPAD) {
 		hwstate.ClearInt(INTERRUPT_JOYPAD);
 		push_pc();
-		cpu.SetPC(INTERRUPT_JOYPAD_ADDR);
-		cpu.AddCycles(12);
+		cpu.pc = INTERRUPT_JOYPAD_ADDR;
+		cpu.clock += 12;
 	}
 }
 
