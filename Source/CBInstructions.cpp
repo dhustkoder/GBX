@@ -79,8 +79,21 @@ void rl_16(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void rl_17(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void rr_18(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void rr_19(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rr_1A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rr_1B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void rr_1A(Gameboy* const gb)
+{
+	// RR D ( Z 0 0 C )
+	const uint8_t result = gb->cpu.RR(gb->cpu.GetD());
+	gb->cpu.SetD(result);
+}
+
+void rr_1B(Gameboy* const gb)
+{
+	// RR E ( Z 0 0 C )
+	const uint8_t result = gb->cpu.RR(gb->cpu.GetE());
+	gb->cpu.SetE(result);
+}
+
 void rr_1C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void rr_1D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void rr_1E(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -95,7 +108,14 @@ void rr_1F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void sla_20(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void sla_21(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void sla_22(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sla_23(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void sla_23(Gameboy* const gb)
+{
+	// SLA E ( Z 0 0 C )
+	const uint8_t result = gb->cpu.SLA(gb->cpu.GetE());
+	gb->cpu.SetE(result);
+}
+
 void sla_24(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void sla_25(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 

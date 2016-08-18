@@ -66,8 +66,8 @@ struct CPU
 	uint8_t INC(const uint8_t first);
 	uint8_t DEC(const uint8_t first);
 	
-	uint8_t ADC(uint8_t first, const uint8_t second);
-	uint8_t SBC(uint8_t first, const uint8_t second);
+	uint8_t ADC(const uint8_t first, uint8_t second);
+	uint8_t SBC(const uint8_t first, uint8_t second);
 
 	uint8_t ADD(const uint8_t first, const uint8_t second);
 	uint8_t SUB(const uint8_t first, const uint8_t second);
@@ -78,6 +78,7 @@ struct CPU
 	uint8_t AND(const uint8_t first, const uint8_t second);
 	uint8_t XOR(const uint8_t first, const uint8_t second);
 	
+	uint8_t RR(const uint8_t value);
 	uint8_t RLC(const uint8_t value);
 	uint8_t SLA(const uint8_t value);
 	uint8_t SRL(const uint8_t value);

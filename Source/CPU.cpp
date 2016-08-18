@@ -56,11 +56,11 @@ void CPU::ADD_HL(const uint16_t second)
 
 
 
-uint8_t CPU::ADC(uint8_t first, const uint8_t second) 
+uint8_t CPU::ADC(const uint8_t first, uint8_t second) 
 {
 	// flags effect: Z 0 H C
 	if (GetFlags(FLAG_C))
-		++first;
+		++second;
 
 	return ADD(first, second);
 }
@@ -70,11 +70,11 @@ uint8_t CPU::ADC(uint8_t first, const uint8_t second)
 
 
 
-uint8_t CPU::SBC(uint8_t first, const uint8_t second) 
+uint8_t CPU::SBC(const uint8_t first, uint8_t second) 
 {
 	// flags effect: Z 1 H C
 	if (GetFlags(FLAG_C))
-		--first;
+		++second;
 
 	return SUB(first, second);
 }
@@ -208,7 +208,19 @@ uint8_t CPU::XOR(const uint8_t first, const uint8_t second)
 
 
 
+uint8_t CPU::RR(const uint8_t value)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_carry = GetFlags(FLAG_C);
+	const uint8_t old_bit0 = value & 0x01;
+	const uint8_t result = old_carry ? ((value>>1) | 0x80) : (value>>1);
+	if (old_bit0)
+		SetF(CheckZ(result) | FLAG_C);
+	else
+		SetF(CheckZ(result));
 
+	return result;
+}
 
 
 
@@ -216,12 +228,17 @@ uint8_t CPU::XOR(const uint8_t first, const uint8_t second)
 uint8_t CPU::RLC(const uint8_t value)
 {
 	// flags effect: Z 0 0 C
-	const uint8_t carry = ( value & 0x80 ) ? FLAG_C : 0;
-	uint8_t result = value << 1;
-	if (carry)
-		result |= 0x01;
+	const uint8_t old_bit7 = value & 0x80;
+	uint8_t result;
+	if (old_bit7) {
+		result = (value << 1) | 0x01;
+		SetF(CheckZ(result) | FLAG_C);
+	}
+	else {
+		result = value << 1;
+		SetF(CheckZ(result));
+	}
 
-	SetF(CheckZ(result) | carry);
 	return result;
 }
 
@@ -232,9 +249,13 @@ uint8_t CPU::RLC(const uint8_t value)
 uint8_t CPU::SLA(const uint8_t value)
 {
 	// flags  effect: Z 0 0 C
-	const uint8_t carry = (value & 0x80) ? FLAG_C : 0;
+	const uint8_t old_bit7 = value & 0x80;
 	const uint8_t result = value << 1;
-	SetF(CheckZ(result) | carry);
+	if (old_bit7)
+		SetF(CheckZ(result) | FLAG_C);
+	else
+		SetF(CheckZ(result));
+
 	return result;
 }
 
@@ -243,9 +264,13 @@ uint8_t CPU::SLA(const uint8_t value)
 uint8_t CPU::SRL(const uint8_t value)
 {
 	// flags effect: Z 0 0 C
-	const uint8_t carry = ( value & 0x01 ) ? FLAG_C : 0;
+	const uint8_t old_bit0 = value & 0x01;
 	const uint8_t result = value >> 1;
-	SetF(CheckZ(result) | carry);
+	if (old_bit0)
+		SetF(CheckZ(result) | FLAG_C);
+	else
+		SetF(CheckZ(result));
+
 	return result;
 }
 

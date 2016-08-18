@@ -7,7 +7,8 @@
 
 namespace gbx {
 
-
+static uint8_t read_wram(const uint16_t address, const Memory& memory);
+static void write_wram(const uint16_t address, const uint8_t value, Memory* const memory);
 static uint8_t read_io(const uint16_t address, const Gameboy& gb);
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb);
 static uint8_t read_rom(const uint16_t address, const Cartridge& cart);
@@ -47,8 +48,7 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 			return memory.oam[address - 0xFE00];
 	}
 	else if (address >= 0xC000) {
-		if (address < 0xE000)
-			return memory.wram[address - 0xC000];
+		return read_wram(address, memory);
 	}
 	else if (address >= 0xA000) {
 		ASSERT_MSG(false, "cartridge ram required");
@@ -81,11 +81,11 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 			memory.oam[address - 0xFE00] = value;
 	}
 	else if (address >= 0xC000) {
-		if (address < 0xE000)
-			memory.wram[address - 0xC000] = value;
+		write_wram(address, value, &memory);
 	}
 	else if (address >= 0xA000) {
-		ASSERT_MSG(false, "cartridge ram required");
+		//ASSERT_MSG(false, "cartridge ram required");
+		(void());
 	}
 	else if (address >= 0x8000) {
 		memory.vram[address - 0x8000] = value;
@@ -172,13 +172,17 @@ uint16_t Gameboy::PopStack16()
 
 
 
+static uint8_t read_wram(const uint16_t address, const Memory& memory)
+{
+	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
+	return memory.wram[offset];
+}
 
-
-
-
-
-
-
+static void write_wram(const uint16_t address, const uint8_t value, Memory* const memory)
+{
+	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
+	memory->wram[offset] = value;
+}
 
 
 
@@ -204,8 +208,8 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	case 0xFF4A: return gb.gpu.wy;
 	case 0xFF4B: return gb.gpu.wx;
 	default:
-		     debug_printf("required hardware io address: %4x\n", address);
-		     break;
+		debug_printf("required read hardware io address: %4x\n", address);
+		break;
 	}
 
 	return 0;
@@ -240,7 +244,7 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 	case 0xFF4A: gb->gpu.wy = value; break;
 	case 0xFF4B: gb->gpu.wx = value; break;
 	default:
-		debug_printf("required hardware io address: %4x\n", address);
+		debug_printf("required write hardware io address: %4x\n", address);
 		break;
 	}
 }

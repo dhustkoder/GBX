@@ -193,6 +193,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 
 	if (lcdc & GPU::BG_ON_OFF) {
+		ASSERT_MSG(!gpu.scx && !gpu.scy, "BG SCROLL NEEDED");
 		const bool tile_map_select = (lcdc & GPU::BG_TILE_MAP_SELECT) != 0;
 		auto tile_map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
 		                                : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
@@ -200,6 +201,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	}
 
 	if (lcdc & GPU::WIN_ON_OFF) {
+		ASSERT_MSG(gpu.wx==7 && !gpu.wy, "WIN SCROLL NEEDED");
 		const bool tile_map_select = (lcdc & GPU::WIN_TILE_MAP_SELECT) != 0;
 		auto tile_map = tile_map_select ? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
 		                                : reinterpret_cast<const TileMap*>(memory.vram + 0x1800);

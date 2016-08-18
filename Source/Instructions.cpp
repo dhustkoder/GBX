@@ -119,6 +119,10 @@ inline void rst_nn(const uint16_t addr, Gameboy* const gb)
 
 
 
+
+
+
+
 // Main instructions implementation:
 // 0x00
 void nop_00(Gameboy* const)
@@ -182,14 +186,20 @@ void ld_06(Gameboy* const gb)
 
 void rlca_07(Gameboy* const gb)
 {
-	// RLCA ( Rotate A left. Old bit 7 to Carry flag )
-	// flags effect: 0 0 0 C
+	// RLCA  ( 0 0 0 C )
 	const uint8_t a = gb->cpu.GetA();
-	const CPU::Flags carry = static_cast<CPU::Flags>((a & 0x80) >> 3);
+	const uint8_t old_bit7 = a & 0x80;
 	const uint8_t result = a << 1;
-	gb->cpu.SetA(carry ? result+1 : result);
-	gb->cpu.SetF(carry);
+	if (old_bit7) {
+		gb->cpu.SetA(result | 0x01);
+		gb->cpu.SetF(CPU::FLAG_C);
+	}
+	else {
+		gb->cpu.SetA(result);
+		gb->cpu.SetF(0x00);
+	}
 }
+
 
 
 
@@ -251,7 +261,22 @@ void ld_0E(Gameboy* const gb)
 }
 
 
-void rrca_0F(Gameboy* const){ ASSERT_INSTR_IMPL();  }
+
+void rrca_0F(Gameboy* const gb)
+{
+	// RRCA ( 0 0 0 C )
+	const uint8_t a = gb->cpu.GetA();
+	const uint8_t old_bit0 = a & 0x01;
+	const uint8_t result = a >> 1;
+	if (old_bit0) {
+		gb->cpu.SetA(result | 0x80);
+		gb->cpu.SetF(CPU::FLAG_C);
+	}
+	else {
+		gb->cpu.SetA(result);
+		gb->cpu.SetF(0x00);
+	}
+}
 
 
 
@@ -295,13 +320,23 @@ void dec_15(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void ld_16(Gameboy* const gb) 
 {
-	// LD D, d8 ( immediate 8 bit value stored into D )
+	// LD D, d8
 	gb->cpu.SetD(get_d8(gb));
 }
 
 
 
-void rla_17(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void rla_17(Gameboy* const gb)
+{
+	// RLA ( 0 0 0 C )
+	const uint8_t a = gb->cpu.GetA();
+	const uint8_t old_bit7 = a & 0x80;
+	const uint8_t old_carry = gb->cpu.GetFlags(CPU::FLAG_C);
+	const uint8_t result = a << 1;
+	gb->cpu.SetA(old_carry ? (result | 0x01) : result);
+	gb->cpu.SetF(old_bit7 ? CPU::FLAG_C : 0x00);
+	
+}
 
 
 
@@ -491,7 +526,11 @@ void jr_28(Gameboy* const gb)
 
 
 
-void add_29(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void add_29(Gameboy* const gb)
+{
+	// ADD HL, HL ( - 0 H C )
+	gb->cpu.ADD_HL(gb->cpu.GetHL());
+}
 
 
 
@@ -763,7 +802,12 @@ void ld_48(Gameboy* const gb)
 }
 
 void ld_49(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_4A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+void ld_4A(Gameboy* const gb)
+{
+	// LD C, D
+	gb->cpu.SetC(gb->cpu.GetD());
+}
 
 void ld_4B(Gameboy* const gb)
 {
@@ -811,7 +855,14 @@ void ld_4F(Gameboy* const gb)
 
 // 0x50
 void ld_50(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void ld_51(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+void ld_51(Gameboy* const gb)
+{
+	// LD D, C
+	gb->cpu.SetD(gb->cpu.GetC());
+}
+
+
 void ld_52(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_53(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
@@ -925,7 +976,11 @@ void ld_67(Gameboy* const gb)
 
 
 
-void ld_68(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void ld_68(Gameboy* const gb)
+{
+	// LD L, B
+	gb->cpu.SetL(gb->cpu.GetB());
+}
 
 
 
@@ -1198,10 +1253,23 @@ void adc_89(Gameboy* const gb)
 
 
 
+void adc_8A(Gameboy* const gb)
+{
+	// ADC A, D ( Z 0 H C )
+	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->cpu.GetD());
+	gb->cpu.SetA(result);
+}
 
-void adc_8A(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
 void adc_8B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void adc_8C(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+
+void adc_8C(Gameboy* const gb)
+{
+	// ADC A, H ( Z 0 H C )
+	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->cpu.GetH());
+	gb->cpu.SetA(result);
+}
 
 
 
@@ -1275,7 +1343,13 @@ void sub_96(Gameboy* const gb)
 
 
 void sub_97(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-void sbc_98(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+
+void sbc_98(Gameboy* const gb)
+{
+	// SBC A, B ( Z 1 H C )
+	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), gb->cpu.GetB());
+	gb->cpu.SetA(result);
+}
 
 
 void sbc_99(Gameboy* const gb)
@@ -1608,7 +1682,12 @@ void call_CD(Gameboy* const gb)
 
 
 
-void adc_CE(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); gb->cpu.AddPC(1); }
+void adc_CE(Gameboy* const gb) 
+{
+	// ADC A, d8 (Z 0 H C)
+	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), get_d8(gb));
+	gb->cpu.SetA(result);
+}
 
 
 void rst_CF(Gameboy* const gb)
