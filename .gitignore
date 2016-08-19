@@ -40,6 +40,3 @@ BUILD/
 *.out
 *.app
 
-
-# gb bin
-*.gb
