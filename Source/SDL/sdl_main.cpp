@@ -193,7 +193,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 
 	if (lcdc & GPU::BG_ON_OFF) {
-		const uint16_t to_scroll = ((gpu.scy*4)+gpu.scx);
+		const uint16_t to_scroll = ((gpu.scy/7) * 32) + (gpu.scx/7);
 		const bool tile_map_select = (lcdc & GPU::BG_TILE_MAP_SELECT) != 0;
 		auto tile_map = tile_map_select 
 			? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00 + to_scroll)

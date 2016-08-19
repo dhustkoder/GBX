@@ -40,7 +40,7 @@ bool Gameboy::Reset()
 	       cart_info.internal_name, cart_info.size, 
 	       static_cast<unsigned>(cart_info.type), 
 	       static_cast<unsigned>(cart_info.system));
-
+	
 	if (cart_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;

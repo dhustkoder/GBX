@@ -72,6 +72,7 @@ struct CPU
 	uint8_t RLC(const uint8_t value);
 	uint8_t SLA(const uint8_t value);
 	uint8_t SRL(const uint8_t value);
+	uint8_t SRA(const uint8_t value);
 	uint8_t SWAP(const uint8_t value);
 	void BIT(const uint8_t bit, const uint8_t value);
 

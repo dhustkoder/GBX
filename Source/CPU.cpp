@@ -289,6 +289,19 @@ uint8_t CPU::SRL(const uint8_t value)
 }
 
 
+uint8_t CPU::SRA(const uint8_t value)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_bit0 = value & 0x01;
+	const uint8_t result = (value & 0x80) | (value >> 1);
+	if (old_bit0)
+		SetF(CheckZ(result) | FLAG_C);
+	else
+		SetF(CheckZ(result));
+
+	return result;
+}
+
 
 uint8_t CPU::SWAP(const uint8_t value) 
 {
@@ -308,8 +321,6 @@ void CPU::BIT(const uint8_t bit, const uint8_t value)
 	const Flags z = CheckZ(value & (0x01 << bit));
 	SetF(z | FLAG_H | GetFlags(FLAG_C));
 }
-
-
 
 
 
