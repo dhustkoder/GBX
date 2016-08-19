@@ -13,8 +13,8 @@ namespace gbx {
  * a8:  8 bit unsigned data, which are added to $FF00 in certain instructions (replacement for missing IN and OUT instructions)
  * a16: 16 bit address
  * r8: means 8 bit signed data, which are added to program counter
- * note: on gameboy PC appears to be incremented before the instruction is executed -
- * so relative jump instructions (jr) here still need to add its operand length to pc, or to r8 itself 
+ * n: 8 bit data
+ * nn: 16 bit data
  */
 
 /* NOTE: 
@@ -22,9 +22,6 @@ namespace gbx {
  * then store the return result in the target register/variable
  */
 
-
-	
-	
 inline uint8_t get_d8(Gameboy* const gb)
 {
 	const uint8_t d8 = gb->ReadU8(gb->cpu.pc++);
@@ -105,7 +102,6 @@ inline void call_nn(const bool cond, Gameboy* const gb)
 }
 
 
-
 inline void rst_nn(const uint16_t addr, Gameboy* const gb)
 {
 	gb->PushStack16(gb->cpu.pc);
@@ -113,7 +109,33 @@ inline void rst_nn(const uint16_t addr, Gameboy* const gb)
 }
 
 
+inline void add_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->ADD(cpu->af.ind.a, second);
+}
 
+inline void sub_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->SUB(cpu->af.ind.a, second);
+}
+
+inline void adc_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->ADC(cpu->af.ind.a, second);
+}
+
+inline void sbc_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->SBC(cpu->af.ind.a, second);
+}
+
+inline void and_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->AND(second, cpu->af.ind.a);
+}
+
+inline void xor_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->XOR(second, cpu->af.ind.a);
+}
+
+inline void or_a_n(const uint8_t second, CPU* const cpu) {
+	cpu->af.ind.a = cpu->OR(second, cpu->af.ind.a);
+}
 
 
 
@@ -145,7 +167,7 @@ void ld_02(Gameboy* const gb)
 
 void inc_03(Gameboy* const gb) 
 {
-	// INC BC ( no flags effect )
+	// INC BC
 	gb->cpu.SetBC( gb->cpu.GetBC() + 1 );	
 }
 
@@ -153,7 +175,7 @@ void inc_03(Gameboy* const gb)
 
 void inc_04(Gameboy* const gb) 
 { 
-	// INC B (flags affected Z 0 H - )
+	// INC B ( Z 0 H - )
 	const uint8_t b = gb->cpu.GetB();
 	gb->cpu.SetB( gb->cpu.INC(b) );
 }
@@ -162,7 +184,7 @@ void inc_04(Gameboy* const gb)
 
 void dec_05(Gameboy* const gb) 
 {
-	// DEC B ( flags affected Z 1 H - )
+	// DEC B ( Z 1 H - )
 	const uint8_t b = gb->cpu.GetB();
 	gb->cpu.SetB( gb->cpu.DEC(b) );
 }
@@ -1095,7 +1117,6 @@ void ld_73(Gameboy* const gb)
 
 
 
-
 void ld_74(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void ld_75(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
@@ -1181,11 +1202,7 @@ void ld_7E(Gameboy* const gb)
 }
 
 
-
-
 void ld_7F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
-
-
 
 
 
@@ -1193,9 +1210,8 @@ void ld_7F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 // 0x80
 void add_80(Gameboy* const gb)
 { 
-	// ADD A, B ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetB());
-	gb->cpu.SetA(result);
+	// ADD A, B
+	add_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -1203,40 +1219,35 @@ void add_80(Gameboy* const gb)
 void add_81(Gameboy* const gb)
 { 
 	// ADD A, C
-	const auto result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetC());
-	gb->cpu.SetA(result);
+	add_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
 void add_82(Gameboy* const gb) 
 { 
-	// ADD A, D ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetD());
-	gb->cpu.SetA(result);
+	// ADD A, D
+	add_a_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 
 void add_83(Gameboy* const gb)
 { 
 	// ADD A, E
-	const auto result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetE());
-	gb->cpu.SetA(result);
+	add_a_n(gb->cpu.GetE(), &gb->cpu);
 }
 
 void add_84(Gameboy* const gb)
 {
-	// ADD A, H ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetH());
-	gb->cpu.SetA(result);
+	// ADD A, H
+	add_a_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 
 
 void add_85(Gameboy* const gb)
 {
-	// ADD A, L ( flags affected: Z 0 H C )
-	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), gb->cpu.GetL());
-	gb->cpu.SetA(result);
+	// ADD A, L
+	add_a_n(gb->cpu.GetL(), &gb->cpu);
 }
 
 
@@ -1244,10 +1255,8 @@ void add_85(Gameboy* const gb)
 
 void add_86(Gameboy* const gb)
 { 
-	// ADD A, (HL) ( flags affected: Z 0 H C )
-	const uint8_t value = gb->ReadU8(gb->cpu.GetHL());
-	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), value);
-	gb->cpu.SetA(result);
+	// ADD A, (HL)
+	add_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 
@@ -1255,10 +1264,8 @@ void add_86(Gameboy* const gb)
 
 void add_87(Gameboy* const gb) 
 {
-	// ADD A, A ( flags affected: Z 0 H C )
-	const uint8_t a = gb->cpu.GetA();
-	const uint8_t result = gb->cpu.ADD(a, a);
-	gb->cpu.SetA(result);
+	// ADD A, A
+	add_a_n(gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -1268,18 +1275,16 @@ void adc_88(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void adc_89(Gameboy* const gb)
 { 
-	// ADC A, C  ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->cpu.GetC());
-	gb->cpu.SetA(result);
+	// ADC A, C
+	adc_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
 
 void adc_8A(Gameboy* const gb)
 {
-	// ADC A, D ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->cpu.GetD());
-	gb->cpu.SetA(result);
+	// ADC A, D
+	adc_a_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 
@@ -1288,30 +1293,25 @@ void adc_8B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void adc_8C(Gameboy* const gb)
 {
-	// ADC A, H ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->cpu.GetH());
-	gb->cpu.SetA(result);
+	// ADC A, H
+	adc_a_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 
 
 void adc_8D(Gameboy* const gb)
 { 
-	// ADC A, L ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->cpu.GetL());
-	gb->cpu.SetA(result);
+	// ADC A, L
+	adc_a_n(gb->cpu.GetL(), &gb->cpu);
 }
 
 
 
 void adc_8E(Gameboy* const gb)
 { 
-	// ADC A, (HL) ( Z 0 H C )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), gb->ReadU8(hl));
-	gb->cpu.SetA(result);
+	// ADC A, (HL)
+	adc_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
-
 
 
 void adc_8F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
@@ -1319,16 +1319,11 @@ void adc_8F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 
 
-
-
-
-
 // 0x90
 void sub_90(Gameboy* const gb)
 { 
-	// SUB B ( Z 1 H C )
-	const uint8_t result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetB());
-	gb->cpu.SetA(result);
+	// SUB B
+	sub_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -1336,51 +1331,44 @@ void sub_90(Gameboy* const gb)
 void sub_91(Gameboy* const gb)
 { 
 	// SUB C
-	const auto result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetC());
-	gb->cpu.SetA(result);
+	sub_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
 void sub_92(Gameboy* const gb)
 {
-	// SUB D ( Z 1 H C )
-	const uint8_t result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetD());
-	gb->cpu.SetA(result);
+	// SUB D
+	sub_a_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 
 void sub_93(Gameboy* const gb)
 {
-	// SUB E ( Z 1 H C )
-	const auto result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetE());
-	gb->cpu.SetA(result);
+	// SUB E
+	sub_a_n(gb->cpu.GetE(), &gb->cpu);
 }
 
 
 
 void sub_94(Gameboy* const gb)
 {
-	// SUB H ( Z 1 H C )
-	const uint8_t result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetH());
-	gb->cpu.SetA(result);
+	// SUB H
+	sub_a_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 
 void sub_95(Gameboy* const gb)
 {
-	// SUB L ( Z 1 H C )
-	const auto result = gb->cpu.SUB(gb->cpu.GetA(), gb->cpu.GetL());
-	gb->cpu.SetA(result);
+	// SUB L
+	sub_a_n(gb->cpu.GetL(), &gb->cpu);
 }
 
 
 
 void sub_96(Gameboy* const gb)
 { 
-	// SUB (HL) ( Z 1 H C )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.SUB(gb->cpu.GetA(), gb->ReadU8(hl));
-	gb->cpu.SetA(result);
+	// SUB (HL)
+	sub_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 
@@ -1391,25 +1379,22 @@ void sub_97(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void sbc_98(Gameboy* const gb)
 {
-	// SBC A, B ( Z 1 H C )
-	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), gb->cpu.GetB());
-	gb->cpu.SetA(result);
+	// SBC A, B
+	sbc_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
 void sbc_99(Gameboy* const gb)
 { 
-	// SBC A, C ( Z 1 H C )
-	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), gb->cpu.GetC());
-	gb->cpu.SetA(result);
+	// SBC A, C
+	sbc_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
 void sbc_9A(Gameboy* const gb)
 {
-	// SBC A, D ( Z 1 H C )
-	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), gb->cpu.GetD());
-	gb->cpu.SetA(result);
+	// SBC A, D
+	sbc_a_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 
@@ -1417,9 +1402,8 @@ void sbc_9B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void sbc_9C(Gameboy* const gb)
 {
-	// SBC A, H ( Z 1 H C )
-	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), gb->cpu.GetH());
-	gb->cpu.SetA(result);
+	// SBC A, H
+	sbc_a_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 void sbc_9D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
@@ -1427,9 +1411,7 @@ void sbc_9D(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void sbc_9E(Gameboy* const gb)
 {
 	// SBC A, (HL)
-	const uint8_t value = gb->ReadU8(gb->cpu.GetHL());
-	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), value);
-	gb->cpu.SetA(result);
+	sbc_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 void sbc_9F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
@@ -1445,18 +1427,16 @@ void sbc_9F(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 // 0xA0
 void and_A0(Gameboy* const gb)
 { 
-	// AND B ( Z 0 1 0 )
-	const uint8_t result = gb->cpu.AND(gb->cpu.GetB(), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// AND B
+	and_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void and_A1(Gameboy* const gb) 
 {
-	// AND C ( Z 0 1 0 )
-	const uint8_t result = gb->cpu.AND(gb->cpu.GetC(), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// AND C
+	and_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -1466,9 +1446,8 @@ void and_A3(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void and_A4(Gameboy* const gb)
 {
-	// AND H ( Z 0 1 0 )
-	const uint8_t result = gb->cpu.AND(gb->cpu.GetA(), gb->cpu.GetH());
-	gb->cpu.SetA(result);
+	// AND H
+	and_a_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 void and_A5(Gameboy* const) { ASSERT_INSTR_IMPL();  }
@@ -1477,9 +1456,7 @@ void and_A5(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 void and_A6(Gameboy* const gb)
 { 
 	// AND (HL)
-	const auto value = gb->ReadU8(gb->cpu.GetHL());
-	const auto result = gb->cpu.AND(value, gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	and_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 
@@ -1487,30 +1464,24 @@ void and_A6(Gameboy* const gb)
 void and_A7(Gameboy* const gb) 
 {
 	// TODO: optimize
-	// AND A ( Z 0 1 0 )
-	const uint8_t a = gb->cpu.GetA();
-	const uint8_t result = gb->cpu.AND(a, a);
-	gb->cpu.SetA(result);
+	// AND A
+	and_a_n(gb->cpu.GetA(), &gb->cpu);
 }
 
 
 
 void xor_A8(Gameboy* const gb)
 { 
-	// XOR B ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.XOR(gb->cpu.GetB(), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// XOR B
+	xor_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void xor_A9(Gameboy* const gb) 
 {
-	// XOR C ( Z 0 0 0 )
-	const auto a = gb->cpu.GetA();
-	const auto c = gb->cpu.GetC();
-	const auto result = gb->cpu.XOR(c, a);
-	gb->cpu.SetA(result);
+	// XOR C
+	xor_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -1522,20 +1493,15 @@ void xor_AD(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void xor_AE(Gameboy* const gb)
 {
-	// XOR (HL) ( Z 0 0 0 )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.XOR(gb->cpu.GetA(), gb->ReadU8(hl));
-	gb->cpu.SetA(result);
+	// XOR (HL)
+	xor_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
-
-
-
 
 void xor_AF(Gameboy* const gb) 
 {
 	// TODO: optimize
-	// XOR A ( 1 0 0 0 )
-	gb->cpu.SetA(gb->cpu.XOR(gb->cpu.GetA(), gb->cpu.GetA()));
+	// XOR A
+	xor_a_n(gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -1545,18 +1511,16 @@ void xor_AF(Gameboy* const gb)
 // 0xB0
 void or_B0(Gameboy* const gb) 
 {
-	// OR B ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.OR(gb->cpu.GetB(), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// OR B
+	or_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void or_B1(Gameboy* const gb) 
 {
-	// OR C ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.OR(gb->cpu.GetC(), gb->cpu.GetA());
-	gb->cpu.SetA(result);	
+	// OR C
+	or_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -1564,9 +1528,8 @@ void or_B1(Gameboy* const gb)
 
 void or_B2(Gameboy* const gb)
 { 
-	// OR D ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.OR(gb->cpu.GetD(), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// OR D
+	or_a_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 
@@ -1575,9 +1538,8 @@ void or_B4(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void or_B5(Gameboy* const gb)
 {
-	// OR L ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.OR(gb->cpu.GetA(), gb->cpu.GetL());
-	gb->cpu.SetA(result);
+	// OR L
+	or_a_n(gb->cpu.GetL(), &gb->cpu);
 }
 
 
@@ -1585,24 +1547,22 @@ void or_B5(Gameboy* const gb)
 
 void or_B6(Gameboy* const gb) 
 {
-	// OR (HL) ( Z 0 0 0 )
-	const uint8_t value = gb->ReadU8(gb->cpu.GetHL());
-	const uint8_t result = gb->cpu.OR(value, gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// OR (HL)
+	or_a_n(gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 
 
 void or_B7(Gameboy* const gb) 
 { 
-	// OR A ( Z 0 0 0 )
-	gb->cpu.SetF(CheckZ(gb->cpu.GetA()));
+	// OR A
+	or_a_n(gb->cpu.GetA(), &gb->cpu);
 }
 
 
 void cp_B8(Gameboy* const gb)
 { 
-	// CP B ( Z 1 H C )
+	// CP B
 	gb->cpu.CP(gb->cpu.GetB());
 }
 
@@ -1611,7 +1571,7 @@ void cp_B8(Gameboy* const gb)
 
 void cp_B9(Gameboy* const gb) 
 { 
-	// CP C ( Z 1 H C )
+	// CP C
 	gb->cpu.CP(gb->cpu.GetC());
 }
 
@@ -1623,20 +1583,20 @@ void cp_BB(Gameboy* const) { ASSERT_INSTR_IMPL();  }
 
 void cp_BC(Gameboy* const gb)
 {
-	// CP H ( Z 1 H C )
+	// CP H
 	gb->cpu.CP(gb->cpu.GetH());
 }
 
 void cp_BD(Gameboy* const gb)
 {
-	// CP L ( Z 1 H C )
+	// CP L
 	gb->cpu.CP(gb->cpu.GetL());
 }
 
 
 void cp_BE(Gameboy* const gb)
 { 
-	// CP (HL) ( Z 1 H C )
+	// CP (HL)
 	const uint16_t hl = gb->cpu.GetHL();
 	gb->cpu.CP(gb->ReadU8(hl));
 }
@@ -1939,9 +1899,8 @@ void push_E5(Gameboy* const gb)
 
 void and_E6(Gameboy* const gb) 
 {
-	// AND d8 ( Z 0 1 0 )
-	const uint8_t result = gb->cpu.AND(get_d8(gb), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// AND d8
+	and_a_n(get_d8(gb), &gb->cpu);
 }
 
 
@@ -1985,9 +1944,8 @@ void ld_EA(Gameboy* const gb)
 // MISSING ED -----
 void xor_EE(Gameboy* const gb)
 {
-	// XOR d8 ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.XOR(get_d8(gb), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// XOR d8
+	xor_a_n(get_d8(gb), &gb->cpu);
 }
 
 
@@ -2043,9 +2001,8 @@ void push_F5(Gameboy* const gb)
 
 void or_F6(Gameboy* const gb) 
 { 
-	// OR d8 ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.OR(get_d8(gb), gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// OR d8
+	or_a_n(get_d8(gb), &gb->cpu);
 }
 
 
