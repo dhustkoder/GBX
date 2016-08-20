@@ -109,6 +109,30 @@ inline void rst_nn(const uint16_t addr, Gameboy* const gb)
 }
 
 
+inline void add_hl_nn(const uint16_t second, CPU* const cpu)
+{
+	// flags effect: - 0 H C
+	const auto first = cpu->GetHL();
+	const uint32_t result = first + second;
+	uint8_t hc = 0x00;
+
+        if (CheckH_bit11(first, second))
+        	hc = CPU::FLAG_H;
+        if (CheckC_bit15(result))
+        	hc |= CPU::FLAG_H;
+	
+	cpu->SetF(cpu->GetFlags(CPU::FLAG_H) | hc);
+	cpu->SetHL(static_cast<uint16_t>(result));
+}
+
+inline void cp_n(const uint8_t value, CPU* const cpu)
+{
+	// flags effect: Z 1 H C
+	cpu->SUB(cpu->GetA(), value);
+}
+
+
+
 inline void add_a_n(const uint8_t second, CPU* const cpu) {
 	cpu->af.ind.a = cpu->ADD(cpu->af.ind.a, second);
 }
@@ -231,8 +255,8 @@ void ld_08(Gameboy* const gb)
 
 void add_09(Gameboy* const gb) 
 {
-	// ADD HL,BC ( - 0 H C )
-	gb->cpu.ADD_HL(gb->cpu.GetBC());
+	// ADD HL, BC
+	add_hl_nn(gb->cpu.GetBC(), &gb->cpu);
 }
 
 
@@ -383,8 +407,7 @@ void jr_18(Gameboy* const gb)
 void add_19(Gameboy* const gb) 
 {
 	// ADD HL, DE ( - 0 H C )
-	const uint16_t de = gb->cpu.GetDE();
-	gb->cpu.ADD_HL(de);
+	add_hl_nn(gb->cpu.GetDE(), &gb->cpu);
 }
 
 
@@ -568,8 +591,8 @@ void jr_28(Gameboy* const gb)
 
 void add_29(Gameboy* const gb)
 {
-	// ADD HL, HL ( - 0 H C )
-	gb->cpu.ADD_HL(gb->cpu.GetHL());
+	// ADD HL, HL
+	add_hl_nn(gb->cpu.GetHL(), &gb->cpu);
 }
 
 
@@ -1742,7 +1765,7 @@ void or_B7(Gameboy* const gb)
 void cp_B8(Gameboy* const gb)
 { 
 	// CP B
-	gb->cpu.CP(gb->cpu.GetB());
+	cp_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -1751,7 +1774,7 @@ void cp_B8(Gameboy* const gb)
 void cp_B9(Gameboy* const gb) 
 { 
 	// CP C
-	gb->cpu.CP(gb->cpu.GetC());
+	cp_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -1760,25 +1783,25 @@ void cp_B9(Gameboy* const gb)
 void cp_BA(Gameboy* const gb)
 {
 	// CP D
-	gb->cpu.CP(gb->cpu.GetD());
+	cp_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 void cp_BB(Gameboy* const gb)
 {
 	// CP E
-	gb->cpu.CP(gb->cpu.GetE());
+	cp_n(gb->cpu.GetE(), &gb->cpu);
 }
 
 void cp_BC(Gameboy* const gb)
 {
 	// CP H
-	gb->cpu.CP(gb->cpu.GetH());
+	cp_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 void cp_BD(Gameboy* const gb)
 {
 	// CP L
-	gb->cpu.CP(gb->cpu.GetL());
+	cp_n(gb->cpu.GetL(), &gb->cpu);
 }
 
 
@@ -1786,7 +1809,7 @@ void cp_BE(Gameboy* const gb)
 { 
 	// CP (HL)
 	const uint16_t hl = gb->cpu.GetHL();
-	gb->cpu.CP(gb->ReadU8(hl));
+	cp_n(gb->ReadU8(hl), &gb->cpu);
 }
 
 
@@ -1795,7 +1818,7 @@ void cp_BF(Gameboy* const gb)
 {
 	// TODO: optimize
 	// CP A
-	gb->cpu.CP(gb->cpu.GetA());
+	cp_n(gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -2269,7 +2292,7 @@ void ei_FB(Gameboy* const gb)
 void cp_FE(Gameboy* const gb) 
 {
 	// CP d8 ( Z 1 H C )
-	gb->cpu.CP(get_d8(gb));
+	cp_n(get_d8(gb), &gb->cpu);
 }
 
 

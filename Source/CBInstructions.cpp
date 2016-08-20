@@ -35,6 +35,13 @@ inline void res_n_hl(const uint8_t bit, Gameboy* const gb)
 }
 
 
+inline void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
+{
+	// flags effect: Z 0 1 -
+	const CPU::Flags z = CheckZ(value & (0x01 << bit));
+	cpu->SetF(z | CPU::FLAG_H | cpu->GetFlags(CPU::FLAG_C));
+}
+
 
 
 // CB Instructions Implementation:
@@ -361,16 +368,16 @@ void srl_3F(Gameboy* const gb)
 // 0x40
 void bit_40(Gameboy* const gb)
 { 
-	// BIT 0, B ( Z 0 1 - )
-	gb->cpu.BIT(0, gb->cpu.GetB());
+	// BIT 0, B
+	bit_n(0, gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void bit_41(Gameboy* const gb) 
 { 
-	// BIT 0, C ( Z 0 1 - )
-	gb->cpu.BIT(0, gb->cpu.GetC());
+	// BIT 0, C
+	bit_n(0, gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -383,33 +390,33 @@ void bit_45(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void bit_46(Gameboy* const gb)
 { 
-	// BIT 0, (HL) ( Z 0 1 - )
+	// BIT 0, (HL)
 	const uint16_t hl = gb->cpu.GetHL();
-	gb->cpu.BIT(0, gb->ReadU8(hl));
+	bit_n(0, gb->ReadU8(hl), &gb->cpu);
 }
 
 
 
 void bit_47(Gameboy* const gb)
 { 
-	// BIT 0, A ( Z 0 1 - )
-	gb->cpu.BIT(0, gb->cpu.GetA());
+	// BIT 0, A
+	bit_n(0, gb->cpu.GetA(), &gb->cpu);
 }
 
 
 
 void bit_48(Gameboy* const gb)
 { 
-	// BIT 1, B ( Z 0 1 - )
-	gb->cpu.BIT(1, gb->cpu.GetB());
+	// BIT 1, B
+	bit_n(1, gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void bit_49(Gameboy* const gb)
 {
-	// BIT 1, C ( Z 0 1 - )
-	gb->cpu.BIT(1, gb->cpu.GetC());
+	// BIT 1, C
+	bit_n(1, gb->cpu.GetC(), &gb->cpu);
 }
 
 void bit_4A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -419,14 +426,14 @@ void bit_4D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void bit_4E(Gameboy* const gb)
 {
-	// BIT 1 , (HL) ( Z 0 1 - )
-	gb->cpu.BIT(1, gb->ReadU8(gb->cpu.GetHL()));
+	// BIT 1 , (HL)
+	bit_n(1, gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 void bit_4F(Gameboy* const gb)
 { 
 	// BIT 1, A
-	gb->cpu.BIT(1, gb->cpu.GetA());
+	bit_n(1, gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -437,8 +444,8 @@ void bit_4F(Gameboy* const gb)
 // 0x50
 void bit_50(Gameboy* const gb)
 { 
-	// BIT 2, B (  Z 0 1 -  )
-	gb->cpu.BIT(2, gb->cpu.GetB());
+	// BIT 2, B
+	bit_n(2, gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -450,22 +457,22 @@ void bit_55(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void bit_56(Gameboy* const gb)
 {
-	// BIT 2, (HL) ( Z 0 1 - )
-	gb->cpu.BIT(2, gb->ReadU8(gb->cpu.GetHL()));
+	// BIT 2, (HL)
+	bit_n(2, gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 
 void bit_57(Gameboy* const gb) 
 { 
-	// BIT 2, A ( Z 0 1 - )
-	gb->cpu.BIT(2, gb->cpu.GetA());
+	// BIT 2, A
+	bit_n(2, gb->cpu.GetA(), &gb->cpu);
 }
 
 
 void bit_58(Gameboy* const gb) 
 { 
-	// BIT 3, B ( Z 0 1 - )
-	gb->cpu.BIT(3, gb->cpu.GetB());
+	// BIT 3, B
+	bit_n(3, gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -477,16 +484,16 @@ void bit_5D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void bit_5E(Gameboy* const gb)
 {
-	// BIT 3, (HL) ( Z 0 1 - )
+	// BIT 3, (HL)
 	const uint8_t value = gb->ReadU8(gb->cpu.GetHL());
-	gb->cpu.BIT(3, value);
+	bit_n(3, value, &gb->cpu);
 }
 
 
 void bit_5F(Gameboy* const gb)
 {
-	// BIT 3, A ( Z 0 1 - )
-	gb->cpu.BIT(3, gb->cpu.GetA());
+	// BIT 3, A
+	bit_n(3, gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -495,16 +502,16 @@ void bit_5F(Gameboy* const gb)
 // 0x60
 void bit_60(Gameboy* const gb) 
 { 
-	// BIT 4, B ( Z 0 1 -  )
-	gb->cpu.BIT(4, gb->cpu.GetB());
+	// BIT 4, B
+	bit_n(4, gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void bit_61(Gameboy* const gb)
 { 
-	// BIT 4, C ( Z 0 1 - )
-	gb->cpu.BIT(4, gb->cpu.GetC());
+	// BIT 4, C
+	bit_n(4, gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -518,13 +525,13 @@ void bit_65(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_66(Gameboy* const gb)
 {
 	// BIT 4, (HL)
-	gb->cpu.BIT(4, gb->ReadU8(gb->cpu.GetHL()));
+	bit_n(4, gb->ReadU8(gb->cpu.GetHL()), &gb->cpu);
 }
 
 void bit_67(Gameboy* const gb)
 {
-	// BIT 4, A ( Z 0 1 - )
-	gb->cpu.BIT(4, gb->cpu.GetA());
+	// BIT 4, A
+	bit_n(4, gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -533,7 +540,7 @@ void bit_67(Gameboy* const gb)
 void bit_68(Gameboy* const gb)
 { 
 	// BIT 5, B
-	gb->cpu.BIT(5, gb->cpu.GetB());
+	bit_n(5, gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -543,7 +550,7 @@ void bit_68(Gameboy* const gb)
 void bit_69(Gameboy* const gb)
 { 
 	// BIT 5, C
-	gb->cpu.BIT(5, gb->cpu.GetC());
+	bit_n(5, gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -557,13 +564,13 @@ void bit_6E(Gameboy* const gb)
 {
 	// BIT 5, (HL)
 	const uint8_t value = gb->ReadU8(gb->cpu.GetHL());
-	gb->cpu.BIT(5, value);
+	bit_n(5, value, &gb->cpu);
 }
 
 void bit_6F(Gameboy* const gb)
 { 
-	// BIT 5, A ( Z 0 1 - )
-	gb->cpu.BIT(5, gb->cpu.GetA());
+	// BIT 5, A
+	bit_n(5, gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -573,16 +580,16 @@ void bit_6F(Gameboy* const gb)
 // 0x70
 void bit_70(Gameboy* const gb) 
 {
-	// BIT 6, B ( Z 0 1 - )
-	gb->cpu.BIT(6, gb->cpu.GetB());
+	// BIT 6, B
+	bit_n(6, gb->cpu.GetB(), &gb->cpu);
 }
 
 
 
 void bit_71(Gameboy* const gb)
 { 
-	// BIT 6, C ( Z 0 1 - )
-	gb->cpu.BIT(6, gb->cpu.GetC());
+	// BIT 6, C
+	bit_n(6, gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -595,30 +602,30 @@ void bit_76(Gameboy* const gb)
 {
 	// BIT 6, (HL)
 	const auto value = gb->ReadU8(gb->cpu.GetHL());
-	gb->cpu.BIT(6, value);
+	bit_n(6, value, &gb->cpu);
 }
 
 
 
 void bit_77(Gameboy* const gb)
 { 
-	// BIT 6, A ( Z 0 1 - )
-	gb->cpu.BIT(6, gb->cpu.GetA());
+	// BIT 6, A
+	bit_n(6, gb->cpu.GetA(), &gb->cpu);
 }
 
 
 
 void bit_78(Gameboy* const gb) 
 { 
-	// BIT 7, B ( Z 0 1  - )
-	gb->cpu.BIT(7, gb->cpu.GetB());
+	// BIT 7, B
+	bit_n(7, gb->cpu.GetB(), &gb->cpu);
 }
 
 
 void bit_79(Gameboy* const gb) 
 { 
-	// BIT 7, C ( Z 0 1 - )
-	gb->cpu.BIT(7, gb->cpu.GetC());
+	// BIT 7, C
+	bit_n(7, gb->cpu.GetC(), &gb->cpu);
 }
 void bit_7A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_7B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -629,17 +636,17 @@ void bit_7D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void bit_7E(Gameboy* const gb)
 {
-	// BIT 7, (HL) ( Z 0 1 - )
+	// BIT 7, (HL)
 	const uint8_t value = gb->ReadU8(gb->cpu.GetHL());
-	gb->cpu.BIT(7, value);
+	bit_n(7, value, &gb->cpu);
 }
 
 
 
 void bit_7F(Gameboy* const gb)
 { 
-	// BIT 7, A ( Z 0 1 - )
-	gb->cpu.BIT(7, gb->cpu.GetA());
+	// BIT 7, A
+	bit_n(7, gb->cpu.GetA(), &gb->cpu);
 }
 
 

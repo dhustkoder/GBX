@@ -60,8 +60,6 @@ struct CPU
 
 	uint8_t ADD(const uint8_t first, const uint8_t second);
 	uint8_t SUB(const uint8_t first, const uint8_t second);
-	void ADD_HL(const uint16_t reg_pair);
-	void CP(const uint8_t value);
 
 	uint8_t OR(const uint8_t first, const uint8_t second);
 	uint8_t AND(const uint8_t first, const uint8_t second);
@@ -75,7 +73,6 @@ struct CPU
 	uint8_t SRL(const uint8_t value);
 	uint8_t SRA(const uint8_t value);
 	uint8_t SWAP(const uint8_t value);
-	void BIT(const uint8_t bit, const uint8_t value);
 
 
 	uint32_t clock;

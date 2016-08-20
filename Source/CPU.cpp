@@ -40,21 +40,6 @@ void CPU::PrintRegisters() const
 
 
 
-void CPU::ADD_HL(const uint16_t second) 
-{
-	// flags effect: - 0 H C
-	const auto first = GetHL();
-	const uint32_t result = first + second;
-	const Flags hc = CheckH_bit11(first, second) |
-	                 CheckC_bit15(result);
-	SetF(GetFlags(FLAG_Z) | hc);
-	SetHL(static_cast<uint16_t>(result));
-}
-
-
-
-
-
 
 uint8_t CPU::ADC(const uint8_t first, const uint8_t second) 
 {
@@ -189,14 +174,6 @@ uint8_t CPU::DEC(const uint8_t first)
 
 	SetF(flags);
 	return result;
-}
-
-
-
-void CPU::CP(const uint8_t value)
-{
-	// flags effect: Z 1 H C
-	SUB(GetA(), value);
 }
 
 
@@ -362,17 +339,6 @@ uint8_t CPU::SWAP(const uint8_t value)
 	const uint8_t result = ((value & 0x0f) << 4) | ((value & 0xf0) >> 4);
 	SetF(CheckZ(result));
 	return result;
-}
-
-
-
-
-
-void CPU::BIT(const uint8_t bit, const uint8_t value)
-{
-	// flags effect: Z 0 1 -
-	const Flags z = CheckZ(value & (0x01 << bit));
-	SetF(z | FLAG_H | GetFlags(FLAG_C));
 }
 
 
