@@ -548,7 +548,7 @@ void daa_27(Gameboy* const gb)
 
 	gb->cpu.SetA(static_cast<uint8_t>(bcd));
 	const uint8_t carry_flag = bcd >= 100 ? CPU::FLAG_C : 0;
-	gb->cpu.SetF(CheckZ(bcd) | gb->cpu.GetFlags(CPU::FLAG_N) | carry_flag);
+	gb->cpu.SetF(CheckZ(bcd&0xff) | gb->cpu.GetFlags(CPU::FLAG_N) | carry_flag);
 }
 
 
@@ -1861,7 +1861,11 @@ void add_C6(Gameboy* const gb)
 
 
 
-void rst_C7(Gameboy* const)  { ASSERT_INSTR_IMPL();  }
+void rst_C7(Gameboy* const gb)
+{
+	// RST 00h
+	rst_nn(0x00, gb);
+}
 
 
 
@@ -1971,7 +1975,11 @@ void jp_D2(Gameboy* const gb)
 }
 
 // MISSING D3 ----
-void call_D4(Gameboy* const gb) { ASSERT_INSTR_IMPL(); gb->cpu.pc += 2; }
+void call_D4(Gameboy* const gb)
+{
+	// CALL NC, a16
+	call_nn(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
+}
 
 
 
@@ -1991,7 +1999,11 @@ void sub_D6(Gameboy* const gb)
 }
 
 
-void rst_D7(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void rst_D7(Gameboy* const gb)
+{
+	// RST 10h
+	rst_nn(0x10, gb);
+}
 
 void ret_D8(Gameboy* const gb) 
 { 
@@ -2013,8 +2025,8 @@ void reti_D9(Gameboy* const gb)
 
 void jp_DA(Gameboy* const gb)
 {
-	// JP Z, a16
-	jp_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+	// JP C, a16
+	jp_nn(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
 }
 
 // MISSING DB -----
@@ -2097,7 +2109,11 @@ void and_E6(Gameboy* const gb)
 }
 
 
-void rst_E7(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void rst_E7(Gameboy* const gb)
+{
+	// RST 20h
+	rst_nn(0x20, gb);
+}
 
 
 
@@ -2200,7 +2216,11 @@ void or_F6(Gameboy* const gb)
 
 
 
-void rst_F7(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void rst_F7(Gameboy* const gb)
+{
+	// RST 30h
+	rst_nn(0x30, gb);
+}
 
 void ld_F8(Gameboy* const gb)
 {
@@ -2254,7 +2274,11 @@ void cp_FE(Gameboy* const gb)
 
 
 
-void rst_FF(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void rst_FF(Gameboy* const gb)
+{
+	// RST 38h
+	rst_nn(0x38, gb);
+}
 
 
 

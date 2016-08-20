@@ -56,12 +56,23 @@ void CPU::ADD_HL(const uint16_t second)
 
 
 
-uint8_t CPU::ADC(const uint8_t first, uint8_t second) 
+uint8_t CPU::ADC(const uint8_t first, const uint8_t second) 
 {
-	if (GetFlags(FLAG_C))
-		++second;
+	// flags effect Z 0 H C
+	const uint8_t carry = GetFlags(FLAG_C) ? 1 : 0;
+	const uint16_t sec_n_carry = second + carry;
+	const uint16_t result = first + sec_n_carry;
+	uint8_t flags = 0x00;
 
-	return ADD(first, second);
+	if (CheckC_bit7(result))
+		flags = FLAG_C;
+	if (CheckZ(result & 0xFF))
+		flags |= FLAG_Z;
+	if (((first&0xf)+(second&0xf)+carry) > 0x0f)
+		flags |= FLAG_H;
+
+	SetF(flags);
+	return static_cast<uint8_t>(result);
 }
 
 
@@ -69,13 +80,22 @@ uint8_t CPU::ADC(const uint8_t first, uint8_t second)
 
 
 
-uint8_t CPU::SBC(const uint8_t first, uint8_t second) 
+uint8_t CPU::SBC(const uint8_t first, const uint8_t second)
 {
 	// flags effect: Z 1 H C
-	if (GetFlags(FLAG_C))
-		++second;
+	const uint16_t sec_n_carry = GetFlags(FLAG_C) ? second + 1 : second;
+	const uint32_t result = first - sec_n_carry;
+	uint8_t flags = FLAG_N;
 
-	return SUB(first, second);
+	if (CheckC_borrow(first, sec_n_carry))
+		flags |= FLAG_C;
+	if (CheckZ(result & 0xFF))
+		flags |= FLAG_Z;
+	if (((result ^ second ^ first) & 0x10) == 0x10)
+		flags |= FLAG_H;
+
+	SetF(flags);
+	return static_cast<uint8_t>(result);
 }
 
 
@@ -89,9 +109,15 @@ uint8_t CPU::ADD(const uint8_t first, const uint8_t second)
 {
 	// flags effect Z 0 H C
 	const uint16_t result = first + second;
-	const Flags zhc = CheckZ(result&0xff) | 
-	                  CheckH_bit3(first, second) | 
-	                  CheckC_bit7(result);
+	uint8_t zhc = 0x00;
+
+	if (CheckZ(result&0xff))
+		zhc = FLAG_Z; 
+	if (CheckH_bit3(first, second))
+		zhc |= FLAG_H;
+	if (CheckC_bit7(result))
+		zhc |= FLAG_C;
+
 	SetF(zhc);
 	return static_cast<uint8_t>(result);
 }
@@ -108,10 +134,16 @@ uint8_t CPU::SUB(const uint8_t first, const uint8_t second)
 {
 	// flags effect: Z 1 H C
 	const uint16_t result = first - second;
-	const Flags zhc = CheckZ(result&0xff) | 
-	                CheckH_borrow(first, second) | 
-	                CheckC_borrow(first, second);
-	SetF(zhc | FLAG_N);
+	uint8_t zhc = FLAG_N;
+	
+	if (CheckZ(result&0xff))
+		zhc |= FLAG_Z;
+	if (CheckH_borrow(first, second))
+		zhc |= FLAG_H;
+	if (CheckC_borrow(first, second))
+		zhc |= FLAG_C;
+	
+	SetF(zhc);
 	return static_cast<uint8_t>(result);
 }
 
@@ -126,8 +158,13 @@ uint8_t CPU::INC(const uint8_t first)
 {
 	// flags effect: Z 0 H -
 	const uint8_t result = first + 1;
-	const Flags zh = CheckZ(result) |
-	                CheckH_bit3(first, 1);
+	uint8_t zh = 0x00;
+
+	if (CheckZ(result))
+		zh = FLAG_Z;
+	if (CheckH_bit3(first, 1))
+		zh |= FLAG_H;
+
 	SetF(zh | GetFlags(FLAG_C));
 	return result;
 }
@@ -143,9 +180,14 @@ uint8_t CPU::DEC(const uint8_t first)
 {
 	// flags effect: Z 1 H -
 	const uint8_t result = first - 1;
-	const Flags zh = CheckZ(result) |
-	                 CheckH_borrow(first, 1);
-	SetF(zh | FLAG_N | GetFlags(FLAG_C));
+	uint8_t flags = FLAG_N | GetFlags(FLAG_C);
+
+	if (CheckZ(result))
+		flags |= FLAG_Z;
+	if (CheckH_borrow(first, 1))
+		flags |= FLAG_H;
+
+	SetF(flags);
 	return result;
 }
 
@@ -154,13 +196,7 @@ uint8_t CPU::DEC(const uint8_t first)
 void CPU::CP(const uint8_t value)
 {
 	// flags effect: Z 1 H C
-	const uint8_t a = GetA();
-	const uint16_t result = a - value;
-	const Flags zhc = CheckZ(result&0xff) | 
-	                  CheckH_borrow(a, value) | 
-	                  CheckC_borrow(a, value);
-
-	SetF(zhc | FLAG_N);
+	SUB(GetA(), value);
 }
 
 
@@ -228,11 +264,11 @@ uint8_t CPU::RRC(const uint8_t value)
 	const uint8_t old_bit0 = (value & 0x01);
 	uint8_t result;
 	if (old_bit0) {
-		result = (value << 1) | 0x80;
+		result = (value >> 1) | 0x80;
 		SetF(CheckZ(result) | FLAG_C);
 	}
 	else {
-		result = value << 1;
+		result = value >> 1;
 		SetF(CheckZ(result));
 	}
 
@@ -338,6 +374,22 @@ void CPU::BIT(const uint8_t bit, const uint8_t value)
 	const Flags z = CheckZ(value & (0x01 << bit));
 	SetF(z | FLAG_H | GetFlags(FLAG_C));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

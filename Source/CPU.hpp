@@ -55,8 +55,8 @@ struct CPU
 	uint8_t INC(const uint8_t first);
 	uint8_t DEC(const uint8_t first);
 	
-	uint8_t ADC(const uint8_t first, uint8_t second);
-	uint8_t SBC(const uint8_t first, uint8_t second);
+	uint8_t ADC(const uint8_t first, const uint8_t second);
+	uint8_t SBC(const uint8_t first, const uint8_t second);
 
 	uint8_t ADD(const uint8_t first, const uint8_t second);
 	uint8_t SUB(const uint8_t first, const uint8_t second);
@@ -125,14 +125,14 @@ constexpr CPU::Flags operator&(const CPU::Flags f1, const CPU::Flags f2) {
 
 
 
-constexpr CPU::Flags CheckZ(const uint32_t result) {
+constexpr CPU::Flags CheckZ(const uint8_t result) {
 	return result ? static_cast<CPU::Flags>(0) : CPU::FLAG_Z;
 }
 
 
 
-constexpr CPU::Flags CheckH_bit3(const uint8_t first, const uint8_t second) {
-	return (((first&0x0f) + (second&0x0f)) > 0x0f) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
+constexpr CPU::Flags CheckH_bit3(const uint8_t first, const uint16_t second) {
+	return (((first&0x0f) + (second&0x0f)) & 0x10) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
 }
 
 
@@ -155,14 +155,14 @@ constexpr CPU::Flags CheckC_bit15(const uint32_t result) {
 
 
 
-constexpr CPU::Flags CheckC_borrow(const uint8_t first, const uint8_t second) {
+constexpr CPU::Flags CheckC_borrow(const uint8_t first, const uint16_t second) {
 	return first < second ? CPU::FLAG_C : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint8_t second) {
-	return (((first&0xf) - (second&0xf)) & 0x10) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
+constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint16_t second) {
+	return (((first&0xf) - (second&0xf)) < 0) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
 }
 
 
