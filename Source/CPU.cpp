@@ -58,7 +58,6 @@ void CPU::ADD_HL(const uint16_t second)
 
 uint8_t CPU::ADC(const uint8_t first, uint8_t second) 
 {
-	// flags effect: Z 0 H C
 	if (GetFlags(FLAG_C))
 		++second;
 
@@ -90,7 +89,7 @@ uint8_t CPU::ADD(const uint8_t first, const uint8_t second)
 {
 	// flags effect Z 0 H C
 	const uint16_t result = first + second;
-	const Flags zhc = CheckZ(result) | 
+	const Flags zhc = CheckZ(result&0xff) | 
 	                  CheckH_bit3(first, second) | 
 	                  CheckC_bit7(result);
 	SetF(zhc);
@@ -109,7 +108,7 @@ uint8_t CPU::SUB(const uint8_t first, const uint8_t second)
 {
 	// flags effect: Z 1 H C
 	const uint16_t result = first - second;
-	const Flags zhc = CheckZ(result) | 
+	const Flags zhc = CheckZ(result&0xff) | 
 	                CheckH_borrow(first, second) | 
 	                CheckC_borrow(first, second);
 	SetF(zhc | FLAG_N);
@@ -157,7 +156,7 @@ void CPU::CP(const uint8_t value)
 	// flags effect: Z 1 H C
 	const uint8_t a = GetA();
 	const uint16_t result = a - value;
-	const Flags zhc = CheckZ(result) | 
+	const Flags zhc = CheckZ(result&0xff) | 
 	                  CheckH_borrow(a, value) | 
 	                  CheckC_borrow(a, value);
 
@@ -218,6 +217,24 @@ uint8_t CPU::RR(const uint8_t value)
 		SetF(CheckZ(result) | FLAG_C);
 	else
 		SetF(CheckZ(result));
+
+	return result;
+}
+
+
+uint8_t CPU::RRC(const uint8_t value)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_bit0 = (value & 0x01);
+	uint8_t result;
+	if (old_bit0) {
+		result = (value << 1) | 0x80;
+		SetF(CheckZ(result) | FLAG_C);
+	}
+	else {
+		result = value << 1;
+		SetF(CheckZ(result));
+	}
 
 	return result;
 }

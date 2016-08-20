@@ -68,6 +68,7 @@ struct CPU
 	uint8_t XOR(const uint8_t first, const uint8_t second);
 	
 	uint8_t RR(const uint8_t value);
+	uint8_t RRC(const uint8_t value);
 	uint8_t RL(const uint8_t value);
 	uint8_t RLC(const uint8_t value);
 	uint8_t SLA(const uint8_t value);
@@ -131,7 +132,7 @@ constexpr CPU::Flags CheckZ(const uint32_t result) {
 
 
 constexpr CPU::Flags CheckH_bit3(const uint8_t first, const uint8_t second) {
-	return (((first&0x0f) + (second&0x0f)) & 0x10) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
+	return (((first&0x0f) + (second&0x0f)) > 0x0f) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
 }
 
 

@@ -40,7 +40,7 @@ bool Gameboy::Reset()
 	       cart_info.internal_name, cart_info.size, 
 	       static_cast<unsigned>(cart_info.type), 
 	       static_cast<unsigned>(cart_info.system));
-	
+
 	if (cart_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;
@@ -52,13 +52,14 @@ bool Gameboy::Reset()
 
 	// init the system, Gameboy mode
 	cpu.pc = CARTRIDGE_ENTRY_ADDR;
-	cpu.sp = 0xfffe;
+	cpu.sp = 0xFFFe;
 	cpu.SetAF(0x01B0);
 	cpu.SetBC(0x0013);
 	cpu.SetDE(0x00D8);
 	cpu.SetHL(0x014D);
 
 	gpu.lcdc = 0x91;
+	gpu.stat = 0x85;
 	gpu.bgp = 0xfc;
 	gpu.obp0 = 0xff;
 	gpu.obp1 = 0xff;
