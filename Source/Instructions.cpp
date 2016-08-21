@@ -55,8 +55,13 @@ inline uint16_t get_a16(Gameboy* const gb)
 	return get_d16(gb);
 }
 
+inline void rst(const uint16_t addr, Gameboy* const gb)
+{
+	gb->PushStack16(gb->cpu.pc);
+	gb->cpu.pc = addr;
+}
 
-inline void jr(const bool cond, Gameboy* const gb)
+static void jr(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		const int8_t r8 = get_r8(gb);
@@ -69,7 +74,7 @@ inline void jr(const bool cond, Gameboy* const gb)
 
 
 
-inline void jp(const bool cond, Gameboy* const gb)
+static void jp(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		gb->cpu.pc = gb->ReadU16(gb->cpu.pc);
@@ -81,7 +86,7 @@ inline void jp(const bool cond, Gameboy* const gb)
 
 
 
-inline void ret(const bool cond, Gameboy* const gb)
+static void ret(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		gb->cpu.pc = gb->PopStack16();
@@ -89,7 +94,7 @@ inline void ret(const bool cond, Gameboy* const gb)
 	}
 }
 
-inline void call(const bool cond, Gameboy* const gb)
+static void call(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		const uint16_t addr = get_a16(gb);
@@ -102,14 +107,61 @@ inline void call(const bool cond, Gameboy* const gb)
 }
 
 
-inline void rst(const uint16_t addr, Gameboy* const gb)
+static uint8_t inc(const uint8_t first, CPU* const cpu)
 {
-	gb->PushStack16(gb->cpu.pc);
-	gb->cpu.pc = addr;
+	// flags effect: Z 0 H -
+	const uint8_t result = first + 1;
+	uint8_t flags = cpu->GetFlags(CPU::FLAG_C);
+
+	if (CheckZ(result))
+		flags |= CPU::FLAG_Z;
+	if (CheckH_bit3(first, 1))
+		flags |= CPU::FLAG_H;
+
+	cpu->af.ind.f = flags;
+	return result;
+}
+
+static uint8_t dec(const uint8_t first, CPU* const cpu)
+{
+	// flags effect: Z 1 H -
+	const uint8_t result = first - 1;
+	uint8_t flags = CPU::FLAG_N | cpu->GetFlags(CPU::FLAG_C);
+
+	if (CheckZ(result))
+		flags |= CPU::FLAG_Z;
+	if (CheckH_borrow(first, 1))
+		flags |= CPU::FLAG_H;
+
+	cpu->af.ind.f = flags;
+	return result;
 }
 
 
-inline void add_hl_nn(const uint16_t second, CPU* const cpu)
+inline void inc_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = inc(*reg, cpu);
+}
+
+inline void dec_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = dec(*reg, cpu);
+}
+
+inline void inc_hlp(Gameboy* const gb) 
+{
+	const uint16_t hl = gb->cpu.hl.pair;
+	const uint8_t result = inc(gb->ReadU8(hl), &gb->cpu);
+	gb->WriteU8(hl, result);
+}
+
+inline void dec_hlp(Gameboy* const gb)
+{
+	const uint16_t hl = gb->cpu.hl.pair;
+	const uint8_t result = dec(gb->ReadU8(hl), &gb->cpu);
+	gb->WriteU8(hl, result);
+}
+
+
+static void add_hl_nn(const uint16_t second, CPU* const cpu)
 {
 	// flags effect: - 0 H C
 	const uint16_t first = cpu->GetHL();
@@ -126,40 +178,127 @@ inline void add_hl_nn(const uint16_t second, CPU* const cpu)
 }
 
 
-inline void cp_n(const uint8_t value, CPU* const cpu)
+static void cp_a_n(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 1 H C
-	cpu->SUB(cpu->GetA(), value);
+	const uint8_t first = cpu->af.ind.a;
+	const uint16_t result = first - value;
+	uint8_t flags = CPU::FLAG_N;
+
+	if (CheckZ(result & 0xff))
+		flags |= CPU::FLAG_Z;
+	if (CheckH_borrow(first, value))
+		flags |= CPU::FLAG_H;
+	if (CheckC_borrow(first, value))
+		flags |= CPU::FLAG_C;
+
+	cpu->af.ind.f = flags;
 }
 
 
 
-inline void add_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->ADD(cpu->af.ind.a, second);
+static void add_a_n(const uint8_t second, CPU* const cpu)
+{
+	// flags effect Z 0 H C
+	const uint8_t first = cpu->af.ind.a;
+	const uint16_t result = first + second;
+	uint8_t flags = 0x00;
+
+	if (CheckZ(result & 0xff))
+		flags = CPU::FLAG_Z;
+	if (CheckH_bit3(first, second))
+		flags |= CPU::FLAG_H;
+	if (CheckC_bit7(result))
+		flags |= CPU::FLAG_C;
+
+	cpu->af.ind.f = flags;
+	cpu->af.ind.a = static_cast<uint8_t>(result);
 }
 
-inline void sub_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->SUB(cpu->af.ind.a, second);
+static void sub_a_n(const uint8_t second, CPU* const cpu)
+{
+	// flags effect: Z 1 H C
+	const uint8_t first = cpu->af.ind.a;
+	const uint16_t result = first - second;
+	uint8_t flags = CPU::FLAG_N;
+
+	if (CheckZ(result & 0xff))
+		flags |= CPU::FLAG_Z;
+	if (CheckH_borrow(first, second))
+		flags |= CPU::FLAG_H;
+	if (CheckC_borrow(first, second))
+		flags |= CPU::FLAG_C;
+
+	cpu->af.ind.f = flags;
+	cpu->af.ind.a = static_cast<uint8_t>(result);
 }
 
-inline void adc_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->ADC(cpu->af.ind.a, second);
+static void adc_a_n(const uint8_t second, CPU* const cpu)
+{
+	// flags effect Z 0 H C
+	const uint8_t carry = cpu->GetFlags(CPU::FLAG_C) ? 1 : 0;
+	const uint8_t first = cpu->af.ind.a;
+	const uint16_t sec_n_carry = second + carry;
+	const uint16_t result = first + sec_n_carry;
+	uint8_t flags = 0x00;
+
+	if (CheckC_bit7(result))
+		flags = CPU::FLAG_C;
+	if (CheckZ(result & 0xFF))
+		flags |= CPU::FLAG_Z;
+	if (((first & 0xf) + (second & 0xf) + carry) > 0x0f)
+		flags |= CPU::FLAG_H;
+
+	cpu->af.ind.f = flags;
+	cpu->af.ind.a = static_cast<uint8_t>(result);
 }
 
-inline void sbc_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->SBC(cpu->af.ind.a, second);
+static void sbc_a_n(const uint8_t second, CPU* const cpu)
+{
+	// flags effect: Z 1 H C
+	const uint8_t first = cpu->af.ind.a;
+	const uint16_t sec_n_carry = cpu->GetFlags(CPU::FLAG_C) ? second + 1 : second;
+	const uint32_t result = first - sec_n_carry;
+	uint8_t flags = CPU::FLAG_N;
+
+	if (CheckC_borrow(first, sec_n_carry))
+		flags |= CPU::FLAG_C;
+	if (CheckZ(result & 0xFF))
+		flags |= CPU::FLAG_Z;
+	if (((result ^ second ^ first) & 0x10) == 0x10)
+		flags |= CPU::FLAG_H;
+
+	cpu->af.ind.f = flags;
+	cpu->af.ind.a = static_cast<uint8_t>(result);
 }
 
-inline void and_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->AND(second, cpu->af.ind.a);
+static void and_a_n(const uint8_t second, CPU* const cpu) 
+{
+	// flags effect: Z 0 1 0
+	const uint8_t first = cpu->af.ind.a;
+	const uint8_t result = first & second;
+	cpu->af.ind.f = CheckZ(result) | CPU::FLAG_H;
+	cpu->af.ind.a = result;
 }
 
-inline void xor_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->XOR(second, cpu->af.ind.a);
+
+static void or_a_n(const uint8_t second, CPU* const cpu)
+{
+	// flags effect: Z 0 0 0
+	const uint8_t first = cpu->af.ind.a;
+	const uint8_t result = first | second;
+	cpu->af.ind.f = CheckZ(result);
+	cpu->af.ind.a = result;
 }
 
-inline void or_a_n(const uint8_t second, CPU* const cpu) {
-	cpu->af.ind.a = cpu->OR(second, cpu->af.ind.a);
+
+static void xor_a_n(const uint8_t second, CPU* const cpu)
+{
+	// flags effect: Z 0 0 0
+	const uint8_t first = cpu->af.ind.a;
+	const uint8_t result = first ^ second;
+	cpu->af.ind.f = CheckZ(result);
+	cpu->af.ind.a = result;
 }
 
 
@@ -201,8 +340,7 @@ void inc_03(Gameboy* const gb)
 void inc_04(Gameboy* const gb) 
 { 
 	// INC B ( Z 0 H - )
-	const uint8_t b = gb->cpu.GetB();
-	gb->cpu.SetB( gb->cpu.INC(b) );
+	inc_r(&gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -210,8 +348,7 @@ void inc_04(Gameboy* const gb)
 void dec_05(Gameboy* const gb) 
 {
 	// DEC B ( Z 1 H - )
-	const uint8_t b = gb->cpu.GetB();
-	gb->cpu.SetB( gb->cpu.DEC(b) );
+	dec_r(&gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -285,8 +422,7 @@ void dec_0B(Gameboy* const gb)
 void inc_0C(Gameboy* const gb) 
 { 
 	// INC C ( Z 0 H - )
-	const uint8_t c = gb->cpu.GetC();
-	gb->cpu.SetC(gb->cpu.INC(c));	
+	inc_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 
@@ -294,8 +430,7 @@ void inc_0C(Gameboy* const gb)
 void dec_0D(Gameboy* const gb) 
 {
 	// DEC C ( Z 1 H - )
-	const uint8_t c = gb->cpu.GetC();
-	gb->cpu.SetC(gb->cpu.DEC(c));
+	dec_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 
@@ -361,14 +496,13 @@ void inc_13(Gameboy* const gb)
 void inc_14(Gameboy* const gb)
 {
 	// INC D ( Z 0 H - )
-	const uint8_t result = gb->cpu.INC(gb->cpu.GetD());
-	gb->cpu.SetD(result);
+	inc_r(&gb->cpu.de.ind.d, &gb->cpu);
 }
 
 void dec_15(Gameboy* const gb)
 {
 	// DEC D ( Z 1 H - )
-	gb->cpu.SetD(gb->cpu.DEC(gb->cpu.GetD()));
+	dec_r(&gb->cpu.de.ind.d, &gb->cpu);
 }
 
 
@@ -441,8 +575,7 @@ void dec_1B(Gameboy* const gb)
 void inc_1C(Gameboy* const gb) 
 {
 	// INC E ( Z 0 H - )
-	const uint8_t e = gb->cpu.GetE();
-	gb->cpu.SetE(gb->cpu.INC(e));
+	inc_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
 
@@ -452,8 +585,7 @@ void inc_1C(Gameboy* const gb)
 void dec_1D(Gameboy* const gb)
 { 
 	// DEC E ( Z 1 H - )
-	const uint8_t e = gb->cpu.GetE();
-	gb->cpu.SetE(gb->cpu.DEC(e));
+	dec_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
 
@@ -527,16 +659,14 @@ void inc_23(Gameboy* const gb)
 void inc_24(Gameboy* const gb)
 {
 	// INC H ( Z 0 H - )
-	const uint8_t result = gb->cpu.INC(gb->cpu.GetH());
-	gb->cpu.SetH(result);
+	inc_r(&gb->cpu.hl.ind.h, &gb->cpu);
 }
 
 
 void dec_25(Gameboy* const gb) 
 { 
 	// DEC H ( Z 1 H - )
-	const uint8_t h = gb->cpu.GetH();
-	gb->cpu.SetH(gb->cpu.DEC(h));
+	dec_r(&gb->cpu.hl.ind.h, &gb->cpu);
 }
 
 
@@ -623,8 +753,7 @@ void dec_2B(Gameboy* const gb)
 void inc_2C(Gameboy* const gb)
 {
 	// INC L ( Z 0 H - )
-	const uint8_t l = gb->cpu.GetL();
-	gb->cpu.SetL(gb->cpu.INC(l));
+	inc_r(&gb->cpu.hl.ind.l, &gb->cpu);
 }
 
 
@@ -632,8 +761,7 @@ void inc_2C(Gameboy* const gb)
 void dec_2D(Gameboy* const gb) 
 {
 	// DEC L ( Z 1 H - )
-	const uint8_t l = gb->cpu.GetL();
-	gb->cpu.SetL(gb->cpu.DEC(l));
+	dec_r(&gb->cpu.hl.ind.l, &gb->cpu);
 }
 
 
@@ -703,9 +831,8 @@ void inc_33(Gameboy* const gb)
 
 void inc_34(Gameboy* const gb) 
 {
-	// INC (HL) ( increment value pointed by hl in memory )
-	const uint16_t hl = gb->cpu.GetHL();
-	gb->WriteU8(hl, gb->cpu.INC(gb->ReadU8(hl)));
+	// INC (HL)
+	inc_hlp(gb);
 }
 
 
@@ -713,10 +840,8 @@ void inc_34(Gameboy* const gb)
 
 void dec_35(Gameboy* const gb)
 {
-	// DEC (HL) ( Z 1 H - )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t value = gb->ReadU8(hl);
-	gb->WriteU8(hl, gb->cpu.DEC(value));
+	// DEC (HL)
+	dec_hlp(gb);
 }
 
 
@@ -788,8 +913,7 @@ void dec_3B(Gameboy* const gb)
 void inc_3C(Gameboy* const gb) 
 {
 	// INC A ( Z 0 H - )
-	const uint8_t a = gb->cpu.GetA();
-	gb->cpu.SetA(gb->cpu.INC(a));
+	inc_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -798,8 +922,7 @@ void inc_3C(Gameboy* const gb)
 void dec_3D(Gameboy* const gb) 
 { 
 	// DEC A ( Z 1 H - )
-	const uint8_t a = gb->cpu.GetA();
-	gb->cpu.SetA(gb->cpu.DEC(a));
+	dec_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -1750,7 +1873,7 @@ void or_B7(Gameboy* const gb)
 void cp_B8(Gameboy* const gb)
 { 
 	// CP B
-	cp_n(gb->cpu.GetB(), &gb->cpu);
+	cp_a_n(gb->cpu.GetB(), &gb->cpu);
 }
 
 
@@ -1759,7 +1882,7 @@ void cp_B8(Gameboy* const gb)
 void cp_B9(Gameboy* const gb) 
 { 
 	// CP C
-	cp_n(gb->cpu.GetC(), &gb->cpu);
+	cp_a_n(gb->cpu.GetC(), &gb->cpu);
 }
 
 
@@ -1768,25 +1891,25 @@ void cp_B9(Gameboy* const gb)
 void cp_BA(Gameboy* const gb)
 {
 	// CP D
-	cp_n(gb->cpu.GetD(), &gb->cpu);
+	cp_a_n(gb->cpu.GetD(), &gb->cpu);
 }
 
 void cp_BB(Gameboy* const gb)
 {
 	// CP E
-	cp_n(gb->cpu.GetE(), &gb->cpu);
+	cp_a_n(gb->cpu.GetE(), &gb->cpu);
 }
 
 void cp_BC(Gameboy* const gb)
 {
 	// CP H
-	cp_n(gb->cpu.GetH(), &gb->cpu);
+	cp_a_n(gb->cpu.GetH(), &gb->cpu);
 }
 
 void cp_BD(Gameboy* const gb)
 {
 	// CP L
-	cp_n(gb->cpu.GetL(), &gb->cpu);
+	cp_a_n(gb->cpu.GetL(), &gb->cpu);
 }
 
 
@@ -1794,7 +1917,7 @@ void cp_BE(Gameboy* const gb)
 { 
 	// CP (HL)
 	const uint16_t hl = gb->cpu.GetHL();
-	cp_n(gb->ReadU8(hl), &gb->cpu);
+	cp_a_n(gb->ReadU8(hl), &gb->cpu);
 }
 
 
@@ -1803,7 +1926,7 @@ void cp_BF(Gameboy* const gb)
 {
 	// TODO: optimize
 	// CP A
-	cp_n(gb->cpu.GetA(), &gb->cpu);
+	cp_a_n(gb->cpu.GetA(), &gb->cpu);
 }
 
 
@@ -1863,8 +1986,7 @@ void push_C5(Gameboy* const gb)
 void add_C6(Gameboy* const gb)
 { 
 	// ADD A, d8 ( Z 0 H C )
-	const uint8_t result = gb->cpu.ADD(gb->cpu.GetA(), get_d8(gb));
-	gb->cpu.SetA(result);
+	add_a_n(get_d8(gb), &gb->cpu);
 }
 
 
@@ -1944,8 +2066,7 @@ void call_CD(Gameboy* const gb)
 void adc_CE(Gameboy* const gb) 
 {
 	// ADC A, d8 (Z 0 H C)
-	const uint8_t result = gb->cpu.ADC(gb->cpu.GetA(), get_d8(gb));
-	gb->cpu.SetA(result);
+	adc_a_n(get_d8(gb), &gb->cpu);
 }
 
 
@@ -2002,8 +2123,7 @@ void push_D5(Gameboy* const gb)
 void sub_D6(Gameboy* const gb) 
 { 
 	// SUB d8 ( Z 1 H C )
-	const uint8_t result = gb->cpu.SUB(gb->cpu.GetA(), get_d8(gb));
-	gb->cpu.SetA(result);
+	sub_a_n(get_d8(gb), &gb->cpu);
 }
 
 
@@ -2053,8 +2173,7 @@ void call_DC(Gameboy* const gb)
 void sbc_DE(Gameboy* const gb)
 {
 	// SBC A, d8
-	const uint8_t result = gb->cpu.SBC(gb->cpu.GetA(), get_d8(gb));
-	gb->cpu.SetA(result);
+	sbc_a_n(get_d8(gb), &gb->cpu);
 }
 
 
@@ -2294,7 +2413,7 @@ void ei_FB(Gameboy* const gb)
 void cp_FE(Gameboy* const gb) 
 {
 	// CP d8 ( Z 1 H C )
-	cp_n(get_d8(gb), &gb->cpu);
+	cp_a_n(get_d8(gb), &gb->cpu);
 }
 
 

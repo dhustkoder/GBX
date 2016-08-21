@@ -51,19 +51,6 @@ struct CPU
 
 	void SetFlags(const CPU::Flags flags);
 	void ClearFlags(const CPU::Flags flags);
-
-	uint8_t INC(const uint8_t first);
-	uint8_t DEC(const uint8_t first);
-	
-	uint8_t ADC(const uint8_t first, const uint8_t second);
-	uint8_t SBC(const uint8_t first, const uint8_t second);
-
-	uint8_t ADD(const uint8_t first, const uint8_t second);
-	uint8_t SUB(const uint8_t first, const uint8_t second);
-
-	uint8_t OR(const uint8_t first, const uint8_t second);
-	uint8_t AND(const uint8_t first, const uint8_t second);
-	uint8_t XOR(const uint8_t first, const uint8_t second);
 	
 	uint8_t RR(const uint8_t value);
 	uint8_t RRC(const uint8_t value);
