@@ -56,7 +56,7 @@ inline uint16_t get_a16(Gameboy* const gb)
 }
 
 
-inline void jr_nn(const bool cond, Gameboy* const gb)
+inline void jr(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		const int8_t r8 = get_r8(gb);
@@ -69,7 +69,7 @@ inline void jr_nn(const bool cond, Gameboy* const gb)
 
 
 
-inline void jp_nn(const bool cond, Gameboy* const gb)
+inline void jp(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		gb->cpu.pc = gb->ReadU16(gb->cpu.pc);
@@ -81,7 +81,7 @@ inline void jp_nn(const bool cond, Gameboy* const gb)
 
 
 
-inline void ret_nn(const bool cond, Gameboy* const gb)
+inline void ret(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		gb->cpu.pc = gb->PopStack16();
@@ -89,19 +89,20 @@ inline void ret_nn(const bool cond, Gameboy* const gb)
 	}
 }
 
-inline void call_nn(const bool cond, Gameboy* const gb)
+inline void call(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
 		const uint16_t addr = get_a16(gb);
 		gb->PushStack16(gb->cpu.pc);
 		gb->cpu.pc = addr;
+		gb->cpu.clock += 12;
 	} else {
 		gb->cpu.pc += 2;
 	}
 }
 
 
-inline void rst_nn(const uint16_t addr, Gameboy* const gb)
+inline void rst(const uint16_t addr, Gameboy* const gb)
 {
 	gb->PushStack16(gb->cpu.pc);
 	gb->cpu.pc = addr;
@@ -490,7 +491,7 @@ void jr_20(Gameboy* const gb)
 {
 	// JR NZ, r8 ( jump if Z flags is reset )
 	// clock cycles: 12 if jumps, 8 if not
-	jr_nn(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
+	jr(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
 }
 
 
@@ -583,7 +584,7 @@ void jr_28(Gameboy* const gb)
 {
 	// JP Z, r8 ( jump if Z flag is set )
 	// clock cycles: if jumps 12, else 8
-	jr_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+	jr(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
 }
 
 
@@ -668,7 +669,7 @@ void cpl_2F(Gameboy* const gb)
 void jr_30(Gameboy* const gb) 
 {
 	// JR NC, r8 ( jump if C flag is reset )
-	jr_nn(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
+	jr(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
 }
 
 
@@ -747,7 +748,7 @@ void scf_37(Gameboy* const gb)
 void jr_38(Gameboy* const gb) 
 {
 	// JR C, r8 ( jump if C flag is set )
-	jr_nn(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
+	jr(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
 }
 
 
@@ -1817,7 +1818,7 @@ void cp_BF(Gameboy* const gb)
 void ret_C0(Gameboy* const gb) 
 { 
 	// RET NZ
-	ret_nn(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
+	ret(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
 }
 
 
@@ -1832,7 +1833,7 @@ void pop_C1(Gameboy* const gb)
 void jp_C2(Gameboy* const gb) 
 {
 	// JP NZ, a16
-	jp_nn(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
+	jp(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
 }
 
 
@@ -1847,7 +1848,7 @@ void jp_C3(Gameboy* const gb)
 void call_C4(Gameboy* const gb) 
 { 
 	// CALL NZ, a16
-	call_nn(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
+	call(gb->cpu.GetFlags(CPU::FLAG_Z) == 0, gb);
 }
 
 
@@ -1871,7 +1872,7 @@ void add_C6(Gameboy* const gb)
 void rst_C7(Gameboy* const gb)
 {
 	// RST 00h
-	rst_nn(0x00, gb);
+	rst(0x00, gb);
 }
 
 
@@ -1879,7 +1880,7 @@ void rst_C7(Gameboy* const gb)
 void ret_C8(Gameboy* const gb) 
 {
 	// RET Z
-	ret_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+	ret(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
 }
 
 
@@ -1897,7 +1898,7 @@ void ret_C9(Gameboy* const gb)
 void jp_CA(Gameboy* const gb) 
 {
 	// JP Z, a16
-	jp_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+	jp(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
 }
 
 
@@ -1926,7 +1927,7 @@ void PREFIX_CB(Gameboy* const gb)
 void call_CC(Gameboy* const gb) 
 {
 	// CALL Z, a16
-	call_nn(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
+	call(gb->cpu.GetFlags(CPU::FLAG_Z) != 0, gb);
 }
 
 
@@ -1951,7 +1952,7 @@ void adc_CE(Gameboy* const gb)
 void rst_CF(Gameboy* const gb)
 { 
 	// RST 08h
-	rst_nn(0x08, gb);
+	rst(0x08, gb);
 }
 
 
@@ -1963,7 +1964,7 @@ void rst_CF(Gameboy* const gb)
 void ret_D0(Gameboy* const gb) 
 { 
 	// RET NC
-	ret_nn(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
+	ret(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
 }
 
 
@@ -1978,14 +1979,14 @@ void pop_D1(Gameboy* const gb)
 void jp_D2(Gameboy* const gb) 
 { 
 	// JP NC, a16
-	jp_nn(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
+	jp(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
 }
 
 // MISSING D3 ----
 void call_D4(Gameboy* const gb)
 {
 	// CALL NC, a16
-	call_nn(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
+	call(gb->cpu.GetFlags(CPU::FLAG_C) == 0, gb);
 }
 
 
@@ -2009,13 +2010,13 @@ void sub_D6(Gameboy* const gb)
 void rst_D7(Gameboy* const gb)
 {
 	// RST 10h
-	rst_nn(0x10, gb);
+	rst(0x10, gb);
 }
 
 void ret_D8(Gameboy* const gb) 
 { 
 	// RET C
-	ret_nn(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
+	ret(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
 }
 
 
@@ -2033,7 +2034,7 @@ void reti_D9(Gameboy* const gb)
 void jp_DA(Gameboy* const gb)
 {
 	// JP C, a16
-	jp_nn(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
+	jp(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
 }
 
 // MISSING DB -----
@@ -2042,7 +2043,7 @@ void jp_DA(Gameboy* const gb)
 void call_DC(Gameboy* const gb)
 {
 	// CALL C, a16
-	call_nn(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
+	call(gb->cpu.GetFlags(CPU::FLAG_C) != 0, gb);
 }
 
 
@@ -2060,7 +2061,7 @@ void sbc_DE(Gameboy* const gb)
 void rst_DF(Gameboy* const gb)
 { 
 	// RST 18h
-	rst_nn(0x18, gb);
+	rst(0x18, gb);
 }
 
 
@@ -2119,7 +2120,7 @@ void and_E6(Gameboy* const gb)
 void rst_E7(Gameboy* const gb)
 {
 	// RST 20h
-	rst_nn(0x20, gb);
+	rst(0x20, gb);
 }
 
 
@@ -2175,7 +2176,7 @@ void xor_EE(Gameboy* const gb)
 void rst_EF(Gameboy* const gb) 
 {
 	// RST 28H
-	rst_nn(0x28, gb);
+	rst(0x28, gb);
 }
 
 
@@ -2237,7 +2238,7 @@ void or_F6(Gameboy* const gb)
 void rst_F7(Gameboy* const gb)
 {
 	// RST 30h
-	rst_nn(0x30, gb);
+	rst(0x30, gb);
 }
 
 void ld_F8(Gameboy* const gb)
@@ -2301,7 +2302,7 @@ void cp_FE(Gameboy* const gb)
 void rst_FF(Gameboy* const gb)
 {
 	// RST 38h
-	rst_nn(0x38, gb);
+	rst(0x38, gb);
 }
 
 

@@ -9,17 +9,17 @@ namespace gbx {
 // note: all CB instructons are 2 bytes long, no need to increment PC
 // this is done by the CB instructions caller.
 
-inline void set_n_reg(const uint8_t bit, uint8_t* const reg) {
+inline void set_r(const uint8_t bit, uint8_t* const reg) {
 	*reg = SetBit(bit, *reg);
 }
 
 
-inline void res_n_reg(const uint8_t bit, uint8_t* const reg) {
+inline void res_r(const uint8_t bit, uint8_t* const reg) {
 	*reg = ResBit(bit, *reg);
 }
 
 
-inline void set_n_hl(const uint8_t bit, Gameboy* const gb)
+inline void set_hlp(const uint8_t bit, Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.GetHL();
 	const uint8_t result = SetBit(bit, gb->ReadU8(hl));
@@ -27,7 +27,7 @@ inline void set_n_hl(const uint8_t bit, Gameboy* const gb)
 }
 
 
-inline void res_n_hl(const uint8_t bit, Gameboy* const gb)
+inline void res_hlp(const uint8_t bit, Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.GetHL();
 	const uint8_t result = ResBit(bit, gb->ReadU8(hl));
@@ -660,7 +660,7 @@ void res_80(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_81(Gameboy* const gb)
 {
 	// RES 0, C 
-	res_n_reg(0, &gb->cpu.bc.ind.c);
+	res_r(0, &gb->cpu.bc.ind.c);
 }
 
 void res_82(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -672,7 +672,7 @@ void res_85(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_86(Gameboy* const gb)
 { 
 	// RES 0, (HL)
-	res_n_hl(0, gb);
+	res_hlp(0, gb);
 }
 
 
@@ -680,7 +680,7 @@ void res_86(Gameboy* const gb)
 void res_87(Gameboy* const gb)
 {
 	// RES 0, A
-	res_n_reg(0, &gb->cpu.af.ind.a);
+	res_r(0, &gb->cpu.af.ind.a);
 }
 
 
@@ -691,7 +691,7 @@ void res_88(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_89(Gameboy* const gb)
 {
 	// RES 1, C
-	res_n_reg(1, &gb->cpu.bc.ind.c);
+	res_r(1, &gb->cpu.bc.ind.c);
 }
 
 void res_8A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -702,7 +702,7 @@ void res_8D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_8E(Gameboy* const gb)
 {
 	// RES 1, (HL)
-	res_n_hl(1, gb);
+	res_hlp(1, gb);
 }
 
 void res_8F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -721,7 +721,7 @@ void res_95(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_96(Gameboy* const gb)
 {
 	// RES 2, (HL)
-	res_n_hl(2, gb);
+	res_hlp(2, gb);
 }
 
 void res_97(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -736,7 +736,7 @@ void res_9D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_9E(Gameboy* const gb) 
 { 
 	// RES 3, (HL)
-	res_n_hl(3, gb);
+	res_hlp(3, gb);
 }
 
 
@@ -750,7 +750,7 @@ void res_A0(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_A1(Gameboy* const gb)
 {
 	// RES 4, C
-	res_n_reg(4, &gb->cpu.bc.ind.c);
+	res_r(4, &gb->cpu.bc.ind.c);
 }
 
 void res_A2(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -761,7 +761,7 @@ void res_A5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_A6(Gameboy* const gb)
 {
 	// RES 4, (HL)
-	res_n_hl(4, gb);
+	res_hlp(4, gb);
 }
 
 void res_A7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -775,13 +775,13 @@ void res_AD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_AE(Gameboy* const gb)
 {
 	// RES 5, (HL)
-	res_n_hl(5, gb);
+	res_hlp(5, gb);
 }
 
 void res_AF(Gameboy* const gb)
 {
 	// RES 5, A
-	res_n_reg(5, &gb->cpu.af.ind.a);
+	res_r(5, &gb->cpu.af.ind.a);
 }
 
 
@@ -791,7 +791,7 @@ void res_AF(Gameboy* const gb)
 void res_B0(Gameboy* const gb) 
 {
 	// RES 6, B
-	res_n_reg(6, &gb->cpu.bc.ind.b);
+	res_r(6, &gb->cpu.bc.ind.b);
 }
 
 void res_B1(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -803,7 +803,7 @@ void res_B5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_B6(Gameboy* const gb)
 {
 	// RES 6, (HL)
-	res_n_hl(6, gb);
+	res_hlp(6, gb);
 }
 
 void res_B7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -811,7 +811,7 @@ void res_B7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_B8(Gameboy* const gb)
 {
 	// RES 7, B
-	res_n_reg(7, &gb->cpu.bc.ind.b);
+	res_r(7, &gb->cpu.bc.ind.b);
 }
 
 void res_B9(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -824,14 +824,14 @@ void res_BD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void res_BE(Gameboy* const gb) 
 { 
 	// RES 7, (HL)
-	res_n_hl(7, gb);
+	res_hlp(7, gb);
 }
 
 
 void res_BF(Gameboy* const gb)
 {
 	// RES 7, A
-	res_n_reg(7, &gb->cpu.af.ind.a);
+	res_r(7, &gb->cpu.af.ind.a);
 }
 
 
@@ -843,7 +843,7 @@ void set_C0(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_C1(Gameboy* const gb)
 {
 	// SET 0, C
-	set_n_reg(0, &gb->cpu.bc.ind.c);
+	set_r(0, &gb->cpu.bc.ind.c);
 }
 
 void set_C2(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -854,13 +854,13 @@ void set_C5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_C6(Gameboy* const gb)
 {
 	// SET 0, (HL)
-	set_n_hl(0, gb);
+	set_hlp(0, gb);
 }
 
 void set_C7(Gameboy* const gb)
 {
 	// SET 0, A
-	set_n_reg(0, &gb->cpu.af.ind.a);
+	set_r(0, &gb->cpu.af.ind.a);
 }
 
 void set_C8(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -868,7 +868,7 @@ void set_C8(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_C9(Gameboy* const gb)
 {
 	// SET 1, C
-	set_n_reg(1, &gb->cpu.bc.ind.c);
+	set_r(1, &gb->cpu.bc.ind.c);
 }
 
 void set_CA(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -880,14 +880,14 @@ void set_CD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_CE(Gameboy* const gb)
 {
 	// SET 1, (HL)
-	set_n_hl(1, gb);
+	set_hlp(1, gb);
 }
 
 
 void set_CF(Gameboy* const gb)
 {
 	// SET 1, A
-	set_n_reg(1, &gb->cpu.af.ind.a);
+	set_r(1, &gb->cpu.af.ind.a);
 }
 
 
@@ -896,14 +896,14 @@ void set_CF(Gameboy* const gb)
 void set_D0(Gameboy* const gb) 
 { 
 	// SET 2, B
-	set_n_reg(2, &gb->cpu.bc.ind.b);
+	set_r(2, &gb->cpu.bc.ind.b);
 }
 
 
 void set_D1(Gameboy* const gb)
 {
 	// SET 2, C
-	set_n_reg(2, &gb->cpu.bc.ind.c);
+	set_r(2, &gb->cpu.bc.ind.c);
 }
 
 void set_D2(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -914,28 +914,28 @@ void set_D5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_D6(Gameboy* const gb)
 {
 	// SET 2, (HL)
-	set_n_hl(2, gb);
+	set_hlp(2, gb);
 }
 
 
 void set_D7(Gameboy* const gb)
 { 
 	// SET 2, A
-	set_n_reg(2, &gb->cpu.af.ind.a);
+	set_r(2, &gb->cpu.af.ind.a);
 }
 
 
 void set_D8(Gameboy* const gb)
 { 
 	// SET 3, B
-	set_n_reg(3, &gb->cpu.bc.ind.b);
+	set_r(3, &gb->cpu.bc.ind.b);
 }
 
 
 void set_D9(Gameboy* const gb)
 {
 	// SET 3, C
-	set_n_reg(3, &gb->cpu.bc.ind.c);
+	set_r(3, &gb->cpu.bc.ind.c);
 }
 
 void set_DA(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -947,7 +947,7 @@ void set_DD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_DE(Gameboy* const gb) 
 { 
 	// SET 3, (HL)
-	set_n_hl(3, gb);
+	set_hlp(3, gb);
 }
 
 
@@ -966,7 +966,7 @@ void set_E5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_E6(Gameboy* const gb)
 {
 	// SET 4, (HL)
-	set_n_hl(4, gb);
+	set_hlp(4, gb);
 }
 
 void set_E7(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -979,19 +979,19 @@ void set_EC(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_ED(Gameboy* const gb)
 {
 	// SET 5, L
-	set_n_reg(5, &gb->cpu.hl.ind.l);
+	set_r(5, &gb->cpu.hl.ind.l);
 }
 
 void set_EE(Gameboy* const gb)
 {
 	// SET 5, (HL)
-	set_n_hl(5, gb);
+	set_hlp(5, gb);
 }
 
 void set_EF(Gameboy* const gb)
 {
 	// SET 5, A
-	set_n_reg(5, &gb->cpu.af.ind.a);
+	set_r(5, &gb->cpu.af.ind.a);
 }
 
 
@@ -1002,7 +1002,7 @@ void set_EF(Gameboy* const gb)
 void set_F0(Gameboy* const gb)
 { 
 	// SET 6, B
-	set_n_reg(6, &gb->cpu.bc.ind.b);
+	set_r(6, &gb->cpu.bc.ind.b);
 }
 
 void set_F1(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -1014,19 +1014,19 @@ void set_F5(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_F6(Gameboy* const gb)
 {
 	// SET 6, (HL)
-	set_n_hl(6, gb);
+	set_hlp(6, gb);
 }
 
 void set_F7(Gameboy* const gb)
 {
 	// SET 6, A
-	set_n_reg(6, &gb->cpu.af.ind.a);
+	set_r(6, &gb->cpu.af.ind.a);
 }
 
 void set_F8(Gameboy* const gb)
 { 
 	// SET 7, B
-	set_n_reg(7, &gb->cpu.bc.ind.b);
+	set_r(7, &gb->cpu.bc.ind.b);
 }
 
 void set_F9(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -1039,14 +1039,14 @@ void set_FD(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void set_FE(Gameboy* const gb)
 { 
 	// SET 7, (HL)
-	set_n_hl(7, gb);
+	set_hlp(7, gb);
 }
 
 
 void set_FF(Gameboy* const gb)
 {
 	// SET 7, A
-	set_n_reg(7, &gb->cpu.af.ind.a);
+	set_r(7, &gb->cpu.af.ind.a);
 }
     
     
