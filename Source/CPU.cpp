@@ -243,8 +243,7 @@ uint8_t CPU::RRC(const uint8_t value)
 	if (old_bit0) {
 		result = (value >> 1) | 0x80;
 		SetF(CheckZ(result) | FLAG_C);
-	}
-	else {
+	} else {
 		result = value >> 1;
 		SetF(CheckZ(result));
 	}
@@ -277,8 +276,7 @@ uint8_t CPU::RLC(const uint8_t value)
 	if (old_bit7) {
 		result = (value << 1) | 0x01;
 		SetF(CheckZ(result) | FLAG_C);
-	}
-	else {
+	} else {
 		result = value << 1;
 		SetF(CheckZ(result));
 	}

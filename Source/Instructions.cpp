@@ -117,7 +117,7 @@ inline void add_hl_nn(const uint16_t second, CPU* const cpu)
 
 	if (CheckC_bit15(result))
 		hc = CPU::FLAG_C;
-	if (CheckH_bit11(first, second))
+	if ((result ^ first ^ second) & 0x1000)
 		hc |= CPU::FLAG_H;
 
 	cpu->SetF(cpu->GetFlags(CPU::FLAG_Z) | hc);
@@ -2127,10 +2127,16 @@ void rst_E7(Gameboy* const gb)
 void add_E8(Gameboy* const gb) 
 {
 	// ADD SP, r8 ( 0 0 H C )
-	const uint16_t sp = gb->cpu.sp;
 	const int8_t r8 = get_r8(gb);
-	const uint32_t result = sp + r8;
-	const CPU::Flags hc = CheckH_bit11(sp, r8) | CheckC_bit15(result);
+	const uint16_t sp = gb->cpu.sp;
+	const uint16_t result = sp + r8;
+	uint8_t hc = 0x00;
+	
+	if ((result & 0xff) < (sp & 0xff))
+		hc = CPU::FLAG_C;
+	if ((result & 0xf) < (sp & 0xf))
+		hc |= CPU::FLAG_H;
+
 	gb->cpu.SetF(hc);
 	gb->cpu.sp = static_cast<uint16_t>(result);
 }
@@ -2191,7 +2197,12 @@ void pop_F1(Gameboy* const gb)
 }
 
 
-void ld_F2(Gameboy* const gb)  { ASSERT_INSTR_IMPL(); ++gb->cpu.pc; }
+void ld_F2(Gameboy* const gb)
+{
+	// LD A, (C)
+	const uint8_t value = gb->ReadU8(0xFF00 + gb->cpu.GetC());
+	gb->cpu.SetA(value);
+}
 
 
 void di_F3(Gameboy* const gb)
@@ -2232,13 +2243,19 @@ void rst_F7(Gameboy* const gb)
 void ld_F8(Gameboy* const gb)
 {
 	// LD HL, SP+r8 ( 0 0 H C )
-	const uint16_t sp = gb->cpu.sp;
 	const int8_t r8 = get_r8(gb);
-	const uint32_t result = sp + r8;
-	const CPU::Flags hc = CheckH_bit3(static_cast<uint8_t>(sp), r8) |
-	                      CheckC_bit15(result);
+	const uint16_t sp = gb->cpu.sp;
+	const uint16_t result = sp + r8;
+	const uint16_t check = sp ^ r8 ^ result;
+	uint8_t hc = 0x00;
+
+	if ((check & 0x100) == 0x100)
+		hc = CPU::FLAG_C;
+	if ((check & 0x10) == 0x10)
+		hc |= CPU::FLAG_H;
+
 	gb->cpu.SetF(hc);
-	gb->cpu.SetHL(static_cast<uint16_t>(result));
+	gb->cpu.SetHL(result);
 }
 
 void ld_F9(Gameboy* const gb)
