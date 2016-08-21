@@ -304,6 +304,13 @@ static void xor_a_n(const uint8_t second, CPU* const cpu)
 
 
 
+
+
+
+
+
+
+
 // Main instructions implementation:
 // 0x00
 void nop_00(Gameboy* const)
@@ -332,7 +339,7 @@ void ld_02(Gameboy* const gb)
 void inc_03(Gameboy* const gb) 
 {
 	// INC BC
-	gb->cpu.SetBC( gb->cpu.GetBC() + 1 );	
+	++gb->cpu.bc.pair;
 }
 
 

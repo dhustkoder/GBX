@@ -24,9 +24,6 @@
     <ClCompile Include="..\..\Source\CBInstructions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\CPU.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\Gameboy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

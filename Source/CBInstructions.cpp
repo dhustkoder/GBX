@@ -4,12 +4,8 @@
 namespace gbx {
         
 
-    
-    
 // note: all CB instructons are 2 bytes long, no need to increment PC
 // this is done by the CB instructions caller.
-
-
 
 static uint8_t rlc(const uint8_t value, CPU* const cpu)
 {
@@ -60,22 +56,102 @@ static uint8_t rl(const uint8_t value, CPU* const cpu)
 }
 
 
+static uint8_t rr(const uint8_t value, CPU* const cpu)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_carry = cpu->GetFlags(CPU::FLAG_C);
+	const uint8_t old_bit0 = value & 0x01;
+	const uint8_t result = old_carry ? ((value >> 1) | 0x80) : (value >> 1);
+	if (old_bit0)
+		cpu->af.ind.f = CheckZ(result) | CPU::FLAG_C;
+	else
+		cpu->af.ind.f = CheckZ(result);
+
+	return result;
+}
+
+
+static uint8_t sla(const uint8_t value, CPU* const cpu)
+{
+	// flags  effect: Z 0 0 C
+	const uint8_t old_bit7 = value & 0x80;
+	const uint8_t result = value << 1;
+	if (old_bit7)
+		cpu->af.ind.f = CheckZ(result) | CPU::FLAG_C;
+	else
+		cpu->af.ind.f = CheckZ(result);
+
+	return result;
+}
+
+static uint8_t sra(const uint8_t value, CPU* const cpu)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_bit0 = value & 0x01;
+	const uint8_t result = (value & 0x80) | (value >> 1);
+	if (old_bit0)
+		cpu->af.ind.f = CheckZ(result) | CPU::FLAG_C;
+	else
+		cpu->af.ind.f = CheckZ(result);
+
+	return result;
+}
+
+
+static uint8_t swap(const uint8_t value, CPU* const cpu)
+{
+	// flags effect: Z 0 0 0
+	const uint8_t result = ((value & 0x0f) << 4) | ((value & 0xf0) >> 4);
+	cpu->af.ind.f = CheckZ(result);
+	return result;
+}
+
+
+static uint8_t srl(const uint8_t value, CPU* const cpu)
+{
+	// flags effect: Z 0 0 C
+	const uint8_t old_bit0 = value & 0x01;
+	const uint8_t result = value >> 1;
+	if (old_bit0)
+		cpu->af.ind.f = CheckZ(result) | CPU::FLAG_C;
+	else
+		cpu->af.ind.f = CheckZ(result);
+
+	return result;
+}
 
 
 inline void rlc_r(uint8_t* const reg, CPU* const cpu) {
 	*reg = rlc(*reg, cpu);
 }
 
-
 inline void rrc_r(uint8_t* const reg, CPU* const cpu) {
 	*reg = rrc(*reg, cpu);
 }
-
 
 inline void rl_r(uint8_t* const reg, CPU* const cpu) {
 	*reg = rl(*reg, cpu);
 }
 
+inline void rr_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = rr(*reg, cpu);
+}
+
+inline void sla_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = sla(*reg, cpu);
+}
+
+inline void sra_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = sra(*reg, cpu);
+}
+
+inline void swap_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = swap(*reg, cpu);
+}
+
+inline void srl_r(uint8_t* const reg, CPU* const cpu) {
+	*reg = srl(*reg, cpu);
+}
 
 
 inline void op_hlp(uint8_t(*op)(uint8_t, CPU*), Gameboy* const gb)
@@ -244,45 +320,38 @@ void rr_18(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void rr_19(Gameboy* const gb)
 {
-	// RR C ( Z 0 0 C )
-	const uint8_t result = gb->cpu.RR(gb->cpu.GetC());
-	gb->cpu.SetC(result);
+	// RR C
+	rr_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 void rr_1A(Gameboy* const gb)
 {
-	// RR D ( Z 0 0 C )
-	const uint8_t result = gb->cpu.RR(gb->cpu.GetD());
-	gb->cpu.SetD(result);
+	// RR D
+	rr_r(&gb->cpu.de.ind.d, &gb->cpu);
 }
 
 void rr_1B(Gameboy* const gb)
 {
-	// RR E ( Z 0 0 C )
-	const uint8_t result = gb->cpu.RR(gb->cpu.GetE());
-	gb->cpu.SetE(result);
+	// RR E
+	rr_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
 void rr_1C(Gameboy* const gb)
 {
-	// RR H ( Z 0 0 C )
-	const uint8_t result = gb->cpu.RR(gb->cpu.GetH());
-	gb->cpu.SetH(result);
+	// RR H
+	rr_r(&gb->cpu.hl.ind.h, &gb->cpu);
 }
 
 void rr_1D(Gameboy* const gb)
 {
-	// RR L ( Z 0 0 C )
-	const uint8_t result = gb->cpu.RR(gb->cpu.GetL());
-	gb->cpu.SetL(result);
+	// RR L
+	rr_r(&gb->cpu.hl.ind.l, &gb->cpu);
 }
 
 void rr_1E(Gameboy* const gb)
 {
 	// RR (HL)
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.RR(gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	op_hlp(rr, gb);
 }
 
 void rr_1F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -297,18 +366,16 @@ void sla_20(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void sla_21(Gameboy* const gb)
 {
-	// SLA C ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SLA(gb->cpu.GetC());
-	gb->cpu.SetC(result);
+	// SLA C
+	sla_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 void sla_22(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void sla_23(Gameboy* const gb)
 {
-	// SLA E ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SLA(gb->cpu.GetE());
-	gb->cpu.SetE(result);
+	// SLA E
+	sla_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
 void sla_24(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -316,23 +383,15 @@ void sla_25(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void sla_26(Gameboy* const gb)
 { 
-	// SLA (HL) ( Z 0 0 C )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t value = gb->ReadU8(hl);
-	const uint8_t result = gb->cpu.SLA(value);
-	gb->WriteU8(hl, result);
+	// SLA (HL)
+	op_hlp(sla, gb);
 }
 
-
-
-
-
-void sla_27(Gameboy* const gb) { 
-	// SLA A ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SLA(gb->cpu.GetA());
-	gb->cpu.SetA(result);
+void sla_27(Gameboy* const gb)
+{
+	// SLA A
+	sla_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
-
 
 
 
@@ -347,16 +406,13 @@ void sra_2D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void sra_2E(Gameboy* const gb)
 {
 	// SRA ( HL )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.SRA(gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	op_hlp(sra, gb);
 }
 
 void sra_2F(Gameboy* const gb)
 {
-	// SRA A ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.SRA(gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// SRA A
+	sra_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -370,9 +426,8 @@ void swap_32(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void swap_33(Gameboy* const gb)
 {
-	// SWAP E ( Z 0 0 0 )
-	const uint8_t result = gb->cpu.SWAP(gb->cpu.GetE());
-	gb->cpu.SetE(result);
+	// SWAP E
+	swap_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
 
@@ -383,39 +438,30 @@ void swap_35(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void swap_36(Gameboy* const gb)
 {
 	// SWAP ( HL )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.SWAP(gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	op_hlp(swap, gb);
 }
 
 
 
 void swap_37(Gameboy* const gb)
 {
-	// SWAP A ( Z 0 0 0 )
-	const auto result = gb->cpu.SWAP(gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// SWAP A
+	swap_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
-
-
-
-
 
 
 
 
 void srl_38(Gameboy* const gb)
 {
-	// SRL B ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SRL(gb->cpu.GetB());
-	gb->cpu.SetB(result);
+	// SRL B
+	srl_r(&gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 void srl_39(Gameboy* const gb)
 {
-	// SRL C ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SRL(gb->cpu.GetC());
-	gb->cpu.SetC(result);
+	// SRL C
+	srl_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 void srl_3A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -424,24 +470,20 @@ void srl_3C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 void srl_3D(Gameboy* const gb)
 {
-	// SRL L ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SRL(gb->cpu.GetL());
-	gb->cpu.SetL(result);
+	// SRL L
+	srl_r(&gb->cpu.hl.ind.l, &gb->cpu);
 }
 
 void srl_3E(Gameboy* const gb)
 {
-	// SRL ( HL )
-	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = gb->cpu.SRL(gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	// SRL (HL)
+	op_hlp(srl, gb);
 }
 
 void srl_3F(Gameboy* const gb)
 { 
-	// SRL A ( Z 0 0 C )
-	const uint8_t result = gb->cpu.SRL(gb->cpu.GetA());
-	gb->cpu.SetA(result);
+	// SRL A
+	srl_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
 
 

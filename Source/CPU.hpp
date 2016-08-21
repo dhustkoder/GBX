@@ -32,9 +32,6 @@ struct CPU
 
 	Flags GetFlags(const CPU::Flags flags) const;
 
-	void PrintFlags() const;
-	void PrintRegisters() const;
-
 	void SetA(const uint8_t val);
 	void SetF(const uint8_t val);
 	void SetB(const uint8_t val);
@@ -51,12 +48,6 @@ struct CPU
 
 	void SetFlags(const CPU::Flags flags);
 	void ClearFlags(const CPU::Flags flags);
-	
-	uint8_t RR(const uint8_t value);
-	uint8_t SLA(const uint8_t value);
-	uint8_t SRL(const uint8_t value);
-	uint8_t SRA(const uint8_t value);
-	uint8_t SWAP(const uint8_t value);
 
 
 	uint32_t clock;
