@@ -95,8 +95,7 @@ inline void call_nn(const bool cond, Gameboy* const gb)
 		const uint16_t addr = get_a16(gb);
 		gb->PushStack16(gb->cpu.pc);
 		gb->cpu.pc = addr;
-	}
-	else {
+	} else {
 		gb->cpu.pc += 2;
 	}
 }
@@ -112,18 +111,19 @@ inline void rst_nn(const uint16_t addr, Gameboy* const gb)
 inline void add_hl_nn(const uint16_t second, CPU* const cpu)
 {
 	// flags effect: - 0 H C
-	const auto first = cpu->GetHL();
+	const uint16_t first = cpu->GetHL();
 	const uint32_t result = first + second;
 	uint8_t hc = 0x00;
 
-        if (CheckH_bit11(first, second))
-        	hc = CPU::FLAG_H;
-        if (CheckC_bit15(result))
-        	hc |= CPU::FLAG_H;
-	
-	cpu->SetF(cpu->GetFlags(CPU::FLAG_H) | hc);
+	if (CheckC_bit15(result))
+		hc = CPU::FLAG_C;
+	if (CheckH_bit11(first, second))
+		hc |= CPU::FLAG_H;
+
+	cpu->SetF(cpu->GetFlags(CPU::FLAG_Z) | hc);
 	cpu->SetHL(static_cast<uint16_t>(result));
 }
+
 
 inline void cp_n(const uint8_t value, CPU* const cpu)
 {
@@ -692,7 +692,11 @@ void ld_32(Gameboy* const gb)
 
 
 
-void inc_33(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void inc_33(Gameboy* const gb)
+{
+	// INC SP
+	++gb->cpu.sp;
+}
 
 
 
@@ -750,7 +754,11 @@ void jr_38(Gameboy* const gb)
 
 
 
-void add_39(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void add_39(Gameboy* const gb)
+{
+	// ADD HL, SP
+	add_hl_nn(gb->cpu.sp, &gb->cpu);
+}
 
 
 
@@ -767,7 +775,11 @@ void ld_3A(Gameboy* const gb)
 
 
 
-void dec_3B(Gameboy* const) { ASSERT_INSTR_IMPL();  }
+void dec_3B(Gameboy* const gb)
+{
+	// DEC SP
+	--gb->cpu.sp;
+}
 
 
 
@@ -812,14 +824,7 @@ void ccf_3F(Gameboy* const gb)
 
 
 // 0x40
-void ld_40(Gameboy* const) 
-{
-	// LD B, B
-	// nop like
-}
-
-
-
+// ld_40 LD B, B ( nop )
 
 
 void ld_41(Gameboy* const gb)
@@ -883,11 +888,9 @@ void ld_48(Gameboy* const gb)
 	gb->cpu.SetC(gb->cpu.GetB());
 }
 
-void ld_49(Gameboy* const)
-{
-	// LD C, C
-	// nop like
-}
+
+// ld_49 LD C, C ( nop )
+
 
 void ld_4A(Gameboy* const gb)
 {
@@ -957,11 +960,8 @@ void ld_51(Gameboy* const gb)
 }
 
 
-void ld_52(Gameboy* const)
-{
-	// LD D, D
-	// nop like
-}
+// ld_52 LD D, D ( nop )
+
 
 void ld_53(Gameboy* const gb)
 {
@@ -1021,11 +1021,8 @@ void ld_5A(Gameboy* const gb)
 	gb->cpu.SetE(gb->cpu.GetD());
 }
 
-void ld_5B(Gameboy* const)
-{
-	// LD E, E
-	// nop like
-}
+// ld_5B LD E, E ( nop )
+
 
 void ld_5C(Gameboy* const gb)
 {
@@ -1098,11 +1095,8 @@ void ld_63(Gameboy* const gb)
 	gb->cpu.SetH(gb->cpu.GetE());
 }
 
-void ld_64(Gameboy* const)
-{
-	// LD H, H
-	// nop like
-}
+// ld_64 LD H, H ( nop )
+
 
 void ld_65(Gameboy* const gb)
 {
@@ -1168,11 +1162,7 @@ void ld_6C(Gameboy* const gb)
 }
 
 
-void ld_6D(Gameboy* const)
-{
-	// LD L, L
-	// nop like
-}
+// ld_6D LD L, L ( nop )
 
 
 void ld_6E(Gameboy* const gb)
@@ -1331,13 +1321,7 @@ void ld_7E(Gameboy* const gb)
 }
 
 
-void ld_7F(Gameboy* const)
-{
-	// LD A, A
-	// nop like
-}
-
-
+// ld_7f LD A, A ( nop )
 
 
 // 0x80
@@ -2322,10 +2306,10 @@ const instruction_table_t main_instructions[256] = {
 /*1*/ stop_10,   ld_11,   ld_12,  inc_13,  inc_14,  dec_15,   ld_16,  rla_17,   jr_18,  add_19,   ld_1A,  dec_1B,  inc_1C,  dec_1D,   ld_1E,  rra_1F,
 /*2*/   jr_20,   ld_21,   ld_22,  inc_23,  inc_24,  dec_25,   ld_26,  daa_27,   jr_28,  add_29,   ld_2A,  dec_2B,  inc_2C,  dec_2D,   ld_2E,  cpl_2F,
 /*3*/   jr_30,   ld_31,   ld_32,  inc_33,  inc_34,  dec_35,   ld_36,  scf_37,   jr_38,  add_39,   ld_3A,  dec_3B,  inc_3C,  dec_3D,   ld_3E,  ccf_3F,
-/*4*/   ld_40,   ld_41,   ld_42,   ld_43,   ld_44,   ld_45,   ld_46,   ld_47,   ld_48,   ld_49,   ld_4A,   ld_4B,   ld_4C,   ld_4D,   ld_4E,   ld_4F,
-/*5*/   ld_50,   ld_51,   ld_52,   ld_53,   ld_54,   ld_55,   ld_56,   ld_57,   ld_58,   ld_59,   ld_5A,   ld_5B,   ld_5C,   ld_5D,   ld_5E,   ld_5F,
-/*6*/   ld_60,   ld_61,   ld_62,   ld_63,   ld_64,   ld_65,   ld_66,   ld_67,   ld_68,   ld_69,   ld_6A,   ld_6B,   ld_6C,   ld_6D,   ld_6E,   ld_6F,
-/*7*/   ld_70,   ld_71,   ld_72,   ld_73,   ld_74,   ld_75, halt_76,   ld_77,   ld_78,   ld_79,   ld_7A,   ld_7B,   ld_7C,   ld_7D,   ld_7E,   ld_7F,
+/*4*/  nop_00,   ld_41,   ld_42,   ld_43,   ld_44,   ld_45,   ld_46,   ld_47,   ld_48,  nop_00,   ld_4A,   ld_4B,   ld_4C,   ld_4D,   ld_4E,   ld_4F,
+/*5*/   ld_50,   ld_51,  nop_00,   ld_53,   ld_54,   ld_55,   ld_56,   ld_57,   ld_58,   ld_59,   ld_5A,  nop_00,   ld_5C,   ld_5D,   ld_5E,   ld_5F,
+/*6*/   ld_60,   ld_61,   ld_62,   ld_63,  nop_00,   ld_65,   ld_66,   ld_67,   ld_68,   ld_69,   ld_6A,   ld_6B,   ld_6C,  nop_00,   ld_6E,   ld_6F,
+/*7*/   ld_70,   ld_71,   ld_72,   ld_73,   ld_74,   ld_75, halt_76,   ld_77,   ld_78,   ld_79,   ld_7A,   ld_7B,   ld_7C,   ld_7D,   ld_7E,  nop_00,
 /*8*/  add_80,  add_81,  add_82,  add_83,  add_84,  add_85,  add_86,  add_87,  adc_88,  adc_89,  adc_8A,  adc_8B,  adc_8C,  adc_8D,  adc_8E,  adc_8F,
 /*9*/  sub_90,  sub_91,  sub_92,  sub_93,  sub_94,  sub_95,  sub_96,  sub_97,  sbc_98,  sbc_99,  sbc_9A,  sbc_9B,  sbc_9C,  sbc_9D,  sbc_9E,  sbc_9F,
 /*A*/  and_A0,  and_A1,  and_A2,  and_A3,  and_A4,  and_A5,  and_A6,  and_A7,  xor_A8,  xor_A9,  xor_AA,  xor_AB,  xor_AC,  xor_AD,  xor_AE,  xor_AF,
