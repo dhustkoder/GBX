@@ -53,9 +53,6 @@ struct CPU
 	void ClearFlags(const CPU::Flags flags);
 	
 	uint8_t RR(const uint8_t value);
-	uint8_t RRC(const uint8_t value);
-	uint8_t RL(const uint8_t value);
-	uint8_t RLC(const uint8_t value);
 	uint8_t SLA(const uint8_t value);
 	uint8_t SRL(const uint8_t value);
 	uint8_t SRA(const uint8_t value);
