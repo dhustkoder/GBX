@@ -609,13 +609,13 @@ void ld_1E(Gameboy* const gb)
 
 void rra_1F(Gameboy* const gb)
 {
-	// RRA
+	// RRA  ( 0 0 0 C )
 	const uint8_t a = gb->cpu.GetA();
 	const uint8_t old_bit0 = a & 0x01;
 	const uint8_t old_carry = gb->cpu.GetFlags(CPU::FLAG_C);
-	const uint8_t result = old_carry ? (a >> 1) | 0x01 : (a >> 1);
-	gb->cpu.SetF(old_bit0 ? CPU::FLAG_C : 0x00);
-	gb->cpu.SetA(result);
+	const uint8_t result = old_carry ? (a >> 1) | 0x80 : (a >> 1);
+	gb->cpu.af.ind.f = old_bit0 ? CPU::FLAG_C : 0x00;
+	gb->cpu.af.ind.a = result;
 }
 
 

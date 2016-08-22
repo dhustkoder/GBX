@@ -222,7 +222,7 @@ void rlc_00(Gameboy* const gb)
 void rlc_01(Gameboy* const gb)
 {
 	// RLC C
-	rlc_r(&gb->cpu.bc.ind.b, &gb->cpu);
+	rlc_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 void rlc_02(Gameboy* const gb)
@@ -263,12 +263,43 @@ void rlc_07(Gameboy* const gb)
 
 
 
-void rrc_08(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rrc_09(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rrc_0A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rrc_0B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rrc_0C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rrc_0D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+
+void rrc_08(Gameboy* const gb)
+{
+	// RRC B
+	rrc_r(&gb->cpu.bc.ind.b, &gb->cpu);
+}
+
+void rrc_09(Gameboy* const gb)
+{
+	// RRC C
+	rrc_r(&gb->cpu.bc.ind.c, &gb->cpu);
+}
+
+void rrc_0A(Gameboy* const gb)
+{
+	// RRC D
+	rrc_r(&gb->cpu.de.ind.d, &gb->cpu);
+}
+
+void rrc_0B(Gameboy* const gb)
+{
+	// RRC E
+	rrc_r(&gb->cpu.de.ind.e, &gb->cpu);
+}
+
+void rrc_0C(Gameboy* const gb)
+{
+	// RRC H
+	rrc_r(&gb->cpu.hl.ind.h, &gb->cpu);
+}
+
+void rrc_0D(Gameboy* const gb)
+{
+	// RRC L
+	rrc_r(&gb->cpu.hl.ind.l, &gb->cpu);
+}
 
 void rrc_0E(Gameboy* const gb)
 {
@@ -276,7 +307,11 @@ void rrc_0E(Gameboy* const gb)
 	op_hlp(rrc, gb);
 }
 
-void rrc_0F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void rrc_0F(Gameboy* const gb)
+{
+	// RRC A
+	rrc_r(&gb->cpu.af.ind.a, &gb->cpu);
+}
 
 
 
@@ -302,9 +337,23 @@ void rl_12(Gameboy* const gb)
 	rl_r(&gb->cpu.de.ind.d, &gb->cpu);
 }
 
-void rl_13(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rl_14(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void rl_15(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void rl_13(Gameboy* const gb)
+{
+	// RL E
+	rl_r(&gb->cpu.de.ind.e, &gb->cpu);
+}
+
+void rl_14(Gameboy* const gb)
+{
+	// RL H
+	rl_r(&gb->cpu.hl.ind.h, &gb->cpu);
+}
+
+void rl_15(Gameboy* const gb)
+{
+	// RL L
+	rl_r(&gb->cpu.hl.ind.l, &gb->cpu);
+}
 
 void rl_16(Gameboy* const gb)
 {
@@ -322,7 +371,11 @@ void rl_17(Gameboy* const gb)
 
 
 
-void rr_18(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void rr_18(Gameboy* const gb)
+{
+	// RR B
+	rr_r(&gb->cpu.bc.ind.b, &gb->cpu);
+}
 
 void rr_19(Gameboy* const gb)
 {
@@ -360,7 +413,11 @@ void rr_1E(Gameboy* const gb)
 	op_hlp(rr, gb);
 }
 
-void rr_1F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void rr_1F(Gameboy* const gb)
+{
+	// RR A
+	rr_r(&gb->cpu.af.ind.a, &gb->cpu);
+}
 
 
 
@@ -368,7 +425,11 @@ void rr_1F(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 
 
 // 0x20
-void sla_20(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void sla_20(Gameboy* const gb)
+{
+	// SLA B
+	sla_r(&gb->cpu.bc.ind.b, &gb->cpu);
+}
 
 void sla_21(Gameboy* const gb)
 {
@@ -376,7 +437,11 @@ void sla_21(Gameboy* const gb)
 	sla_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
-void sla_22(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void sla_22(Gameboy* const gb)
+{
+	// SLA D
+	sla_r(&gb->cpu.de.ind.d, &gb->cpu);
+}
 
 void sla_23(Gameboy* const gb)
 {
@@ -384,8 +449,17 @@ void sla_23(Gameboy* const gb)
 	sla_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
-void sla_24(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sla_25(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void sla_24(Gameboy* const gb)
+{
+	// SLA H
+	sla_r(&gb->cpu.hl.ind.h, &gb->cpu);
+}
+
+void sla_25(Gameboy* const gb)
+{
+	// SLA L
+	sla_r(&gb->cpu.hl.ind.l, &gb->cpu);
+}
 
 void sla_26(Gameboy* const gb)
 { 
@@ -402,12 +476,43 @@ void sla_27(Gameboy* const gb)
 
 
 
-void sra_28(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sra_29(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sra_2A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sra_2B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sra_2C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void sra_2D(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+
+void sra_28(Gameboy* const gb)
+{
+	// SRA B
+	sra_r(&gb->cpu.bc.ind.b, &gb->cpu);
+}
+
+
+void sra_29(Gameboy* const gb)
+{
+	// SRA C
+	sra_r(&gb->cpu.bc.ind.c, &gb->cpu);
+}
+
+void sra_2A(Gameboy* const gb)
+{
+	// SRA D
+	sra_r(&gb->cpu.de.ind.d, &gb->cpu);
+}
+
+void sra_2B(Gameboy* const gb)
+{
+	// SRA E
+	sra_r(&gb->cpu.de.ind.e, &gb->cpu);
+}
+
+void sra_2C(Gameboy* const gb)
+{
+	// SRA H
+	sra_r(&gb->cpu.hl.ind.h, &gb->cpu);
+}
+
+void sra_2D(Gameboy* const gb)
+{
+	// SRA L
+	sra_r(&gb->cpu.hl.ind.l, &gb->cpu);
+}
 
 void sra_2E(Gameboy* const gb)
 {
@@ -425,10 +530,23 @@ void sra_2F(Gameboy* const gb)
 
 
 // 0x30
-void swap_30(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void swap_31(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void swap_32(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void swap_30(Gameboy* const gb)
+{
+	// SWAP B
+	swap_r(&gb->cpu.bc.ind.b, &gb->cpu);
+}
 
+void swap_31(Gameboy* const gb)
+{
+	//  SWAP C
+	swap_r(&gb->cpu.bc.ind.c, &gb->cpu);
+}
+
+void swap_32(Gameboy* const gb)
+{
+	// SWAP D
+	swap_r(&gb->cpu.de.ind.d, &gb->cpu);
+}
 
 void swap_33(Gameboy* const gb)
 {
@@ -436,10 +554,17 @@ void swap_33(Gameboy* const gb)
 	swap_r(&gb->cpu.de.ind.e, &gb->cpu);
 }
 
+void swap_34(Gameboy* const gb)
+{
+	// SWAP H
+	swap_r(&gb->cpu.hl.ind.h, &gb->cpu);
+}
 
-
-void swap_34(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void swap_35(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void swap_35(Gameboy* const gb)
+{
+	// SWAP L
+	swap_r(&gb->cpu.hl.ind.l, &gb->cpu);
+}
 
 void swap_36(Gameboy* const gb)
 {
@@ -448,12 +573,12 @@ void swap_36(Gameboy* const gb)
 }
 
 
-
 void swap_37(Gameboy* const gb)
 {
 	// SWAP A
 	swap_r(&gb->cpu.af.ind.a, &gb->cpu);
 }
+
 
 
 
@@ -470,9 +595,23 @@ void srl_39(Gameboy* const gb)
 	srl_r(&gb->cpu.bc.ind.c, &gb->cpu);
 }
 
-void srl_3A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void srl_3B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
-void srl_3C(Gameboy* const) { ASSERT_INSTR_IMPL(); }
+void srl_3A(Gameboy* const gb)
+{
+	// SRL D
+	srl_r(&gb->cpu.de.ind.d, &gb->cpu);
+}
+
+void srl_3B(Gameboy* const gb)
+{
+	// SRL E
+	srl_r(&gb->cpu.de.ind.e, &gb->cpu);
+}
+
+void srl_3C(Gameboy* const gb)
+{
+	// SRL H
+	srl_r(&gb->cpu.hl.ind.h, &gb->cpu);
+}
 
 void srl_3D(Gameboy* const gb)
 {
