@@ -173,8 +173,8 @@ static void add_hl_nn(const uint16_t second, CPU* const cpu)
 	if ((result ^ first ^ second) & 0x1000)
 		hc |= CPU::FLAG_H;
 
-	cpu->SetF(cpu->GetFlags(CPU::FLAG_Z) | hc);
-	cpu->SetHL(static_cast<uint16_t>(result));
+	cpu->af.ind.f = cpu->GetFlags(CPU::FLAG_Z) | hc;
+	cpu->hl.pair = static_cast<uint16_t>(result);
 }
 
 

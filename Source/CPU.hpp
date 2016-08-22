@@ -23,13 +23,10 @@ struct CPU
 	uint8_t GetE() const;
 	uint8_t GetH() const;
 	uint8_t GetL() const;
-
 	uint16_t GetAF() const;
 	uint16_t GetBC() const;
 	uint16_t GetDE() const;
 	uint16_t GetHL() const;
-
-
 	Flags GetFlags(const CPU::Flags flags) const;
 
 	void SetA(const uint8_t val);
@@ -40,12 +37,10 @@ struct CPU
 	void SetE(const uint8_t val);
 	void SetH(const uint8_t val);
 	void SetL(const uint8_t val);
-
 	void SetAF(const uint16_t val);
 	void SetBC(const uint16_t val);
 	void SetDE(const uint16_t val);
 	void SetHL(const uint16_t val);
-
 	void SetFlags(const CPU::Flags flags);
 	void ClearFlags(const CPU::Flags flags);
 
