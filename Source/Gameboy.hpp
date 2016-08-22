@@ -31,11 +31,10 @@ struct Gameboy
 	void UpdateHWState(const uint8_t cycles);
 	void UpdateInterrupts();
 
-	int8_t ReadS8(const uint16_t address) const;
-	uint8_t ReadU8(const uint16_t address) const;
-	uint16_t ReadU16(const uint16_t address) const;
-	void WriteU8(const uint16_t address, const uint8_t value);
-	void WriteU16(const uint16_t address, const uint16_t value);
+	uint8_t Read8(const uint16_t address) const;
+	uint16_t Read16(const uint16_t address) const;
+	void Write8(const uint16_t address, const uint8_t value);
+	void Write16(const uint16_t address, const uint16_t value);
 
 	void PushStack8(const uint8_t value);
 	void PushStack16(const uint16_t value);

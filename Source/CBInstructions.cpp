@@ -4,9 +4,6 @@
 namespace gbx {
         
 
-// note: all CB instructons are 2 bytes long, no need to increment PC
-// this is done by the CB instructions caller.
-
 static uint8_t rlc(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 0 C
@@ -22,6 +19,8 @@ static uint8_t rlc(const uint8_t value, CPU* const cpu)
 
 	return result;
 }
+
+
 
 
 static uint8_t rrc(const uint8_t value, CPU* const cpu)
@@ -41,6 +40,8 @@ static uint8_t rrc(const uint8_t value, CPU* const cpu)
 }
 
 
+
+
 static uint8_t rl(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 0 C
@@ -54,6 +55,8 @@ static uint8_t rl(const uint8_t value, CPU* const cpu)
 
 	return result;
 }
+
+
 
 
 static uint8_t rr(const uint8_t value, CPU* const cpu)
@@ -71,6 +74,8 @@ static uint8_t rr(const uint8_t value, CPU* const cpu)
 }
 
 
+
+
 static uint8_t sla(const uint8_t value, CPU* const cpu)
 {
 	// flags  effect: Z 0 0 C
@@ -83,6 +88,8 @@ static uint8_t sla(const uint8_t value, CPU* const cpu)
 
 	return result;
 }
+
+
 
 static uint8_t sra(const uint8_t value, CPU* const cpu)
 {
@@ -98,6 +105,8 @@ static uint8_t sra(const uint8_t value, CPU* const cpu)
 }
 
 
+
+
 static uint8_t swap(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 0 0
@@ -105,6 +114,8 @@ static uint8_t swap(const uint8_t value, CPU* const cpu)
 	cpu->af.ind.f = CheckZ(result);
 	return result;
 }
+
+
 
 
 static uint8_t srl(const uint8_t value, CPU* const cpu)
@@ -120,12 +131,16 @@ static uint8_t srl(const uint8_t value, CPU* const cpu)
 	return result;
 }
 
+
+
+
 static void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 1 -
-	const CPU::Flags z = CheckZ(value & (0x01 << bit));
-	cpu->af.ind.f = z | CPU::FLAG_H | cpu->GetFlags(CPU::FLAG_C);
+	cpu->af.ind.f = CheckZ(value & (0x01 << bit)) | CPU::FLAG_H | 
+	                cpu->GetFlags(CPU::FLAG_C);
 }
+
 
 
 inline void rlc_r(uint8_t* const reg, CPU* const cpu) {
@@ -161,11 +176,11 @@ inline void srl_r(uint8_t* const reg, CPU* const cpu) {
 }
 
 
-inline void op_hlp(uint8_t(*op)(uint8_t, CPU*), Gameboy* const gb)
+inline void op_hlp(uint8_t(*op)(uint8_t,CPU*), Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.hl.pair;
-	const uint8_t result = op(gb->ReadU8(hl), &gb->cpu);
-	gb->WriteU8(hl, result);
+	const uint8_t result = op(gb->Read8(hl), &gb->cpu);
+	gb->Write8(hl, result);
 }
 
 
@@ -183,16 +198,16 @@ inline void res_r(const uint8_t bit, uint8_t* const reg) {
 inline void set_hlp(const uint8_t bit, Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = SetBit(bit, gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	const uint8_t result = SetBit(bit, gb->Read8(hl));
+	gb->Write8(hl, result);
 }
 
 
 inline void res_hlp(const uint8_t bit, Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.GetHL();
-	const uint8_t result = ResBit(bit, gb->ReadU8(hl));
-	gb->WriteU8(hl, result);
+	const uint8_t result = ResBit(bit, gb->Read8(hl));
+	gb->Write8(hl, result);
 }
 
 
@@ -202,7 +217,7 @@ inline void bit_r(const uint8_t bit, const uint8_t reg, CPU* const cpu) {
 }
 
 inline void bit_hlp(const uint8_t bit, Gameboy* const gb) {
-	bit_n(bit, gb->ReadU8(gb->cpu.hl.pair), &gb->cpu);
+	bit_n(bit, gb->Read8(gb->cpu.hl.pair), &gb->cpu);
 }
 
 

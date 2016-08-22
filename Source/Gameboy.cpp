@@ -29,7 +29,6 @@ void destroy_gameboy(Gameboy* const gb)
 
 bool Gameboy::Reset() 
 {
-	// load cartridge data into memory
 	const auto& cart_info = memory.cart.info;
 
 	printf("Cartridge information\n"
@@ -41,7 +40,7 @@ bool Gameboy::Reset()
 	       static_cast<unsigned>(cart_info.type), 
 	       static_cast<unsigned>(cart_info.system));
 
-	/*
+
 	if (cart_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;
@@ -50,7 +49,6 @@ bool Gameboy::Reset()
 		fprintf(stderr, "cartridge type not suppoerted!");
 		return false;
 	}
-	*/
 
 	// init the system, Gameboy mode
 	cpu.pc = CARTRIDGE_ENTRY_ADDR;
@@ -62,35 +60,35 @@ bool Gameboy::Reset()
 
 	gpu.lcdc = 0x91;
 	gpu.stat = 0x85;
-	gpu.bgp = 0xfc;
-	gpu.obp0 = 0xff;
-	gpu.obp1 = 0xff;
+	gpu.bgp = 0xFC;
+	gpu.obp0 = 0xFF;
+	gpu.obp1 = 0xFF;
 
 	hwstate.tima_clock_limit = 0x400;
-	keys.value = 0xcf;
-	keys.pad.all = 0xff;
+	keys.value = 0xCF;
+	keys.pad.all = 0xFF;
 
 	// WriteU8(0xFF05, 0x00); // TIMA, in HWState
 	// WriteU8(0xFF06, 0x00); // TMA, in HWState
 	// WriteU8(0xFF07, 0x00); // TAC, in HWState
-	WriteU8(0xFF10, 0x80); // NR10
-	WriteU8(0xFF11, 0xBF); // NR11
-	WriteU8(0xFF12, 0xF3); // NR12
-	WriteU8(0xFF14, 0xBF); // NR14
-	WriteU8(0xFF16, 0x3F); // NR21
-	WriteU8(0xFF17, 0x00); // NR22
-	WriteU8(0xFF19, 0xBF); // NR24
-	WriteU8(0xFF1A, 0x7F); // NR30
-	WriteU8(0xFF1B, 0xFF); // NR31
-	WriteU8(0xFF1C, 0x9F); // NR32
-	WriteU8(0xFF1E, 0xBF); // NR33
-	WriteU8(0xFF20, 0xFF); // NR41
-	WriteU8(0xFF21, 0x00); // NR42
-	WriteU8(0xFF22, 0x00); // NR43
-	WriteU8(0xFF23, 0xBF); // NR30
-	WriteU8(0xFF24, 0x77); // NR50
-	WriteU8(0xFF25, 0xF3); // NR51
-	WriteU8(0xFF26, 0xF1); // NR52
+	Write8(0xFF10, 0x80); // NR10
+	Write8(0xFF11, 0xBF); // NR11
+	Write8(0xFF12, 0xF3); // NR12
+	Write8(0xFF14, 0xBF); // NR14
+	Write8(0xFF16, 0x3F); // NR21
+	Write8(0xFF17, 0x00); // NR22
+	Write8(0xFF19, 0xBF); // NR24
+	Write8(0xFF1A, 0x7F); // NR30
+	Write8(0xFF1B, 0xFF); // NR31
+	Write8(0xFF1C, 0x9F); // NR32
+	Write8(0xFF1E, 0xBF); // NR33
+	Write8(0xFF20, 0xFF); // NR41
+	Write8(0xFF21, 0x00); // NR42
+	Write8(0xFF22, 0x00); // NR43
+	Write8(0xFF23, 0xBF); // NR30
+	Write8(0xFF24, 0x77); // NR50
+	Write8(0xFF25, 0xF3); // NR51
+	Write8(0xFF26, 0xF1); // NR52
 	// WriteU8(0xFF40, 0x91); // LCDC, in GPU
 	// WriteU8(0xFF42, 0x00); // SCY, in GPU
 	// WriteU8(0xFF43, 0x00); // SCX, in GPU
@@ -110,7 +108,7 @@ bool Gameboy::Reset()
 
 uint8_t Gameboy::Step()
 {
-	const uint8_t opcode = ReadU8(cpu.pc++);
+	const uint8_t opcode = Read8(cpu.pc++);
 	main_instructions[opcode](this);
 	const uint8_t cycles = clock_table[opcode];
 	cpu.clock += cycles;

@@ -22,16 +22,8 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb);
 
 
 
-// TODO: this might not be totally portable 
-int8_t Gameboy::ReadS8(const uint16_t address) const 
-{
-	return static_cast<int8_t>(ReadU8(address));
-}
 
-
-
-
-uint8_t Gameboy::ReadU8(const uint16_t address) const 
+uint8_t Gameboy::Read8(const uint16_t address) const 
 {
 	if (address < 0x8000) {
 		return read_rom(address, memory.cart);
@@ -64,7 +56,7 @@ uint8_t Gameboy::ReadU8(const uint16_t address) const
 
 
 
-void Gameboy::WriteU8(const uint16_t address, const uint8_t value) 
+void Gameboy::Write8(const uint16_t address, const uint8_t value) 
 {
 
 	if (address >= 0xFF80) {
@@ -101,19 +93,19 @@ void Gameboy::WriteU8(const uint16_t address, const uint8_t value)
 
 
 
-uint16_t Gameboy::ReadU16(const uint16_t address) const 
+uint16_t Gameboy::Read16(const uint16_t address) const 
 {
-	return ConcatBytes(ReadU8(address + 1), ReadU8(address));
+	return ConcatBytes(Read8(address + 1), Read8(address));
 }
 
 
 
 
 
-void Gameboy::WriteU16(const uint16_t address, const uint16_t value) 
+void Gameboy::Write16(const uint16_t address, const uint16_t value) 
 {
-	WriteU8(address, GetLowByte(value));
-	WriteU8(address + 1, GetHighByte(value));
+	Write8(address, GetLowByte(value));
+	Write8(address + 1, GetHighByte(value));
 }
 
 
@@ -122,26 +114,26 @@ void Gameboy::WriteU16(const uint16_t address, const uint16_t value)
 
 void Gameboy::PushStack8(const uint8_t value) 
 {
-	WriteU8(--cpu.sp, value);
+	Write8(--cpu.sp, value);
 }
 
 
 void Gameboy::PushStack16(const uint16_t value) 
 {
 	cpu.sp -= 2;
-	WriteU16(cpu.sp, value);
+	Write16(cpu.sp, value);
 }
 
 
 uint8_t Gameboy::PopStack8() 
 {
-	return ReadU8(cpu.sp++);
+	return Read8(cpu.sp++);
 }
 
 
 uint16_t Gameboy::PopStack16() 
 {
-	const uint16_t val = ReadU16(cpu.sp);
+	const uint16_t val = Read16(cpu.sp);
 	cpu.sp += 2;
 	return val;
 }
@@ -321,7 +313,7 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb)
 	}
 	else {
 		for (size_t i = 0; i < nbytes; ++i)
-			gb->memory.oam[i] = gb->ReadU8(source_addr++);
+			gb->memory.oam[i] = gb->Read8(source_addr++);
 	}
 }
 
