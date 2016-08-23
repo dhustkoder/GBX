@@ -51,6 +51,7 @@ int main(int argc, char** argv)
 		QuitSDL();
 	});
 
+	constexpr const auto ESCAPE = SDL_SCANCODE_ESCAPE;
 	SDL_Event event;
 	Uint32 last_ticks = 0;
 	size_t itr = 0;
@@ -59,6 +60,9 @@ int main(int argc, char** argv)
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 			case SDL_KEYDOWN:
+				if (event.key.keysym.scancode == ESCAPE)
+					goto SDL_QUIT_EVENT;
+
 				UpdateKey(gbx::KEYDOWN,
 					event.key.keysym.scancode,
 					&gameboy->keys);
