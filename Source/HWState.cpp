@@ -20,7 +20,7 @@ void Gameboy::UpdateHWState(const uint8_t cycles)
 			}
 			else {
 				hwstate.tima = hwstate.tma;
-				hwstate.RequestInt(INTERRUPT_TIMER);
+				hwstate.RequestInt(INT_TIMER);
 			}
 
 			hwstate.tima_clock -= hwstate.tima_clock_limit;
@@ -35,7 +35,6 @@ void Gameboy::UpdateHWState(const uint8_t cycles)
 
 
 void Gameboy::UpdateInterrupts()
-
 {
 	if (!hwstate.GetIntMaster()) {
 		return;
@@ -52,50 +51,33 @@ void Gameboy::UpdateInterrupts()
 
 	hwstate.DisableIntMaster();
 
-	const auto push_pc = [this] {
-		if (hwstate.GetFlags(HWState::CPU_HALT)) {
+	const auto trigger = [this](IntMask inter, uint16_t addr) {
+		if (!hwstate.GetFlags(HWState::CPU_HALT)) {
+			PushStack16(cpu.pc);
+		}
+		else {
 			PushStack16(cpu.pc + 1);
 			hwstate.ClearFlags(HWState::CPU_HALT);
 		}
-		else {
-			PushStack16(cpu.pc);
-		}
+		hwstate.ClearInt(inter);
+		cpu.pc = addr;
+		cpu.clock += 12;
 	};
 
-	if (pendents & INTERRUPT_VBLANK) {
-		hwstate.ClearInt(INTERRUPT_VBLANK);
-		push_pc();
-		cpu.pc = INTERRUPT_VBLANK_ADDR;
-		cpu.clock += 12;
-	}
+	if (pendents & INT_VBLANK)
+		trigger(INT_VBLANK, 0x40);
 
-	if (pendents & INTERRUPT_LCD_STAT) {
-		hwstate.ClearInt(INTERRUPT_LCD_STAT);
-		push_pc();
-		cpu.pc = INTERRUPT_LCD_STAT_ADDR;
-		cpu.clock += 12;
-	}
+	if (pendents & INT_LCD_STAT)
+		trigger(INT_LCD_STAT, 0x48);
 
-	if (pendents & INTERRUPT_TIMER) {
-		hwstate.ClearInt(INTERRUPT_TIMER);
-		push_pc();
-		cpu.pc = INTERRUPT_TIMER_ADDR;
-		cpu.clock += 12;
-	}
+	if (pendents & INT_TIMER)
+		trigger(INT_TIMER, 0x50);
 
-	if (pendents & INTERRUPT_SERIAL) {
-		hwstate.ClearInt(INTERRUPT_SERIAL);
-		push_pc();
-		cpu.pc = INTERRUPT_SERIAL_ADDR;
-		cpu.clock += 12;
-	}
+	if (pendents & INT_SERIAL)
+		trigger(INT_SERIAL, 0x58);
 
-	if (pendents & INTERRUPT_JOYPAD) {
-		hwstate.ClearInt(INTERRUPT_JOYPAD);
-		push_pc();
-		cpu.pc = INTERRUPT_JOYPAD_ADDR;
-		cpu.clock += 12;
-	}
+	if (pendents & INT_JOYPAD)
+		trigger(INT_JOYPAD, 0x60);
 }
 
 

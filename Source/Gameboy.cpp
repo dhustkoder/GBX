@@ -51,7 +51,7 @@ bool Gameboy::Reset()
 	}
 
 	// init the system, Gameboy mode
-	cpu.pc = CARTRIDGE_ENTRY_ADDR;
+	cpu.pc = 0x0100;
 	cpu.sp = 0xFFFE;
 	cpu.af.pair = 0x01B0;
 	cpu.bc.pair = 0x0013;
