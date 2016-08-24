@@ -51,7 +51,7 @@ void Gameboy::UpdateInterrupts()
 
 	hwstate.DisableIntMaster();
 
-	const auto trigger = [this](IntMask inter, uint16_t addr) {
+	const auto trigger = [this](const IntMask inter, const uint16_t addr) {
 		if (!hwstate.GetFlags(HWState::CPU_HALT)) {
 			PushStack16(cpu.pc);
 		}

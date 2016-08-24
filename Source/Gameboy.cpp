@@ -40,7 +40,7 @@ bool Gameboy::Reset()
 	       static_cast<unsigned>(cart_info.type), 
 	       static_cast<unsigned>(cart_info.system));
 
-
+	/*
 	if (cart_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;
@@ -49,6 +49,7 @@ bool Gameboy::Reset()
 		fprintf(stderr, "cartridge type not suppoerted!");
 		return false;
 	}
+	*/
 
 	// init the system, Gameboy mode
 	cpu.pc = 0x0100;

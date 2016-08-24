@@ -707,25 +707,29 @@ void ld_26(Gameboy* const gb)
 
 void daa_27(Gameboy* const gb)
 { 
-	// DAA
-	uint16_t bcd = gb->cpu.GetA();
-	
-	if (gb->cpu.GetFlags(CPU::FLAG_N)) {
-		if (gb->cpu.GetFlags(CPU::FLAG_H))
-			bcd = (bcd - 0x06) & 0xFF;
-		if (gb->cpu.GetFlags(CPU::FLAG_C))
-			bcd -= 0x60;
-	} 
-	else {
-		if (gb->cpu.GetFlags(CPU::FLAG_H) || (bcd&0xF)>9) 
-			bcd  += 0x06;
-		if (gb->cpu.GetFlags(CPU::FLAG_C) || bcd > 0x9F)
-			bcd += 0x60;
-	}
+	// DAA  ( Z - H X )
+	const uint8_t flags = gb->cpu.af.ind.f;
+	uint8_t flags_result = flags & (CPU::FLAG_N | CPU::FLAG_C);
+	uint16_t a = gb->cpu.af.ind.a;
 
-	gb->cpu.SetA(static_cast<uint8_t>(bcd));
-	const uint8_t carry_flag = bcd >= 100 ? CPU::FLAG_C : 0;
-	gb->cpu.SetF(CheckZ(bcd&0xff) | gb->cpu.GetFlags(CPU::FLAG_N) | carry_flag);
+	if (!(flags & CPU::FLAG_N)) {
+		if ((flags & CPU::FLAG_H) || (a & 0xF) > 9)
+			a += 0x06;
+		if ((flags & CPU::FLAG_C) || (a > 0x9F))
+			a += 0x60;
+	} else {
+		if ((flags & CPU::FLAG_H))
+			a = (a - 0x06) & 0xFF;
+		if ((flags & CPU::FLAG_C))
+			a -= 0x60;
+	}
+	if (a & 0xff00)
+		flags_result |= CPU::FLAG_C;
+	if ((a & 0xFF) == 0x00)
+		flags_result |= CPU::FLAG_Z;
+
+	gb->cpu.af.ind.a = static_cast<uint8_t>(a);
+	gb->cpu.af.ind.f = flags_result;
 }
 
 
