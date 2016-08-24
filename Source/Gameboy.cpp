@@ -69,9 +69,9 @@ bool Gameboy::Reset()
 	keys.value = 0xCF;
 	keys.pad.all = 0xFF;
 
-	// WriteU8(0xFF05, 0x00); // TIMA, in HWState
-	// WriteU8(0xFF06, 0x00); // TMA, in HWState
-	// WriteU8(0xFF07, 0x00); // TAC, in HWState
+	// Write8(0xFF05, 0x00); // TIMA, in HWState
+	// Write8(0xFF06, 0x00); // TMA, in HWState
+	// Write8(0xFF07, 0x00); // TAC, in HWState
 	Write8(0xFF10, 0x80); // NR10
 	Write8(0xFF11, 0xBF); // NR11
 	Write8(0xFF12, 0xF3); // NR12
@@ -90,15 +90,15 @@ bool Gameboy::Reset()
 	Write8(0xFF24, 0x77); // NR50
 	Write8(0xFF25, 0xF3); // NR51
 	Write8(0xFF26, 0xF1); // NR52
-	// WriteU8(0xFF40, 0x91); // LCDC, in GPU
-	// WriteU8(0xFF42, 0x00); // SCY, in GPU
-	// WriteU8(0xFF43, 0x00); // SCX, in GPU
-	// WriteU8(0xFF45, 0x00); // LYC, in GPU
-	// WriteU8(0xFF47, 0xFC); // BGP, in GPU
-	// WriteU8(0xFF48, 0xFF); // OBP0, in GPU
-	// WriteU8(0xFF49, 0xFF); // OBP1, in GPU
-	// WriteU8(0xFF4A, 0x00); // WY, in GPU
-	// WriteU8(0xFF4B, 0x00); // WX, in GPU
+	// Write8(0xFF40, 0x91); // LCDC, in GPU
+	// Write8(0xFF42, 0x00); // SCY, in GPU
+	// Write8(0xFF43, 0x00); // SCX, in GPU
+	// Write8(0xFF45, 0x00); // LYC, in GPU
+	// Write8(0xFF47, 0xFC); // BGP, in GPU
+	// Write8(0xFF48, 0xFF); // OBP0, in GPU
+	// Write8(0xFF49, 0xFF); // OBP1, in GPU
+	// Write8(0xFF4A, 0x00); // WY, in GPU
+	// Write8(0xFF4B, 0x00); // WX, in GPU
 
 	return true;
 }
