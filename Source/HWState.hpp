@@ -21,8 +21,8 @@ struct HWState
 
 	enum Flags : uint8_t
 	{
-		INTERRUPT_MASTER_ENABLED = 0x01,
-		INTERRUPT_MASTER_ACTIVE = 0x02,
+		INT_MASTER_ENABLED = 0x01,
+		INT_MASTER_ACTIVE = 0x02,
 		CPU_HALT = 0x04,
 		TIMER_STOP = 0x08
 	};
@@ -44,16 +44,16 @@ struct HWState
 	void RequestInt(const IntMask inter);
 	void ClearInt(const IntMask inter);
 
-	uint16_t div_clock;
 	uint16_t tima_clock;
 	uint16_t tima_clock_limit;
+	uint8_t div_clock;
 	uint8_t flags;
 	uint8_t div;
 	uint8_t tima;
 	uint8_t tma;
 	uint8_t tac;
-	uint8_t interrupt_enable;
-	uint8_t interrupt_flags;
+	uint8_t int_enable;
+	uint8_t int_flags;
 };
 
 
@@ -61,12 +61,12 @@ struct HWState
 
 inline bool HWState::GetIntMaster() const 
 {
-	return (flags & INTERRUPT_MASTER_ENABLED) != 0;
+	return (flags & INT_MASTER_ENABLED) != 0;
 }
 
 inline bool HWState::GetIntActive() const 
 {
-	return (flags & INTERRUPT_MASTER_ACTIVE) != 0;
+	return (flags & INT_MASTER_ACTIVE) != 0;
 }
 
 
@@ -78,7 +78,7 @@ inline HWState::Flags HWState::GetFlags(Flags hwflags) const
 
 inline uint8_t HWState::GetPendentInts() const
 {
-	return 0x1f & interrupt_enable & interrupt_flags;
+	return 0x1f & int_enable & int_flags;
 }
 
 
@@ -88,18 +88,18 @@ inline uint8_t HWState::GetPendentInts() const
 
 inline void HWState::EnableIntMaster() 
 {
-	flags |= INTERRUPT_MASTER_ENABLED;
+	flags |= INT_MASTER_ENABLED;
 }
 
 inline void HWState::EnableIntActive()
 {
-	flags |= INTERRUPT_MASTER_ACTIVE;
+	flags |= INT_MASTER_ACTIVE;
 }
 
 inline void HWState::DisableIntMaster() 
 {
-	flags &= ~(INTERRUPT_MASTER_ENABLED 
-	           | INTERRUPT_MASTER_ACTIVE);
+	flags &= ~(INT_MASTER_ENABLED 
+	           | INT_MASTER_ACTIVE);
 }
 
 
@@ -117,23 +117,23 @@ inline void HWState::ClearFlags(Flags hwflags)
 
 inline void HWState::EnableInt(const IntMask inter)
 {
-	interrupt_enable |= inter;
+	int_enable |= inter;
 }
 
 inline void HWState::DisableInt(const IntMask inter)
 {
-	interrupt_enable &= ~inter;
+	int_enable &= ~inter;
 }
 
 inline void HWState::RequestInt(const IntMask inter)
 {
-	interrupt_flags |= inter;
+	int_flags |= inter;
 }
 
 
 inline void HWState::ClearInt(const IntMask inter)
 {
-	interrupt_flags &= ~inter;
+	int_flags &= ~inter;
 }
 
 

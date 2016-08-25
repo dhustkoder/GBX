@@ -1393,13 +1393,11 @@ void ld_75(Gameboy* const gb)
 
 void halt_76(Gameboy* const gb)
 {
-	// halt cpu until interrupt occurs
-	if (gb->hwstate.GetIntMaster() && gb->hwstate.interrupt_enable) {
-		if (gb->hwstate.GetFlags(HWState::CPU_HALT) == 0)
-			gb->hwstate.SetFlags(HWState::CPU_HALT);
+	// halt cpu until interrupt is requested
+	if (gb->hwstate.GetFlags(HWState::CPU_HALT) == 0)
+		gb->hwstate.SetFlags(HWState::CPU_HALT);
 
-		--gb->cpu.pc;
-	}
+	--gb->cpu.pc;
 }
 
 

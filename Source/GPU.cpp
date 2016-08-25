@@ -61,7 +61,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 			if (gpu.ly != 144) {
 				set_mode_n_stat(GPU::Mode::OAM, INT_ON_OAM);
 			} else {
-				hwstate.interrupt_flags |= INT_VBLANK;
+				hwstate.int_flags |= INT_VBLANK;
 				set_mode_n_stat(GPU::Mode::VBLANK, INT_ON_VBLANK);
 			}
 

@@ -30,7 +30,7 @@ uint8_t Gameboy::Read8(const uint16_t address) const
 	}
 	else if (address >= 0xFF80) {
 		return address != 0xFFFF ? memory.hram[address - 0xFF80]
-		                         : hwstate.interrupt_enable;
+		                         : hwstate.int_enable;
 	}
 	else if (address >= 0xFF00) {
 		return read_io(address, *this);
@@ -63,7 +63,7 @@ void Gameboy::Write8(const uint16_t address, const uint8_t value)
 		if (address != 0xFFFF) 
 			memory.hram[address - 0xFF80] = value;
 		else 
-			hwstate.interrupt_enable = value;
+			hwstate.int_enable = value;
 	}
 	else if (address >= 0xFF00) {
 		write_io(address, value, this);
@@ -174,7 +174,7 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	case 0xFF05: return gb.hwstate.tima;
 	case 0xFF06: return gb.hwstate.tma;
 	case 0xFF07: return gb.hwstate.tac;
-	case 0xFF0F: return gb.hwstate.interrupt_flags;
+	case 0xFF0F: return gb.hwstate.int_flags;
 	case 0xFF40: return gb.gpu.lcdc;
 	case 0xFF41: return gb.gpu.stat;
 	case 0xFF42: return gb.gpu.scy;
@@ -209,7 +209,7 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 	case 0xFF05: gb->hwstate.tima = value; break;
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
-	case 0xFF0F: gb->hwstate.interrupt_flags = value; break;
+	case 0xFF0F: gb->hwstate.int_flags = value; break;
 	case 0xFF40: gb->gpu.lcdc = value; break;
 	case 0xFF41: gb->gpu.stat = (value & 0xF8) | (gb->gpu.stat & 0x07); break;
 	case 0xFF42: gb->gpu.scy = value; break;

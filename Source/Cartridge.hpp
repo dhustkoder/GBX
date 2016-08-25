@@ -21,10 +21,10 @@ enum class System : uint8_t
 
 struct CartridgeInfo
 {
+	char internal_name[17];
 	size_t size;
 	CartridgeType type;
 	System system;
-	char internal_name[17];
 };
 
 

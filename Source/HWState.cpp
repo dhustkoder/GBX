@@ -6,19 +6,16 @@ namespace gbx {
 
 void Gameboy::UpdateHWState(const uint8_t cycles)
 {
-	hwstate.div_clock += cycles;
-	if (hwstate.div_clock >= 0x100) {
+	if ((hwstate.div_clock + cycles) >= 0x100)
 		++hwstate.div;
-		hwstate.div_clock -= 0x100;
-	}
+	hwstate.div_clock += cycles;
 
 	if (!hwstate.GetFlags(HWState::TIMER_STOP)) {
 		hwstate.tima_clock += cycles;
 		if (hwstate.tima_clock >= hwstate.tima_clock_limit) {
 			if (hwstate.tima < 0xff) {
 				++hwstate.tima;
-			}
-			else {
+			} else {
 				hwstate.tima = hwstate.tma;
 				hwstate.RequestInt(INT_TIMER);
 			}
@@ -36,10 +33,14 @@ void Gameboy::UpdateHWState(const uint8_t cycles)
 
 void Gameboy::UpdateInterrupts()
 {
+	if (hwstate.GetFlags(HWState::CPU_HALT) && (hwstate.int_flags&0x1f)) {
+		++cpu.pc;
+		hwstate.ClearFlags(HWState::CPU_HALT);
+	}
+
 	if (!hwstate.GetIntMaster()) {
 		return;
-	}
-	else if(!hwstate.GetIntActive()) {
+	} else if (!hwstate.GetIntActive()) {
 		hwstate.EnableIntActive();
 		return;
 	}
@@ -52,14 +53,8 @@ void Gameboy::UpdateInterrupts()
 	hwstate.DisableIntMaster();
 
 	const auto trigger = [this](const IntMask inter, const uint16_t addr) {
-		if (!hwstate.GetFlags(HWState::CPU_HALT)) {
-			PushStack16(cpu.pc);
-		}
-		else {
-			PushStack16(cpu.pc + 1);
-			hwstate.ClearFlags(HWState::CPU_HALT);
-		}
 		hwstate.ClearInt(inter);
+		PushStack16(cpu.pc);
 		cpu.pc = addr;
 		cpu.clock += 12;
 	};
