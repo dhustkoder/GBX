@@ -1395,9 +1395,9 @@ void halt_76(Gameboy* const gb)
 {
 	// halt cpu until interrupt is requested
 	if (!(gb->hwstate.int_flags & 0x1f)) {
-		--gb->cpu.pc;
 		if (!gb->hwstate.GetFlags(HWState::CPU_HALT))
 			gb->hwstate.SetFlags(HWState::CPU_HALT);
+		--gb->cpu.pc;
 	} else if (gb->hwstate.GetFlags(HWState::CPU_HALT)) {
 		gb->hwstate.ClearFlags(HWState::CPU_HALT);
 	}

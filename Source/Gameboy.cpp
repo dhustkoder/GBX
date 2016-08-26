@@ -44,8 +44,7 @@ bool Gameboy::Reset()
 	if (cart_info.system != System::GAMEBOY) {
 		fprintf(stderr, "cartridge system not supported!");
 		return false;
-	} 
-	else if (cart_info.type != CartridgeType::ROM_ONLY) {
+	} else if (cart_info.type != CartridgeType::ROM_ONLY) {
 		fprintf(stderr, "cartridge type not suppoerted!");
 		return false;
 	}

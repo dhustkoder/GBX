@@ -7,12 +7,20 @@
 
 namespace gbx {
 
+static uint8_t read_cart(const uint16_t address, const Cartridge& cart);
+static void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart);
+static uint8_t read_hram(const uint16_t address, const Gameboy& gb);
+static void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb);
+static uint8_t read_oam(const uint16_t address, const Memory& memory);
+static void write_oam(const uint16_t address, const uint8_t value, Memory* const memory);
 static uint8_t read_wram(const uint16_t address, const Memory& memory);
 static void write_wram(const uint16_t address, const uint8_t value, Memory* const memory);
+static uint8_t read_vram(const uint16_t address, const Memory& memory);
+static void write_vram(const uint16_t address, const uint8_t value, Memory* const memory);
+static uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart);
+static void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const cart);
 static uint8_t read_io(const uint16_t address, const Gameboy& gb);
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb);
-static uint8_t read_rom(const uint16_t address, const Cartridge& cart);
-static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const cart);
 static void write_keys(const uint8_t value, Keys* const keys);
 static void write_tac(const uint8_t value, HWState* const hwstate);
 static void dma_transfer(const uint8_t value, Gameboy* const gb);
@@ -25,32 +33,20 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb);
 
 uint8_t Gameboy::Read8(const uint16_t address) const 
 {
-	if (address < 0x8000) {
-		return read_rom(address, memory.cart);
-	}
-	else if (address >= 0xFF80) {
-		return address != 0xFFFF ? memory.hram[address - 0xFF80]
-		                         : hwstate.int_enable;
-	}
-	else if (address >= 0xFF00) {
+	if (address < 0x8000)
+		return read_cart(address, memory.cart);
+	else if (address >= 0xFF80)
+		return read_hram(address, *this);
+	else if (address >= 0xFF00)
 		return read_io(address, *this);
-	}
-	else if (address >= 0xFE00) {
-		if (address < 0xFEA0)
-			return memory.oam[address - 0xFE00];
-	}
-	else if (address >= 0xC000) {
+	else if (address >= 0xFE00)
+		return read_oam(address, memory);
+	else if (address >= 0xC000)
 		return read_wram(address, memory);
-	}
-	else if (address >= 0xA000) {
-		ASSERT_MSG(false, "cartridge ram required");
-	}
-	else {
-		return memory.vram[address - 0x8000];
-	}
-
-
-	return 0;
+	else if (address >= 0xA000)
+		return read_cart_ram(address, memory.cart);
+	else
+		return read_vram(address, memory);
 }
 
 
@@ -58,38 +54,21 @@ uint8_t Gameboy::Read8(const uint16_t address) const
 
 void Gameboy::Write8(const uint16_t address, const uint8_t value) 
 {
-
-	if (address >= 0xFF80) {
-		if (address != 0xFFFF) 
-			memory.hram[address - 0xFF80] = value;
-		else 
-			hwstate.int_enable = value;
-	}
-	else if (address >= 0xFF00) {
+	if (address >= 0xFF80)
+		write_hram(address, value, this);
+	else if (address >= 0xFF00)
 		write_io(address, value, this);
-	}
-	else if (address >= 0xFE00) {
-		if (address < 0xFEA0)
-			memory.oam[address - 0xFE00] = value;
-	}
-	else if (address >= 0xC000) {
+	else if (address >= 0xFE00)
+		write_oam(address, value, &memory);
+	else if (address >= 0xC000)
 		write_wram(address, value, &memory);
-	}
-	else if (address >= 0xA000) {
-		//ASSERT_MSG(false, "cartridge ram required");
-		(void());
-	}
-	else if (address >= 0x8000) {
-		memory.vram[address - 0x8000] = value;
-	}
-	else {
-		write_rom(address, value, &memory.cart);
-	}
+	else if (address >= 0xA000)
+		write_cart_ram(address, value, &memory.cart);
+	else if (address >= 0x8000)
+		write_vram(address, value, &memory);
+	else
+		write_cart(address, value, &memory.cart);
 }
-
-
-
-
 
 
 
@@ -100,16 +79,11 @@ uint16_t Gameboy::Read16(const uint16_t address) const
 
 
 
-
-
 void Gameboy::Write16(const uint16_t address, const uint16_t value) 
 {
 	Write8(address, GetLowByte(value));
 	Write8(address + 1, GetHighByte(value));
 }
-
-
-
 
 
 void Gameboy::PushStack8(const uint8_t value) 
@@ -146,9 +120,46 @@ uint16_t Gameboy::PopStack16()
 
 
 
+static uint8_t read_cart(const uint16_t address, const Cartridge& cart)
+{
+	return cart.rom_banks[address];
+}
+
+static void write_cart(const uint16_t address, const uint8_t value, Cartridge* const)
+{
+	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
+}
 
 
 
+static uint8_t read_hram(const uint16_t address, const Gameboy& gb)
+{
+	if (address != 0xFFFF)
+		return gb.memory.hram[address - 0xFF80];
+	else
+		return gb.hwstate.int_enable;
+}
+
+
+static void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
+{
+	if (address != 0xFFFF)
+		gb->memory.hram[address - 0xFF80] = value;
+	else
+		gb->hwstate.int_enable = value;
+}
+
+
+static uint8_t read_oam(const uint16_t address, const Memory& memory)
+{
+	return address < 0xFEA0 ? memory.oam[address - 0xFE00] : 0;
+}
+
+static void write_oam(const uint16_t address, const uint8_t value, Memory* const memory)
+{
+	if (address < 0xFEA0)
+		memory->oam[address - 0xFE00] = value;
+}
 
 
 static uint8_t read_wram(const uint16_t address, const Memory& memory)
@@ -157,12 +168,37 @@ static uint8_t read_wram(const uint16_t address, const Memory& memory)
 	return memory.wram[offset];
 }
 
+
 static void write_wram(const uint16_t address, const uint8_t value, Memory* const memory)
 {
 	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
 	memory->wram[offset] = value;
 }
 
+
+static uint8_t read_vram(const uint16_t address, const Memory& memory)
+{
+	return memory.vram[address - 0x8000];
+}
+
+
+static void write_vram(const uint16_t address, const uint8_t value, Memory* const memory)
+{
+	memory->vram[address - 0x8000] = value;
+}
+
+
+
+static uint8_t read_cart_ram(const uint16_t address, const Cartridge&)
+{
+	debug_printf("Cartridge ram read required at %4x\n", address);
+	return 0;
+}
+
+static void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const)
+{
+	debug_printf("Cartridge ram write value %2x required at %4x\n", value, address);
+}
 
 
 
@@ -196,11 +232,6 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 
 
 
-
-
-
-
-
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	switch (address) {
@@ -230,74 +261,37 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 
 
 
-
-
-
-
-static uint8_t read_rom(const uint16_t address, const Cartridge& cart)
-{
-	return cart.rom_banks[address];
-}
-
-
-
-
-
-
-
-static void write_rom(const uint16_t address, const uint8_t value, Cartridge* const)
-{
-	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
-}
-
-
-
-
-
-
 static void write_keys(const uint8_t value, Keys* const keys)
 {
-	const uint8_t mask = ( value & 0x30 );
-
-	if (mask == 0x10)
-		keys->value = 0xD0 | (keys->pad.all >> 4);
-	else if (mask == 0x20)
-		keys->value = 0xE0 | (keys->pad.all & 0x0f);
-	else
-		keys->value = 0xFF;
+	switch (value & 0x30) {
+	case 0x10: keys->value = 0xD0 | (keys->pad.all >> 4); break;
+	case 0x20: keys->value = 0xE0 | (keys->pad.all & 0x0f); break;
+	default: keys->value = 0xFF; break;
+	}
 }
-
-
-
 
 
 
 static void write_tac(const uint8_t value, HWState* const hwstate)
 {
 		hwstate->tac = value;
-
-		const uint8_t hz_code = value & 0x03;
-		switch (hz_code) {
+		switch (value & 0x03) {
 		case 0x00: hwstate->tima_clock_limit = 0x400; break;
 		case 0x01: hwstate->tima_clock_limit = 0x10; break;
 		case 0x02: hwstate->tima_clock_limit = 0x40; break;
 		case 0x03: hwstate->tima_clock_limit = 0x100; break;
 		}
 
-		const auto start_bit = TestBit(2, value);
-		if (start_bit) {
+		const bool timer_stop = TestBit(2, value);
+		if (timer_stop) { 
 			if (hwstate->GetFlags(HWState::TIMER_STOP)) {
 				hwstate->ClearFlags(HWState::TIMER_STOP);
 				hwstate->tima = hwstate->tma;
 			}
-		}
-		else {
+		} else {
 			hwstate->SetFlags(HWState::TIMER_STOP);
 		}
 }
-
-
-
 
 
 
@@ -307,25 +301,13 @@ static void dma_transfer(const uint8_t value, Gameboy* const gb)
 	const uint8_t nbytes = 0xA0;
 	if (source_addr == 0xC000) {
 		memcpy(gb->memory.oam, gb->memory.wram, sizeof(uint8_t) * nbytes);
-	}
-	else if (source_addr == 0x8000) {
+	} else if (source_addr == 0x8000) {
 		memcpy(gb->memory.oam, gb->memory.vram, sizeof(uint8_t) * nbytes);
-	}
-	else {
+	} else {
 		for (size_t i = 0; i < nbytes; ++i)
 			gb->memory.oam[i] = gb->Read8(source_addr++);
 	}
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
