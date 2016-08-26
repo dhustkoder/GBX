@@ -33,11 +33,6 @@ void Gameboy::UpdateHWState(const uint8_t cycles)
 
 void Gameboy::UpdateInterrupts()
 {
-	if (hwstate.GetFlags(HWState::CPU_HALT) && (hwstate.int_flags&0x1f)) {
-		++cpu.pc;
-		hwstate.ClearFlags(HWState::CPU_HALT);
-	}
-
 	if (!hwstate.GetIntMaster()) {
 		return;
 	} else if (!hwstate.GetIntActive()) {
