@@ -281,7 +281,7 @@ static void write_tac(const uint8_t value, HWState* const hwstate)
 		case 0x02: hwstate->tima_clock_limit = 0x40; break;
 		case 0x03: hwstate->tima_clock_limit = 0x100; break;
 		}
-
+		
 		const bool timer_stop = TestBit(2, value);
 		if (timer_stop) { 
 			if (hwstate->GetFlags(HWState::TIMER_STOP)) {
