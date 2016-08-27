@@ -391,14 +391,14 @@ inline void DrawPixel(Color pixel, uint8_t x, uint8_t y)
 static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 {
 	switch (keycode) {
-	case SDL_SCANCODE_Z: keys->pad.bit.a = state; break;
-	case SDL_SCANCODE_X: keys->pad.bit.b = state; break;
-	case SDL_SCANCODE_C: keys->pad.bit.select = state; break;
-	case SDL_SCANCODE_V: keys->pad.bit.start = state; break;
-	case SDL_SCANCODE_RIGHT: keys->pad.bit.right = state; break;
-	case SDL_SCANCODE_LEFT: keys->pad.bit.left = state; break;
-	case SDL_SCANCODE_UP: keys->pad.bit.up = state; break;
-	case SDL_SCANCODE_DOWN: keys->pad.bit.down = state; break;
+	case SDL_SCANCODE_Z: keys->pad.a = state; break;
+	case SDL_SCANCODE_X: keys->pad.b = state; break;
+	case SDL_SCANCODE_C: keys->pad.select = state; break;
+	case SDL_SCANCODE_V: keys->pad.start = state; break;
+	case SDL_SCANCODE_RIGHT: keys->pad.right = state; break;
+	case SDL_SCANCODE_LEFT: keys->pad.left = state; break;
+	case SDL_SCANCODE_UP: keys->pad.up = state; break;
+	case SDL_SCANCODE_DOWN: keys->pad.down = state; break;
 	default: break;
 	}
 }

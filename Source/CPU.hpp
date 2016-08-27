@@ -7,18 +7,14 @@ namespace gbx {
 
 struct CPU
 {
-	enum Flags : uint8_t 
-	{
-		FLAG_Z = 0x80, 
-		FLAG_N = 0x40, 
-		FLAG_H = 0x20, 
-		FLAG_C = 0x10
+	enum Flags : uint8_t {
+		FLAG_Z = 0x80, FLAG_N = 0x40, 
+		FLAG_H = 0x20, FLAG_C = 0x10
 	};
 
-	Flags GetFlags(const CPU::Flags flags) const;
-	void SetFlags(const CPU::Flags flags);
-	void ClearFlags(const CPU::Flags flags);
-
+	Flags GetFlags(const Flags flags) const;
+	void SetFlags(const Flags flags);
+	void ClearFlags(const Flags flags);
 
 	uint32_t clock;
 	uint16_t pc;

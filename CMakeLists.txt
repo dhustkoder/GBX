@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(gbx)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -fms-extensions -Wall -Wextra -Werror -fno-exceptions -fno-rtti")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wshadow -Weffc++ -Wstrict-aliasing -Werror -fno-exceptions -fno-rtti")
 
 option(ADDRESS_SANITIZER OFF)
 option(UNDEFINED_SANITIZER OFF)
