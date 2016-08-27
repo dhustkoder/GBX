@@ -53,7 +53,7 @@ static uint8_t inc(const uint8_t first, CPU* const cpu)
 	if (CheckH_bit3(first, 1))
 		flags |= CPU::FLAG_H;
 
-	cpu->af.ind.f = flags;
+	cpu->f = flags;
 	return result;
 }
 
@@ -70,7 +70,7 @@ static uint8_t dec(const uint8_t first, CPU* const cpu)
 	if (CheckH_borrow(first, 1))
 		flags |= CPU::FLAG_H;
 
-	cpu->af.ind.f = flags;
+	cpu->f = flags;
 	return result;
 }
 
@@ -80,7 +80,7 @@ static uint8_t dec(const uint8_t first, CPU* const cpu)
 static void add_hl_nn(const uint16_t second, CPU* const cpu)
 {
 	// flags effect: - 0 H C
-	const uint16_t first = cpu->hl.pair;
+	const uint16_t first = cpu->hl;
 	const uint32_t result = first + second;
 	uint8_t hc = 0x00;
 
@@ -89,8 +89,8 @@ static void add_hl_nn(const uint16_t second, CPU* const cpu)
 	if ((result ^ first ^ second) & 0x1000)
 		hc |= CPU::FLAG_H;
 
-	cpu->af.ind.f = cpu->GetFlags(CPU::FLAG_Z) | hc;
-	cpu->hl.pair = static_cast<uint16_t>(result);
+	cpu->f = cpu->GetFlags(CPU::FLAG_Z) | hc;
+	cpu->hl = static_cast<uint16_t>(result);
 }
 
 
@@ -100,7 +100,7 @@ static void add_hl_nn(const uint16_t second, CPU* const cpu)
 static void add_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect Z 0 H C
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint16_t result = first + second;
 	uint8_t flags = 0x00;
 
@@ -111,8 +111,8 @@ static void add_a_n(const uint8_t second, CPU* const cpu)
 	if (CheckC_bit7(result))
 		flags |= CPU::FLAG_C;
 
-	cpu->af.ind.f = flags;
-	cpu->af.ind.a = static_cast<uint8_t>(result);
+	cpu->f = flags;
+	cpu->a = static_cast<uint8_t>(result);
 }
 
 
@@ -120,7 +120,7 @@ static void add_a_n(const uint8_t second, CPU* const cpu)
 static void sub_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 1 H C
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint16_t result = first - second;
 	uint8_t flags = CPU::FLAG_N;
 
@@ -131,8 +131,8 @@ static void sub_a_n(const uint8_t second, CPU* const cpu)
 	if (CheckC_borrow(first, second))
 		flags |= CPU::FLAG_C;
 
-	cpu->af.ind.f = flags;
-	cpu->af.ind.a = static_cast<uint8_t>(result);
+	cpu->f = flags;
+	cpu->a = static_cast<uint8_t>(result);
 }
 
 
@@ -141,7 +141,7 @@ static void adc_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect Z 0 H C
 	const uint8_t carry = cpu->GetFlags(CPU::FLAG_C) ? 1 : 0;
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint16_t sec_n_carry = second + carry;
 	const uint16_t result = first + sec_n_carry;
 	uint8_t flags = 0x00;
@@ -153,8 +153,8 @@ static void adc_a_n(const uint8_t second, CPU* const cpu)
 	if (((first & 0xf) + (second & 0xf) + carry) > 0x0f)
 		flags |= CPU::FLAG_H;
 
-	cpu->af.ind.f = flags;
-	cpu->af.ind.a = static_cast<uint8_t>(result);
+	cpu->f = flags;
+	cpu->a = static_cast<uint8_t>(result);
 }
 
 
@@ -165,7 +165,7 @@ static void adc_a_n(const uint8_t second, CPU* const cpu)
 static void sbc_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 1 H C
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint16_t sec_n_carry = cpu->GetFlags(CPU::FLAG_C) ? second + 1 : second;
 	const uint32_t result = first - sec_n_carry;
 	uint8_t flags = CPU::FLAG_N;
@@ -177,8 +177,8 @@ static void sbc_a_n(const uint8_t second, CPU* const cpu)
 	if (((result ^ second ^ first) & 0x10) == 0x10)
 		flags |= CPU::FLAG_H;
 
-	cpu->af.ind.f = flags;
-	cpu->af.ind.a = static_cast<uint8_t>(result);
+	cpu->f = flags;
+	cpu->a = static_cast<uint8_t>(result);
 }
 
 
@@ -187,10 +187,10 @@ static void sbc_a_n(const uint8_t second, CPU* const cpu)
 static void and_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 0 1 0
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint8_t result = first & second;
-	cpu->af.ind.f = CheckZ(result) | CPU::FLAG_H;
-	cpu->af.ind.a = result;
+	cpu->f = CheckZ(result) | CPU::FLAG_H;
+	cpu->a = result;
 }
 
 
@@ -198,10 +198,10 @@ static void and_a_n(const uint8_t second, CPU* const cpu)
 static void xor_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 0 0 0
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint8_t result = first ^ second;
-	cpu->af.ind.f = CheckZ(result);
-	cpu->af.ind.a = result;
+	cpu->f = CheckZ(result);
+	cpu->a = result;
 }
 
 
@@ -209,10 +209,10 @@ static void xor_a_n(const uint8_t second, CPU* const cpu)
 static void or_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 0 0 0
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint8_t result = first | second;
-	cpu->af.ind.f = CheckZ(result);
-	cpu->af.ind.a = result;
+	cpu->f = CheckZ(result);
+	cpu->a = result;
 }
 
 
@@ -221,7 +221,7 @@ static void or_a_n(const uint8_t second, CPU* const cpu)
 static void cp_a_n(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 1 H C
-	const uint8_t first = cpu->af.ind.a;
+	const uint8_t first = cpu->a;
 	const uint16_t result = first - value;
 	uint8_t flags = CPU::FLAG_N;
 
@@ -232,7 +232,7 @@ static void cp_a_n(const uint8_t value, CPU* const cpu)
 	if (CheckC_borrow(first, value))
 		flags |= CPU::FLAG_C;
 
-	cpu->af.ind.f = flags;
+	cpu->f = flags;
 }
 
 
@@ -298,7 +298,7 @@ inline void dec_r(uint8_t* const reg, CPU* const cpu) {
 
 inline void inc_hlp(Gameboy* const gb) 
 {
-	const uint16_t hl = gb->cpu.hl.pair;
+	const uint16_t hl = gb->cpu.hl;
 	const uint8_t result = inc(gb->Read8(hl), &gb->cpu);
 	gb->Write8(hl, result);
 }
@@ -306,7 +306,7 @@ inline void inc_hlp(Gameboy* const gb)
 
 inline void dec_hlp(Gameboy* const gb)
 {
-	const uint16_t hl = gb->cpu.hl.pair;
+	const uint16_t hl = gb->cpu.hl;
 	const uint8_t result = dec(gb->Read8(hl), &gb->cpu);
 	gb->Write8(hl, result);
 }
@@ -338,7 +338,7 @@ void nop_00(Gameboy* const)
 void ld_01(Gameboy* const gb) 
 {
 	// LD BC, d16
-	gb->cpu.bc.pair = get_d16(gb);
+	gb->cpu.bc = get_d16(gb);
 }
 
 
@@ -346,7 +346,7 @@ void ld_01(Gameboy* const gb)
 void ld_02(Gameboy* const gb) 
 {
 	// LD (BC), A
-	gb->Write8(gb->cpu.bc.pair, gb->cpu.af.ind.a);
+	gb->Write8(gb->cpu.bc, gb->cpu.a);
 }
 
 
@@ -354,7 +354,7 @@ void ld_02(Gameboy* const gb)
 void inc_03(Gameboy* const gb) 
 {
 	// INC BC
-	++gb->cpu.bc.pair;
+	++gb->cpu.bc;
 }
 
 
@@ -362,7 +362,7 @@ void inc_03(Gameboy* const gb)
 void inc_04(Gameboy* const gb) 
 { 
 	// INC B ( Z 0 H - )
-	inc_r(&gb->cpu.bc.ind.b, &gb->cpu);
+	inc_r(&gb->cpu.b, &gb->cpu);
 }
 
 
@@ -370,7 +370,7 @@ void inc_04(Gameboy* const gb)
 void dec_05(Gameboy* const gb) 
 {
 	// DEC B ( Z 1 H - )
-	dec_r(&gb->cpu.bc.ind.b, &gb->cpu);
+	dec_r(&gb->cpu.b, &gb->cpu);
 }
 
 
@@ -379,7 +379,7 @@ void dec_05(Gameboy* const gb)
 void ld_06(Gameboy* const gb) 
 {
 	// LD B, d8
-	gb->cpu.bc.ind.b = get_d8(gb);
+	gb->cpu.b = get_d8(gb);
 }
 
 
@@ -388,15 +388,15 @@ void ld_06(Gameboy* const gb)
 void rlca_07(Gameboy* const gb)
 {
 	// RLCA  ( 0 0 0 C )
-	const uint8_t a = gb->cpu.af.ind.a;
+	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit7 = a & 0x80;
 	const uint8_t result = a << 1;
 	if (old_bit7) {
-		gb->cpu.af.ind.a = result | 0x01;
-		gb->cpu.af.ind.f = CPU::FLAG_C;
+		gb->cpu.a = result | 0x01;
+		gb->cpu.f = CPU::FLAG_C;
 	} else {
-		gb->cpu.af.ind.a = result;
-		gb->cpu.af.ind.f = 0x00;
+		gb->cpu.a = result;
+		gb->cpu.f = 0x00;
 	}
 }
 
@@ -415,7 +415,7 @@ void ld_08(Gameboy* const gb)
 void add_09(Gameboy* const gb) 
 {
 	// ADD HL, BC
-	add_hl_nn(gb->cpu.bc.pair, &gb->cpu);
+	add_hl_nn(gb->cpu.bc, &gb->cpu);
 }
 
 
@@ -423,7 +423,7 @@ void add_09(Gameboy* const gb)
 void ld_0A(Gameboy* const gb)
 { 
 	// LD A, (BC)
-	gb->cpu.af.ind.a = gb->Read8(gb->cpu.bc.pair);
+	gb->cpu.a = gb->Read8(gb->cpu.bc);
 }
 
 
@@ -433,7 +433,7 @@ void ld_0A(Gameboy* const gb)
 void dec_0B(Gameboy* const gb) 
 {
 	// DEC BC
-	--gb->cpu.bc.pair;
+	--gb->cpu.bc;
 }
 
 
@@ -442,7 +442,7 @@ void dec_0B(Gameboy* const gb)
 void inc_0C(Gameboy* const gb) 
 { 
 	// INC C ( Z 0 H - )
-	inc_r(&gb->cpu.bc.ind.c, &gb->cpu);
+	inc_r(&gb->cpu.c, &gb->cpu);
 }
 
 
@@ -450,7 +450,7 @@ void inc_0C(Gameboy* const gb)
 void dec_0D(Gameboy* const gb) 
 {
 	// DEC C ( Z 1 H - )
-	dec_r(&gb->cpu.bc.ind.c, &gb->cpu);
+	dec_r(&gb->cpu.c, &gb->cpu);
 }
 
 
@@ -458,7 +458,7 @@ void dec_0D(Gameboy* const gb)
 void ld_0E(Gameboy* const gb) 
 { 
 	// LD C, d8
-	gb->cpu.bc.ind.c = get_d8(gb);
+	gb->cpu.c = get_d8(gb);
 }
 
 
@@ -466,15 +466,15 @@ void ld_0E(Gameboy* const gb)
 void rrca_0F(Gameboy* const gb)
 {
 	// RRCA ( 0 0 0 C )
-	const uint8_t a = gb->cpu.af.ind.a;
+	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit0 = a & 0x01;
 	const uint8_t result = a >> 1;
 	if (old_bit0) {
-		gb->cpu.af.ind.a = result | 0x80;
-		gb->cpu.af.ind.f = CPU::FLAG_C;
+		gb->cpu.a = result | 0x80;
+		gb->cpu.f = CPU::FLAG_C;
 	} else {
-		gb->cpu.af.ind.a = result;
-		gb->cpu.af.ind.f = 0x00;
+		gb->cpu.a = result;
+		gb->cpu.f = 0x00;
 	}
 }
 
@@ -494,7 +494,7 @@ void stop_10(Gameboy* const gb)
 void ld_11(Gameboy* const gb) 
 {
 	// LD DE, d16
-	gb->cpu.de.pair = get_d16(gb);
+	gb->cpu.de = get_d16(gb);
 }
 
 
@@ -502,7 +502,7 @@ void ld_11(Gameboy* const gb)
 void ld_12(Gameboy* const gb) 
 {
 	// LD (DE), A
-	gb->Write8(gb->cpu.de.pair, gb->cpu.af.ind.a);
+	gb->Write8(gb->cpu.de, gb->cpu.a);
 }
 
 
@@ -510,7 +510,7 @@ void ld_12(Gameboy* const gb)
 void inc_13(Gameboy* const gb) 
 {
 	// INC DE
-	++gb->cpu.de.pair;
+	++gb->cpu.de;
 }
 
 
@@ -518,13 +518,13 @@ void inc_13(Gameboy* const gb)
 void inc_14(Gameboy* const gb)
 {
 	// INC D ( Z 0 H - )
-	inc_r(&gb->cpu.de.ind.d, &gb->cpu);
+	inc_r(&gb->cpu.d, &gb->cpu);
 }
 
 void dec_15(Gameboy* const gb)
 {
 	// DEC D ( Z 1 H - )
-	dec_r(&gb->cpu.de.ind.d, &gb->cpu);
+	dec_r(&gb->cpu.d, &gb->cpu);
 }
 
 
@@ -532,7 +532,7 @@ void dec_15(Gameboy* const gb)
 void ld_16(Gameboy* const gb) 
 {
 	// LD D, d8
-	gb->cpu.de.ind.d = get_d8(gb);
+	gb->cpu.d = get_d8(gb);
 }
 
 
@@ -540,12 +540,12 @@ void ld_16(Gameboy* const gb)
 void rla_17(Gameboy* const gb)
 {
 	// RLA ( 0 0 0 C )
-	const uint8_t a = gb->cpu.af.ind.a;
+	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit7 = a & 0x80;
 	const uint8_t old_carry = gb->cpu.GetFlags(CPU::FLAG_C);
 	const uint8_t result = a << 1;
-	gb->cpu.af.ind.a = old_carry ? (result | 0x01) : result;
-	gb->cpu.af.ind.f = old_bit7 ? CPU::FLAG_C : 0x00;
+	gb->cpu.a = old_carry ? (result | 0x01) : result;
+	gb->cpu.f = old_bit7 ? CPU::FLAG_C : 0x00;
 }
 
 
@@ -562,7 +562,7 @@ void jr_18(Gameboy* const gb)
 void add_19(Gameboy* const gb) 
 {
 	// ADD HL, DE ( - 0 H C )
-	add_hl_nn(gb->cpu.de.pair, &gb->cpu);
+	add_hl_nn(gb->cpu.de, &gb->cpu);
 }
 
 
@@ -572,7 +572,7 @@ void add_19(Gameboy* const gb)
 void ld_1A(Gameboy* const gb) 
 {
 	// LD A, (DE)
-	gb->cpu.af.ind.a = gb->Read8(gb->cpu.de.pair);
+	gb->cpu.a = gb->Read8(gb->cpu.de);
 }
 
 
@@ -583,7 +583,7 @@ void ld_1A(Gameboy* const gb)
 void dec_1B(Gameboy* const gb)
 { 
 	 // DEC DE
-	--gb->cpu.de.pair;
+	--gb->cpu.de;
 }
 
 
@@ -594,7 +594,7 @@ void dec_1B(Gameboy* const gb)
 void inc_1C(Gameboy* const gb) 
 {
 	// INC E ( Z 0 H - )
-	inc_r(&gb->cpu.de.ind.e, &gb->cpu);
+	inc_r(&gb->cpu.e, &gb->cpu);
 }
 
 
@@ -604,7 +604,7 @@ void inc_1C(Gameboy* const gb)
 void dec_1D(Gameboy* const gb)
 { 
 	// DEC E ( Z 1 H - )
-	dec_r(&gb->cpu.de.ind.e, &gb->cpu);
+	dec_r(&gb->cpu.e, &gb->cpu);
 }
 
 
@@ -614,7 +614,7 @@ void dec_1D(Gameboy* const gb)
 void ld_1E(Gameboy* const gb)
 {
 	// LD E, d8
-	gb->cpu.de.ind.e = get_d8(gb);
+	gb->cpu.e = get_d8(gb);
 }
 
 
@@ -622,12 +622,12 @@ void ld_1E(Gameboy* const gb)
 void rra_1F(Gameboy* const gb)
 {
 	// RRA  ( 0 0 0 C )
-	const uint8_t a = gb->cpu.af.ind.a;
+	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit0 = a & 0x01;
 	const uint8_t old_carry = gb->cpu.GetFlags(CPU::FLAG_C);
 	const uint8_t result = a >> 1;
-	gb->cpu.af.ind.a = old_carry ? (result | 0x80) : result;
-	gb->cpu.af.ind.f = old_bit0 ? CPU::FLAG_C : 0x00;
+	gb->cpu.a = old_carry ? (result | 0x80) : result;
+	gb->cpu.f = old_bit0 ? CPU::FLAG_C : 0x00;
 }
 
 
@@ -650,7 +650,7 @@ void jr_20(Gameboy* const gb)
 void ld_21(Gameboy* const gb) 
 {
 	// LD HL, d16
-	gb->cpu.hl.pair = get_d16(gb);
+	gb->cpu.hl = get_d16(gb);
 }
 
 
@@ -659,7 +659,7 @@ void ld_21(Gameboy* const gb)
 void ld_22(Gameboy* const gb) 
 {
 	// LD (HL+), A ( Put A into memory address HL. Increment HL )
-	gb->Write8(gb->cpu.hl.pair++, gb->cpu.af.ind.a);
+	gb->Write8(gb->cpu.hl++, gb->cpu.a);
 }
 
 
@@ -668,7 +668,7 @@ void ld_22(Gameboy* const gb)
 void inc_23(Gameboy* const gb) 
 {
 	// INC HL
-	++gb->cpu.hl.pair;
+	++gb->cpu.hl;
 }
 
 
@@ -676,14 +676,14 @@ void inc_23(Gameboy* const gb)
 void inc_24(Gameboy* const gb)
 {
 	// INC H ( Z 0 H - )
-	inc_r(&gb->cpu.hl.ind.h, &gb->cpu);
+	inc_r(&gb->cpu.h, &gb->cpu);
 }
 
 
 void dec_25(Gameboy* const gb) 
 { 
 	// DEC H ( Z 1 H - )
-	dec_r(&gb->cpu.hl.ind.h, &gb->cpu);
+	dec_r(&gb->cpu.h, &gb->cpu);
 }
 
 
@@ -691,7 +691,7 @@ void dec_25(Gameboy* const gb)
 void ld_26(Gameboy* const gb)
 {
 	//  LD H, d8
-	gb->cpu.hl.ind.h = get_d8(gb);
+	gb->cpu.h = get_d8(gb);
 }
 
 
@@ -702,9 +702,9 @@ void ld_26(Gameboy* const gb)
 void daa_27(Gameboy* const gb)
 { 
 	// DAA  ( Z - H X )
-	const uint8_t flags = gb->cpu.af.ind.f;
+	const uint8_t flags = gb->cpu.f;
 	uint8_t flags_result = flags & (CPU::FLAG_N | CPU::FLAG_C);
-	uint16_t a = gb->cpu.af.ind.a;
+	uint16_t a = gb->cpu.a;
 
 	if (!(flags & CPU::FLAG_N)) {
 		if ((flags & CPU::FLAG_H) || (a & 0xF) > 9)
@@ -723,8 +723,8 @@ void daa_27(Gameboy* const gb)
 	if ((a & 0xFF) == 0x00)
 		flags_result |= CPU::FLAG_Z;
 
-	gb->cpu.af.ind.a = static_cast<uint8_t>(a);
-	gb->cpu.af.ind.f = flags_result;
+	gb->cpu.a = static_cast<uint8_t>(a);
+	gb->cpu.f = flags_result;
 }
 
 
@@ -744,7 +744,7 @@ void jr_28(Gameboy* const gb)
 void add_29(Gameboy* const gb)
 {
 	// ADD HL, HL
-	add_hl_nn(gb->cpu.hl.pair, &gb->cpu);
+	add_hl_nn(gb->cpu.hl, &gb->cpu);
 }
 
 
@@ -753,7 +753,7 @@ void add_29(Gameboy* const gb)
 void ld_2A(Gameboy* const gb) 
 {
 	// LD A, (HL+)  ( store value in address pointed by HL into A, increment HL _
-	gb->cpu.af.ind.a = gb->Read8(gb->cpu.hl.pair++);
+	gb->cpu.a = gb->Read8(gb->cpu.hl++);
 }
 
 
@@ -763,7 +763,7 @@ void ld_2A(Gameboy* const gb)
 void dec_2B(Gameboy* const gb) 
 {
 	// DEC HL
-	--gb->cpu.hl.pair;
+	--gb->cpu.hl;
 }
 
 
@@ -772,7 +772,7 @@ void dec_2B(Gameboy* const gb)
 void inc_2C(Gameboy* const gb)
 {
 	// INC L ( Z 0 H - )
-	inc_r(&gb->cpu.hl.ind.l, &gb->cpu);
+	inc_r(&gb->cpu.l, &gb->cpu);
 }
 
 
@@ -780,7 +780,7 @@ void inc_2C(Gameboy* const gb)
 void dec_2D(Gameboy* const gb) 
 {
 	// DEC L ( Z 1 H - )
-	dec_r(&gb->cpu.hl.ind.l, &gb->cpu);
+	dec_r(&gb->cpu.l, &gb->cpu);
 }
 
 
@@ -790,7 +790,7 @@ void dec_2D(Gameboy* const gb)
 void ld_2E(Gameboy* const gb)
 {
 	// LD L, d8
-	gb->cpu.hl.ind.l = get_d8(gb);
+	gb->cpu.l = get_d8(gb);
 }
 
 
@@ -801,7 +801,7 @@ void cpl_2F(Gameboy* const gb)
 {
 	// CPL ( Complement A register, flip all bits )
 	// flags affected: - 1 1 -
-	gb->cpu.af.ind.a = ~gb->cpu.af.ind.a;
+	gb->cpu.a = ~gb->cpu.a;
 	gb->cpu.SetFlags(CPU::FLAG_N | CPU::FLAG_H);
 }
 
@@ -831,7 +831,7 @@ void ld_31(Gameboy* const gb)
 void ld_32(Gameboy* const gb) 
 {
 	// LD (HL-), A  ( store A into memory pointed by HL, Decrements HL )
-	gb->Write8(gb->cpu.hl.pair--, gb->cpu.af.ind.a);
+	gb->Write8(gb->cpu.hl--, gb->cpu.a);
 }
 
 
@@ -866,7 +866,7 @@ void dec_35(Gameboy* const gb)
 void ld_36(Gameboy* const gb) 
 {
 	// LD (HL), d8 ( store d8 into mem address pointed by HL )
-	gb->Write8(gb->cpu.hl.pair, get_d8(gb));
+	gb->Write8(gb->cpu.hl, get_d8(gb));
 }
 
 
@@ -877,7 +877,7 @@ void ld_36(Gameboy* const gb)
 void scf_37(Gameboy* const gb)
 {
 	// SCF ( - 0 0 1 )
-	gb->cpu.af.ind.f = (gb->cpu.af.ind.f & CPU::FLAG_Z) | CPU::FLAG_C;
+	gb->cpu.f = (gb->cpu.f & CPU::FLAG_Z) | CPU::FLAG_C;
 }
 
 
@@ -907,7 +907,7 @@ void add_39(Gameboy* const gb)
 void ld_3A(Gameboy* const gb)
 {
 	// LD A, (HL-)  ( load value in mem pointed by HL in A, decrement HL )
-	gb->cpu.af.ind.a = gb->Read8(gb->cpu.hl.pair--);
+	gb->cpu.a = gb->Read8(gb->cpu.hl--);
 }
 
 
@@ -925,7 +925,7 @@ void dec_3B(Gameboy* const gb)
 void inc_3C(Gameboy* const gb) 
 {
 	// INC A ( Z 0 H - )
-	inc_r(&gb->cpu.af.ind.a, &gb->cpu);
+	inc_r(&gb->cpu.a, &gb->cpu);
 }
 
 
@@ -934,7 +934,7 @@ void inc_3C(Gameboy* const gb)
 void dec_3D(Gameboy* const gb) 
 { 
 	// DEC A ( Z 1 H - )
-	dec_r(&gb->cpu.af.ind.a, &gb->cpu);
+	dec_r(&gb->cpu.a, &gb->cpu);
 }
 
 
@@ -942,7 +942,7 @@ void dec_3D(Gameboy* const gb)
 void ld_3E(Gameboy* const gb) 
 { 
 	// LD A, d8
-	gb->cpu.af.ind.a = get_d8(gb);
+	gb->cpu.a = get_d8(gb);
 }
 
 
@@ -952,7 +952,7 @@ void ccf_3F(Gameboy* const gb)
 	// CCF ( - 0 0 C )
 	const auto old_zero = gb->cpu.GetFlags(CPU::FLAG_Z);
 	const auto old_carry = gb->cpu.GetFlags(CPU::FLAG_C);
-	gb->cpu.af.ind.f = old_carry ? old_zero : old_zero | CPU::FLAG_C;
+	gb->cpu.f = old_carry ? old_zero : old_zero | CPU::FLAG_C;
 }
 
 
@@ -966,31 +966,31 @@ void ccf_3F(Gameboy* const gb)
 void ld_41(Gameboy* const gb)
 {
 	// LD B, C
-	gb->cpu.bc.ind.b = gb->cpu.bc.ind.c;
+	gb->cpu.b = gb->cpu.c;
 }
 
 void ld_42(Gameboy* const gb)
 {
 	// LD B, D
-	gb->cpu.bc.ind.b = gb->cpu.de.ind.d;
+	gb->cpu.b = gb->cpu.d;
 }
 
 void ld_43(Gameboy* const gb)
 { 
 	// LD B, E
-	gb->cpu.bc.ind.b = gb->cpu.de.ind.e;
+	gb->cpu.b = gb->cpu.e;
 }
 
 void ld_44(Gameboy* const gb)
 { 
 	// LD B, H
-	gb->cpu.bc.ind.b = gb->cpu.hl.ind.h;
+	gb->cpu.b = gb->cpu.h;
 }
 
 void ld_45(Gameboy* const gb)
 {
 	// LD B, L
-	gb->cpu.bc.ind.b = gb->cpu.hl.ind.l;
+	gb->cpu.b = gb->cpu.l;
 }
 
 
@@ -998,7 +998,7 @@ void ld_45(Gameboy* const gb)
 void ld_46(Gameboy* const gb) 
 {
 	// LD B, (HL)
-	gb->cpu.bc.ind.b = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.b = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1008,7 +1008,7 @@ void ld_46(Gameboy* const gb)
 void ld_47(Gameboy* const gb) 
 {
 	// LD B, A
-	gb->cpu.bc.ind.b = gb->cpu.af.ind.a;
+	gb->cpu.b = gb->cpu.a;
 }
 
 
@@ -1020,7 +1020,7 @@ void ld_47(Gameboy* const gb)
 void ld_48(Gameboy* const gb)
 { 
 	// LD C, B
-	gb->cpu.bc.ind.c = gb->cpu.bc.ind.b;
+	gb->cpu.c = gb->cpu.b;
 }
 
 
@@ -1030,26 +1030,26 @@ void ld_48(Gameboy* const gb)
 void ld_4A(Gameboy* const gb)
 {
 	// LD C, D
-	gb->cpu.bc.ind.c = gb->cpu.de.ind.d;
+	gb->cpu.c = gb->cpu.d;
 }
 
 void ld_4B(Gameboy* const gb)
 {
 	// LD C, E
-	gb->cpu.bc.ind.c = gb->cpu.de.ind.e;
+	gb->cpu.c = gb->cpu.e;
 }
 
 void ld_4C(Gameboy* const gb)
 {
 	// LD C, H
-	gb->cpu.bc.ind.c = gb->cpu.hl.ind.h;
+	gb->cpu.c = gb->cpu.h;
 }
 
 
 void ld_4D(Gameboy* const gb)
 { 
 	// LD C, L
-	gb->cpu.bc.ind.c = gb->cpu.hl.ind.l;
+	gb->cpu.c = gb->cpu.l;
 }
 
 
@@ -1059,7 +1059,7 @@ void ld_4D(Gameboy* const gb)
 void ld_4E(Gameboy* const gb) 
 {
 	// LD C, (HL)
-	gb->cpu.bc.ind.c = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.c = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1069,7 +1069,7 @@ void ld_4E(Gameboy* const gb)
 void ld_4F(Gameboy* const gb) 
 {
 	// LD C, A
-	gb->cpu.bc.ind.c = gb->cpu.af.ind.a;
+	gb->cpu.c = gb->cpu.a;
 }
 
 
@@ -1084,13 +1084,13 @@ void ld_4F(Gameboy* const gb)
 void ld_50(Gameboy* const gb) 
 {
 	// LD D, B
-	gb->cpu.de.ind.d = gb->cpu.bc.ind.b;
+	gb->cpu.d = gb->cpu.b;
 }
 
 void ld_51(Gameboy* const gb)
 {
 	// LD D, C
-	gb->cpu.de.ind.d = gb->cpu.bc.ind.c;
+	gb->cpu.d = gb->cpu.c;
 }
 
 
@@ -1100,7 +1100,7 @@ void ld_51(Gameboy* const gb)
 void ld_53(Gameboy* const gb)
 {
 	// LD D, E
-	gb->cpu.de.ind.d = gb->cpu.de.ind.e;
+	gb->cpu.d = gb->cpu.e;
 }
 
 
@@ -1108,21 +1108,21 @@ void ld_53(Gameboy* const gb)
 void ld_54(Gameboy* const gb) 
 { 
 	// LD D, H
-	gb->cpu.de.ind.d = gb->cpu.hl.ind.h;
+	gb->cpu.d = gb->cpu.h;
 }
 
 
 void ld_55(Gameboy* const gb)
 {
 	// LD D, L
-	gb->cpu.de.ind.d = gb->cpu.hl.ind.l;
+	gb->cpu.d = gb->cpu.l;
 }
 
 
 void ld_56(Gameboy* const gb) 
 {
 	// LD D, (HL)
-	gb->cpu.de.ind.d = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.d = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1130,7 +1130,7 @@ void ld_56(Gameboy* const gb)
 void ld_57(Gameboy* const gb) 
 {
 	// LD D, A
-	gb->cpu.de.ind.d = gb->cpu.af.ind.a;
+	gb->cpu.d = gb->cpu.a;
 }
 
 
@@ -1139,19 +1139,19 @@ void ld_57(Gameboy* const gb)
 void ld_58(Gameboy* const gb)
 {
 	// LD E, B
-	gb->cpu.de.ind.e = gb->cpu.bc.ind.b;
+	gb->cpu.e = gb->cpu.b;
 }
 
 void ld_59(Gameboy* const gb)
 {
 	// LD E, C
-	gb->cpu.de.ind.e = gb->cpu.bc.ind.c;
+	gb->cpu.e = gb->cpu.c;
 }
 
 void ld_5A(Gameboy* const gb)
 {
 	// LD E, D
-	gb->cpu.de.ind.e = gb->cpu.de.ind.d;
+	gb->cpu.e = gb->cpu.d;
 }
 
 // ld_5B LD E, E ( nop )
@@ -1160,7 +1160,7 @@ void ld_5A(Gameboy* const gb)
 void ld_5C(Gameboy* const gb)
 {
 	// LD E, H
-	gb->cpu.de.ind.e = gb->cpu.hl.ind.h;
+	gb->cpu.e = gb->cpu.h;
 }
 
 
@@ -1168,7 +1168,7 @@ void ld_5C(Gameboy* const gb)
 void ld_5D(Gameboy* const gb) 
 { 
 	// LD E, L
-	gb->cpu.de.ind.e = gb->cpu.hl.ind.l;
+	gb->cpu.e = gb->cpu.l;
 }
 
 
@@ -1177,7 +1177,7 @@ void ld_5D(Gameboy* const gb)
 void ld_5E(Gameboy* const gb) 
 {
 	// LD E, (HL)
-	gb->cpu.de.ind.e = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.e = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1186,7 +1186,7 @@ void ld_5E(Gameboy* const gb)
 void ld_5F(Gameboy* const gb) 
 {
 	// LD E, A
-	gb->cpu.de.ind.e = gb->cpu.af.ind.a;
+	gb->cpu.e = gb->cpu.a;
 }
 
 
@@ -1201,7 +1201,7 @@ void ld_5F(Gameboy* const gb)
 void ld_60(Gameboy* const gb) 
 {
 	// LD H, B
-	gb->cpu.hl.ind.h = gb->cpu.bc.ind.b;
+	gb->cpu.h = gb->cpu.b;
 }
 
 
@@ -1209,7 +1209,7 @@ void ld_60(Gameboy* const gb)
 void ld_61(Gameboy* const gb) 
 { 
 	// LD H, C
-	gb->cpu.hl.ind.h = gb->cpu.bc.ind.c;
+	gb->cpu.h = gb->cpu.c;
 }
 
 
@@ -1217,14 +1217,14 @@ void ld_61(Gameboy* const gb)
 void ld_62(Gameboy* const gb) 
 {
 	// LD H, D
-	gb->cpu.hl.ind.h = gb->cpu.de.ind.d;
+	gb->cpu.h = gb->cpu.d;
 }
 
 
 void ld_63(Gameboy* const gb)
 {
 	// LD H, E
-	gb->cpu.hl.ind.h = gb->cpu.de.ind.e;
+	gb->cpu.h = gb->cpu.e;
 }
 
 // ld_64 LD H, H ( nop )
@@ -1233,13 +1233,13 @@ void ld_63(Gameboy* const gb)
 void ld_65(Gameboy* const gb)
 {
 	// LD H, L
-	gb->cpu.hl.ind.h = gb->cpu.hl.ind.l;
+	gb->cpu.h = gb->cpu.l;
 }
 
 void ld_66(Gameboy* const gb)
 {
 	// LD H, (HL)
-	gb->cpu.hl.ind.h = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.h = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1247,7 +1247,7 @@ void ld_66(Gameboy* const gb)
 void ld_67(Gameboy* const gb) 
 {
 	// LD H, A
-	gb->cpu.hl.ind.h = gb->cpu.af.ind.a;
+	gb->cpu.h = gb->cpu.a;
 }
 
 
@@ -1255,7 +1255,7 @@ void ld_67(Gameboy* const gb)
 void ld_68(Gameboy* const gb)
 {
 	// LD L, B
-	gb->cpu.hl.ind.l = gb->cpu.bc.ind.b;
+	gb->cpu.l = gb->cpu.b;
 }
 
 
@@ -1263,7 +1263,7 @@ void ld_68(Gameboy* const gb)
 void ld_69(Gameboy* const gb) 
 {
 	// LD L, C
-	gb->cpu.hl.ind.l = gb->cpu.bc.ind.c;
+	gb->cpu.l = gb->cpu.c;
 }
 
 
@@ -1271,7 +1271,7 @@ void ld_69(Gameboy* const gb)
 void ld_6A(Gameboy* const gb)
 {
 	// LD L, D
-	gb->cpu.hl.ind.l = gb->cpu.de.ind.d;
+	gb->cpu.l = gb->cpu.d;
 }
 
 
@@ -1280,7 +1280,7 @@ void ld_6A(Gameboy* const gb)
 void ld_6B(Gameboy* const gb) 
 {
 	// LD L, E
-	gb->cpu.hl.ind.l = gb->cpu.de.ind.e;
+	gb->cpu.l = gb->cpu.e;
 }
 
 
@@ -1288,7 +1288,7 @@ void ld_6B(Gameboy* const gb)
 void ld_6C(Gameboy* const gb) 
 {
 	// LD L, H
-	gb->cpu.hl.ind.l = gb->cpu.hl.ind.h;
+	gb->cpu.l = gb->cpu.h;
 
 }
 
@@ -1299,7 +1299,7 @@ void ld_6C(Gameboy* const gb)
 void ld_6E(Gameboy* const gb)
 {
 	// LD L, (HL)
-	gb->cpu.hl.ind.l = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.l = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1309,7 +1309,7 @@ void ld_6E(Gameboy* const gb)
 void ld_6F(Gameboy* const gb)
 { 
 	// LD L, A
-	gb->cpu.hl.ind.l = gb->cpu.af.ind.a;
+	gb->cpu.l = gb->cpu.a;
 }
 
 
@@ -1321,7 +1321,7 @@ void ld_6F(Gameboy* const gb)
 void ld_70(Gameboy* const gb) 
 {
 	// LD (HL), B
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.bc.ind.b);
+	gb->Write8(gb->cpu.hl, gb->cpu.b);
 }
 
 
@@ -1330,7 +1330,7 @@ void ld_70(Gameboy* const gb)
 void ld_71(Gameboy* const gb) 
 {
 	// LD (HL), C
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.bc.ind.c);
+	gb->Write8(gb->cpu.hl, gb->cpu.c);
 }
 
 
@@ -1340,7 +1340,7 @@ void ld_71(Gameboy* const gb)
 void ld_72(Gameboy* const gb) 
 {
 	// LD (HL), D
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.de.ind.d);
+	gb->Write8(gb->cpu.hl, gb->cpu.d);
 }
 
 
@@ -1348,7 +1348,7 @@ void ld_72(Gameboy* const gb)
 void ld_73(Gameboy* const gb)
 {
 	// LD (HL), E
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.de.ind.e);
+	gb->Write8(gb->cpu.hl, gb->cpu.e);
 }
 
 
@@ -1356,7 +1356,7 @@ void ld_73(Gameboy* const gb)
 void ld_74(Gameboy* const gb)
 {
 	// LD (HL), H
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.hl.ind.h);
+	gb->Write8(gb->cpu.hl, gb->cpu.h);
 }
 
 
@@ -1364,7 +1364,7 @@ void ld_74(Gameboy* const gb)
 void ld_75(Gameboy* const gb)
 {
 	// LD (HL), L
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.hl.ind.l);
+	gb->Write8(gb->cpu.hl, gb->cpu.l);
 }
 
 
@@ -1378,7 +1378,7 @@ void halt_76(Gameboy* const gb)
 void ld_77(Gameboy* const gb) 
 { 
 	// LD (HL), A
-	gb->Write8(gb->cpu.hl.pair, gb->cpu.af.ind.a);
+	gb->Write8(gb->cpu.hl, gb->cpu.a);
 }
 
 
@@ -1386,7 +1386,7 @@ void ld_77(Gameboy* const gb)
 void ld_78(Gameboy* const gb) 
 {
 	// LD A, B
-	gb->cpu.af.ind.a = gb->cpu.bc.ind.b;
+	gb->cpu.a = gb->cpu.b;
 }
 
 
@@ -1395,7 +1395,7 @@ void ld_78(Gameboy* const gb)
 void ld_79(Gameboy* const gb) 
 {
 	// LD A, C
-	gb->cpu.af.ind.a = gb->cpu.bc.ind.c;
+	gb->cpu.a = gb->cpu.c;
 }
 
 
@@ -1404,7 +1404,7 @@ void ld_79(Gameboy* const gb)
 void ld_7A(Gameboy* const gb) 
 {
 	// LD A, D
-	gb->cpu.af.ind.a = gb->cpu.de.ind.d;
+	gb->cpu.a = gb->cpu.d;
 }
 
 
@@ -1412,7 +1412,7 @@ void ld_7A(Gameboy* const gb)
 void ld_7B(Gameboy* const gb)
 { 
 	// LD A, E
-	gb->cpu.af.ind.a = gb->cpu.de.ind.e;
+	gb->cpu.a = gb->cpu.e;
 }
 
 
@@ -1421,7 +1421,7 @@ void ld_7B(Gameboy* const gb)
 void ld_7C(Gameboy* const gb) 
 {
 	// LD A, H
-	gb->cpu.af.ind.a = gb->cpu.hl.ind.h;
+	gb->cpu.a = gb->cpu.h;
 }
 
 
@@ -1429,7 +1429,7 @@ void ld_7C(Gameboy* const gb)
 void ld_7D(Gameboy* const gb)
 { 
 	// LD A, L
-	gb->cpu.af.ind.a = gb->cpu.hl.ind.l;
+	gb->cpu.a = gb->cpu.l;
 }
 
 
@@ -1437,7 +1437,7 @@ void ld_7D(Gameboy* const gb)
 void ld_7E(Gameboy* const gb) 
 {
 	// LD A, (HL)
-	gb->cpu.af.ind.a = gb->Read8(gb->cpu.hl.pair);
+	gb->cpu.a = gb->Read8(gb->cpu.hl);
 }
 
 
@@ -1448,7 +1448,7 @@ void ld_7E(Gameboy* const gb)
 void add_80(Gameboy* const gb)
 { 
 	// ADD A, B
-	add_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	add_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
@@ -1456,27 +1456,27 @@ void add_80(Gameboy* const gb)
 void add_81(Gameboy* const gb)
 { 
 	// ADD A, C
-	add_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	add_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
 void add_82(Gameboy* const gb) 
 { 
 	// ADD A, D
-	add_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	add_a_n(gb->cpu.d, &gb->cpu);
 }
 
 
 void add_83(Gameboy* const gb)
 { 
 	// ADD A, E
-	add_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	add_a_n(gb->cpu.e, &gb->cpu);
 }
 
 void add_84(Gameboy* const gb)
 {
 	// ADD A, H
-	add_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	add_a_n(gb->cpu.h, &gb->cpu);
 }
 
 
@@ -1484,7 +1484,7 @@ void add_84(Gameboy* const gb)
 void add_85(Gameboy* const gb)
 {
 	// ADD A, L
-	add_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	add_a_n(gb->cpu.l, &gb->cpu);
 }
 
 
@@ -1493,7 +1493,7 @@ void add_85(Gameboy* const gb)
 void add_86(Gameboy* const gb)
 { 
 	// ADD A, (HL)
-	add_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	add_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 
@@ -1502,7 +1502,7 @@ void add_86(Gameboy* const gb)
 void add_87(Gameboy* const gb) 
 {
 	// ADD A, A
-	add_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	add_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1510,14 +1510,14 @@ void add_87(Gameboy* const gb)
 void adc_88(Gameboy* const gb)
 {
 	// ADC A, B
-	adc_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	adc_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
 void adc_89(Gameboy* const gb)
 { 
 	// ADC A, C
-	adc_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	adc_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
@@ -1525,21 +1525,21 @@ void adc_89(Gameboy* const gb)
 void adc_8A(Gameboy* const gb)
 {
 	// ADC A, D
-	adc_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	adc_a_n(gb->cpu.d, &gb->cpu);
 }
 
 
 void adc_8B(Gameboy* const gb)
 {
 	// ADC A, E
-	adc_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	adc_a_n(gb->cpu.e, &gb->cpu);
 }
 
 
 void adc_8C(Gameboy* const gb)
 {
 	// ADC A, H
-	adc_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	adc_a_n(gb->cpu.h, &gb->cpu);
 }
 
 
@@ -1547,7 +1547,7 @@ void adc_8C(Gameboy* const gb)
 void adc_8D(Gameboy* const gb)
 { 
 	// ADC A, L
-	adc_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	adc_a_n(gb->cpu.l, &gb->cpu);
 }
 
 
@@ -1555,14 +1555,14 @@ void adc_8D(Gameboy* const gb)
 void adc_8E(Gameboy* const gb)
 { 
 	// ADC A, (HL)
-	adc_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	adc_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 
 void adc_8F(Gameboy* const gb)
 {
 	// ADC A, A
-	adc_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	adc_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1572,7 +1572,7 @@ void adc_8F(Gameboy* const gb)
 void sub_90(Gameboy* const gb)
 { 
 	// SUB B
-	sub_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	sub_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
@@ -1580,21 +1580,21 @@ void sub_90(Gameboy* const gb)
 void sub_91(Gameboy* const gb)
 { 
 	// SUB C
-	sub_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	sub_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
 void sub_92(Gameboy* const gb)
 {
 	// SUB D
-	sub_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	sub_a_n(gb->cpu.d, &gb->cpu);
 }
 
 
 void sub_93(Gameboy* const gb)
 {
 	// SUB E
-	sub_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	sub_a_n(gb->cpu.e, &gb->cpu);
 }
 
 
@@ -1602,14 +1602,14 @@ void sub_93(Gameboy* const gb)
 void sub_94(Gameboy* const gb)
 {
 	// SUB H
-	sub_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	sub_a_n(gb->cpu.h, &gb->cpu);
 }
 
 
 void sub_95(Gameboy* const gb)
 {
 	// SUB L
-	sub_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	sub_a_n(gb->cpu.l, &gb->cpu);
 }
 
 
@@ -1617,7 +1617,7 @@ void sub_95(Gameboy* const gb)
 void sub_96(Gameboy* const gb)
 { 
 	// SUB (HL)
-	sub_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	sub_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 
@@ -1625,7 +1625,7 @@ void sub_96(Gameboy* const gb)
 void sub_97(Gameboy* const gb)
 {
 	// SUB A
-	sub_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	sub_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1633,52 +1633,52 @@ void sub_97(Gameboy* const gb)
 void sbc_98(Gameboy* const gb)
 {
 	// SBC A, B
-	sbc_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	sbc_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
 void sbc_99(Gameboy* const gb)
 { 
 	// SBC A, C
-	sbc_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	sbc_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
 void sbc_9A(Gameboy* const gb)
 {
 	// SBC A, D
-	sbc_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	sbc_a_n(gb->cpu.d, &gb->cpu);
 }
 
 
 void sbc_9B(Gameboy* const gb)
 {
 	// SBC A, E
-	sbc_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	sbc_a_n(gb->cpu.e, &gb->cpu);
 }
 
 void sbc_9C(Gameboy* const gb)
 {
 	// SBC A, H
-	sbc_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	sbc_a_n(gb->cpu.h, &gb->cpu);
 }
 
 void sbc_9D(Gameboy* const gb)
 {
 	// SBC A, L
-	sbc_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	sbc_a_n(gb->cpu.l, &gb->cpu);
 }
 
 void sbc_9E(Gameboy* const gb)
 {
 	// SBC A, (HL)
-	sbc_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	sbc_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 void sbc_9F(Gameboy* const gb)
 {
 	// SBC A, A
-	sbc_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	sbc_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1693,7 +1693,7 @@ void sbc_9F(Gameboy* const gb)
 void and_A0(Gameboy* const gb)
 { 
 	// AND B
-	and_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	and_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
@@ -1701,7 +1701,7 @@ void and_A0(Gameboy* const gb)
 void and_A1(Gameboy* const gb) 
 {
 	// AND C
-	and_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	and_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
@@ -1709,32 +1709,32 @@ void and_A1(Gameboy* const gb)
 void and_A2(Gameboy* const gb)
 {
 	// AND D
-	and_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	and_a_n(gb->cpu.d, &gb->cpu);
 }
 
 void and_A3(Gameboy* const gb)
 {
 	// AND E
-	and_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	and_a_n(gb->cpu.e, &gb->cpu);
 }
 
 void and_A4(Gameboy* const gb)
 {
 	// AND H
-	and_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	and_a_n(gb->cpu.h, &gb->cpu);
 }
 
 void and_A5(Gameboy* const gb)
 {
 	// AND L
-	and_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	and_a_n(gb->cpu.l, &gb->cpu);
 }
 
 
 void and_A6(Gameboy* const gb)
 { 
 	// AND (HL)
-	and_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	and_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 
@@ -1743,7 +1743,7 @@ void and_A7(Gameboy* const gb)
 {
 	// TODO: optimize
 	// AND A
-	and_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	and_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1751,7 +1751,7 @@ void and_A7(Gameboy* const gb)
 void xor_A8(Gameboy* const gb)
 { 
 	// XOR B
-	xor_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	xor_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
@@ -1759,7 +1759,7 @@ void xor_A8(Gameboy* const gb)
 void xor_A9(Gameboy* const gb) 
 {
 	// XOR C
-	xor_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	xor_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
@@ -1767,38 +1767,38 @@ void xor_A9(Gameboy* const gb)
 void xor_AA(Gameboy* const gb)
 {
 	// XOR D
-	xor_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	xor_a_n(gb->cpu.d, &gb->cpu);
 }
 
 void xor_AB(Gameboy* const gb)
 {
 	// XOR E
-	xor_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	xor_a_n(gb->cpu.e, &gb->cpu);
 }
 
 void xor_AC(Gameboy* const gb)
 {
 	// XOR H
-	xor_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	xor_a_n(gb->cpu.h, &gb->cpu);
 }
 
 void xor_AD(Gameboy* const gb)
 {
 	// XOR L
-	xor_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	xor_a_n(gb->cpu.l, &gb->cpu);
 }
 
 void xor_AE(Gameboy* const gb)
 {
 	// XOR (HL)
-	xor_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	xor_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 void xor_AF(Gameboy* const gb) 
 {
 	// TODO: optimize
 	// XOR A
-	xor_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	xor_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1809,7 +1809,7 @@ void xor_AF(Gameboy* const gb)
 void or_B0(Gameboy* const gb) 
 {
 	// OR B
-	or_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	or_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
@@ -1817,7 +1817,7 @@ void or_B0(Gameboy* const gb)
 void or_B1(Gameboy* const gb) 
 {
 	// OR C
-	or_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	or_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
@@ -1826,26 +1826,26 @@ void or_B1(Gameboy* const gb)
 void or_B2(Gameboy* const gb)
 { 
 	// OR D
-	or_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	or_a_n(gb->cpu.d, &gb->cpu);
 }
 
 
 void or_B3(Gameboy* const gb)
 {
 	// OR E
-	or_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	or_a_n(gb->cpu.e, &gb->cpu);
 }
 
 void or_B4(Gameboy* const gb)
 {
 	// OR H
-	or_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	or_a_n(gb->cpu.h, &gb->cpu);
 }
 
 void or_B5(Gameboy* const gb)
 {
 	// OR L
-	or_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	or_a_n(gb->cpu.l, &gb->cpu);
 }
 
 
@@ -1854,7 +1854,7 @@ void or_B5(Gameboy* const gb)
 void or_B6(Gameboy* const gb) 
 {
 	// OR (HL)
-	or_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	or_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 
@@ -1862,14 +1862,14 @@ void or_B6(Gameboy* const gb)
 void or_B7(Gameboy* const gb) 
 { 
 	// OR A
-	or_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	or_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
 void cp_B8(Gameboy* const gb)
 { 
 	// CP B
-	cp_a_n(gb->cpu.bc.ind.b, &gb->cpu);
+	cp_a_n(gb->cpu.b, &gb->cpu);
 }
 
 
@@ -1878,7 +1878,7 @@ void cp_B8(Gameboy* const gb)
 void cp_B9(Gameboy* const gb) 
 { 
 	// CP C
-	cp_a_n(gb->cpu.bc.ind.c, &gb->cpu);
+	cp_a_n(gb->cpu.c, &gb->cpu);
 }
 
 
@@ -1887,32 +1887,32 @@ void cp_B9(Gameboy* const gb)
 void cp_BA(Gameboy* const gb)
 {
 	// CP D
-	cp_a_n(gb->cpu.de.ind.d, &gb->cpu);
+	cp_a_n(gb->cpu.d, &gb->cpu);
 }
 
 void cp_BB(Gameboy* const gb)
 {
 	// CP E
-	cp_a_n(gb->cpu.de.ind.e, &gb->cpu);
+	cp_a_n(gb->cpu.e, &gb->cpu);
 }
 
 void cp_BC(Gameboy* const gb)
 {
 	// CP H
-	cp_a_n(gb->cpu.hl.ind.h, &gb->cpu);
+	cp_a_n(gb->cpu.h, &gb->cpu);
 }
 
 void cp_BD(Gameboy* const gb)
 {
 	// CP L
-	cp_a_n(gb->cpu.hl.ind.l, &gb->cpu);
+	cp_a_n(gb->cpu.l, &gb->cpu);
 }
 
 
 void cp_BE(Gameboy* const gb)
 { 
 	// CP (HL)
-	cp_a_n(gb->Read8(gb->cpu.hl.pair), &gb->cpu);
+	cp_a_n(gb->Read8(gb->cpu.hl), &gb->cpu);
 }
 
 
@@ -1921,7 +1921,7 @@ void cp_BF(Gameboy* const gb)
 {
 	// TODO: optimize
 	// CP A
-	cp_a_n(gb->cpu.af.ind.a, &gb->cpu);
+	cp_a_n(gb->cpu.a, &gb->cpu);
 }
 
 
@@ -1944,7 +1944,7 @@ void ret_C0(Gameboy* const gb)
 void pop_C1(Gameboy* const gb) 
 {
 	// POP BC
-	gb->cpu.bc.pair = gb->PopStack16();
+	gb->cpu.bc = gb->PopStack16();
 }
 
 
@@ -1973,7 +1973,7 @@ void call_C4(Gameboy* const gb)
 void push_C5(Gameboy* const gb) 
 {
 	// PUSH BC
-	gb->PushStack16(gb->cpu.bc.pair);
+	gb->PushStack16(gb->cpu.bc);
 }
 
 
@@ -2087,7 +2087,7 @@ void ret_D0(Gameboy* const gb)
 void pop_D1(Gameboy* const gb) 
 {
 	// POP DE
-	gb->cpu.de.pair = gb->PopStack16();
+	gb->cpu.de = gb->PopStack16();
 }
 
 
@@ -2110,7 +2110,7 @@ void call_D4(Gameboy* const gb)
 void push_D5(Gameboy* const gb) 
 {
 	// PUSH DE
-	gb->PushStack16(gb->cpu.de.pair);
+	gb->PushStack16(gb->cpu.de);
 }
 
 
@@ -2185,7 +2185,7 @@ void rst_DF(Gameboy* const gb)
 void ldh_E0(Gameboy* const gb) 
 {
 	// LDH (a8), A
-	gb->Write8(get_a8(gb), gb->cpu.af.ind.a);
+	gb->Write8(get_a8(gb), gb->cpu.a);
 }
 
 
@@ -2193,7 +2193,7 @@ void ldh_E0(Gameboy* const gb)
 void pop_E1(Gameboy* const gb) 
 {
 	// POP HL
-	gb->cpu.hl.pair = gb->PopStack16();
+	gb->cpu.hl = gb->PopStack16();
 }
 
 
@@ -2206,8 +2206,8 @@ void pop_E1(Gameboy* const gb)
 void ld_E2(Gameboy* const gb) 
 {
 	// LD (C), A
-	const uint8_t c = gb->cpu.bc.ind.c;
-	gb->Write8(0xFF00 + c, gb->cpu.af.ind.a);
+	const uint8_t c = gb->cpu.c;
+	gb->Write8(0xFF00 + c, gb->cpu.a);
 }
 
 
@@ -2219,7 +2219,7 @@ void ld_E2(Gameboy* const gb)
 void push_E5(Gameboy* const gb) 
 {
 	// PUSH HL
-	gb->PushStack16(gb->cpu.hl.pair);
+	gb->PushStack16(gb->cpu.hl);
 }
 
 
@@ -2252,7 +2252,7 @@ void add_E8(Gameboy* const gb)
 	if ((result & 0xf) < (sp & 0xf))
 		flags_result |= CPU::FLAG_H;
 
-	gb->cpu.af.ind.f = flags_result;
+	gb->cpu.f = flags_result;
 	gb->cpu.sp = static_cast<uint16_t>(result);
 }
 
@@ -2262,7 +2262,7 @@ void add_E8(Gameboy* const gb)
 void jp_E9(Gameboy* const gb) 
 {
 	// JP (HL)
-	gb->cpu.pc = gb->cpu.hl.pair;
+	gb->cpu.pc = gb->cpu.hl;
 }
 
 
@@ -2270,7 +2270,7 @@ void jp_E9(Gameboy* const gb)
 void ld_EA(Gameboy* const gb) 
 {
 	// LD (a16), A
-	gb->Write8(get_a16(gb), gb->cpu.af.ind.a);
+	gb->Write8(get_a16(gb), gb->cpu.a);
 }
 
 
@@ -2299,7 +2299,7 @@ void rst_EF(Gameboy* const gb)
 void ldh_F0(Gameboy* const gb) 
 {
 	// LDH A, (a8)
-	gb->cpu.af.ind.a = gb->Read8(get_a8(gb));
+	gb->cpu.a = gb->Read8(get_a8(gb));
 }
 
 
@@ -2308,15 +2308,15 @@ void pop_F1(Gameboy* const gb)
 {
 	// POP AF ( Z N H C )
 	const uint16_t value = gb->PopStack16();
-	gb->cpu.af.pair = value & 0xFFF0;
+	gb->cpu.af = value & 0xFFF0;
 }
 
 
 void ld_F2(Gameboy* const gb)
 {
 	// LD A, (C)
-	const uint8_t value = gb->Read8(0xFF00 + gb->cpu.bc.ind.c);
-	gb->cpu.af.ind.a = value;
+	const uint8_t value = gb->Read8(0xFF00 + gb->cpu.c);
+	gb->cpu.a = value;
 }
 
 
@@ -2335,7 +2335,7 @@ void di_F3(Gameboy* const gb)
 void push_F5(Gameboy* const gb) 
 {
 	// PUSH AF
-	gb->PushStack16(gb->cpu.af.pair);	
+	gb->PushStack16(gb->cpu.af);	
 }
 
 
@@ -2369,14 +2369,14 @@ void ld_F8(Gameboy* const gb)
 	if ((check & 0x10) == 0x10)
 		flags_result |= CPU::FLAG_H;
 
-	gb->cpu.hl.pair = result;
-	gb->cpu.af.ind.f = flags_result;
+	gb->cpu.hl = result;
+	gb->cpu.f = flags_result;
 }
 
 void ld_F9(Gameboy* const gb)
 {
 	// LD SP, HL
-	gb->cpu.sp = gb->cpu.hl.pair;
+	gb->cpu.sp = gb->cpu.hl;
 }
 
 
@@ -2389,7 +2389,7 @@ void ld_F9(Gameboy* const gb)
 void ld_FA(Gameboy* const gb) 
 {
 	// LD A, (a16)
-	gb->cpu.af.ind.a = gb->Read8(get_a16(gb));
+	gb->cpu.a = gb->Read8(get_a16(gb));
 }
 
 

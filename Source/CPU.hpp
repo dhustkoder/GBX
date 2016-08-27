@@ -27,30 +27,30 @@ struct CPU
 	union {
 		struct {
 			uint8_t f, a; 
-		}ind;
-		uint16_t pair;
-	}af;
+		};
+		uint16_t af;
+	};
 
 	union {
 		struct {
 			uint8_t c, b; 
-		}ind;
-		uint16_t pair;
-	}bc;
+		};
+		uint16_t bc;
+	};
 
 	union {
 		struct {
 			uint8_t e, d; 
-		}ind;
-		uint16_t pair;
-	}de;
+		};
+		uint16_t de;
+	};
 
 	union {
 		struct {
 			uint8_t l, h; 
-		}ind;
-		uint16_t pair;
-	}hl;
+		};
+		uint16_t hl;
+	};
 	
 };
 
@@ -112,19 +112,19 @@ constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint16_t second) {
 
 inline CPU::Flags CPU::GetFlags(const CPU::Flags flags) const 
 {
-	return static_cast<Flags>(af.ind.f & flags);
+	return static_cast<Flags>(f & flags);
 }
 
 
 inline void CPU::SetFlags(const CPU::Flags flags)
 {
-	af.ind.f |= flags;
+	f |= flags;
 }
 
 
 inline void CPU::ClearFlags(const CPU::Flags flags)
 {
-	af.ind.f &= ~flags;
+	f &= ~flags;
 }
 
 
