@@ -80,7 +80,8 @@ int main(int argc, char** argv)
 		}
 
 		gameboy->Run(69905);
-		if (gameboy->gpu.GetMode() != gbx::GPU::Mode::VBLANK)
+		if (gameboy->gpu.lcdc.lcd_on
+		    && gameboy->gpu.stat.mode != gbx::GPU::Mode::VBLANK)
 			RenderGraphics(gameboy->gpu, gameboy->memory);
 		
 		SDL_Delay(15);
@@ -179,10 +180,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
 	using gbx::GPU;
 
-	const uint8_t lcdc = gpu.lcdc;
-
 	SDL_RenderClear(renderer);
-
 
 	int pitch;
 	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
@@ -191,26 +189,25 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	}
 
 	const uint8_t bgp = gpu.bgp;
-	const bool unsigned_tiles = (lcdc & GPU::BG_WIN_TILE_DATA_SELECT) != 0;
+	const auto lcdc = gpu.lcdc;
+	const bool unsigned_tiles = lcdc.tile_data_select != 0;
 	auto tile_data = unsigned_tiles ? reinterpret_cast<const Tile*>(memory.vram)
 	                                : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
 
 
-	if (lcdc & GPU::BG_ON_OFF) {
-		const bool tile_map_select = (lcdc & GPU::BG_TILE_MAP_SELECT) != 0;
-		auto tile_map = tile_map_select 
+	if (lcdc.bg_on) {
+		auto tile_map = lcdc.bg_map_select
 			? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
 			: reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
 
 		DrawTileMap(tile_data, tile_map, 0, 0, bgp, unsigned_tiles);
 	}
 
-	if (lcdc & GPU::WIN_ON_OFF) {
+	if (lcdc.win_on) {
 		const uint8_t wx = gpu.wx - 7;
 		const uint8_t wy = gpu.wy;
 		if (wx < 153 && wy < 137) {		
-			const bool tile_map_select = (lcdc & GPU::WIN_TILE_MAP_SELECT) != 0;
-			auto tile_map = tile_map_select 
+			auto tile_map = lcdc.win_map_select
 				? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
 				: reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
 
@@ -218,7 +215,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 		}
 	}
 
-	if (lcdc & GPU::OBJ_ON_OFF)
+	if (lcdc.obj_on)
 		DrawOBJ(gpu, memory);
 
 

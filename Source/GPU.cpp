@@ -27,42 +27,50 @@ enum StatusMask : uint8_t
 
 void Gameboy::UpdateGPU(const uint8_t cycles)
 {
-	if (!(gpu.lcdc & GPU::LCD_ON_OFF)) {
+	if (!gpu.lcdc.lcd_on) {
 		gpu.clock = 0;
 		gpu.ly = 0;
-		gpu.SetMode(GPU::Mode::HBLANK);
+		gpu.stat.mode = GPU::Mode::HBLANK;
 		return;
 	}
 
 	const auto compare_ly = [this] {
 		if (gpu.ly != gpu.lyc) {
-			if (gpu.stat & COINCIDENCE_FLAG)
-				gpu.stat &= ~COINCIDENCE_FLAG;
+			if (gpu.stat.coincidence_flag)
+				gpu.stat.coincidence_flag = 0;
 		} else {
-			gpu.stat |= COINCIDENCE_FLAG;
-			if (gpu.stat & INT_ON_COINCIDENCE)
+			gpu.stat.coincidence_flag = 1;
+			if (gpu.stat.int_on_coincidence)
 				hwstate.RequestInt(INT_LCD_STAT);
 		}
 	};
 
-	const auto set_mode_n_stat = [this](GPU::Mode mode, StatusMask interrupt_on) {
-		gpu.SetMode(mode);
-		if (gpu.stat & interrupt_on)
+	const auto set_mode = [this](const GPU::Mode mode) {
+		const auto stat = gpu.stat;
+		uint8_t int_on = 0;
+		switch (mode) {
+		case GPU::Mode::HBLANK: int_on = stat.int_on_hblank; break;
+		case GPU::Mode::VBLANK: int_on = stat.int_on_vblank; break;
+		case GPU::Mode::OAM: int_on = stat.int_on_oam; break;
+		default: break;
+		}
+		if (int_on)
 			hwstate.RequestInt(INT_LCD_STAT);
+		gpu.stat.mode = mode;
 	};
 
 	gpu.clock += cycles;
 
-	switch (gpu.GetMode()) {
+	switch (gpu.stat.mode) {
 	case GPU::Mode::HBLANK:
 		if (gpu.clock >= 204) {
 			++gpu.ly;
 
 			if (gpu.ly != 144) {
-				set_mode_n_stat(GPU::Mode::OAM, INT_ON_OAM);
+				set_mode(GPU::Mode::OAM);
 			} else {
 				hwstate.int_flags |= INT_VBLANK;
-				set_mode_n_stat(GPU::Mode::VBLANK, INT_ON_VBLANK);
+				set_mode(GPU::Mode::VBLANK);
 			}
 
 			compare_ly();
@@ -77,7 +85,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 			if (gpu.ly > 153) {
 				gpu.ly = 0;
-				set_mode_n_stat(GPU::Mode::OAM, INT_ON_OAM);
+				set_mode(GPU::Mode::OAM);
 			}
 
 			compare_ly();
@@ -88,7 +96,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 	case GPU::Mode::OAM:
 		if (gpu.clock >= 80) {
-			gpu.SetMode(GPU::Mode::TRANSFER);
+			gpu.stat.mode = GPU::Mode::TRANSFER;
 			gpu.clock -= 80;
 		}
 
@@ -96,7 +104,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 	case GPU::Mode::TRANSFER:
 		if (gpu.clock >= 172) {
-			set_mode_n_stat(GPU::Mode::HBLANK, INT_ON_HBLANK);
+			set_mode(GPU::Mode::HBLANK);
 			gpu.clock -= 172;
 		}
 

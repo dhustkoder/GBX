@@ -58,8 +58,8 @@ bool Gameboy::Reset()
 	cpu.de = 0x00D8;
 	cpu.hl = 0x014D;
 
-	gpu.lcdc = 0x91;
-	gpu.stat = 0x85;
+	gpu.lcdc.value = 0x91;
+	gpu.stat.value = 0x85;
 	gpu.bgp = 0xFC;
 	gpu.obp0 = 0xFF;
 	gpu.obp1 = 0xFF;

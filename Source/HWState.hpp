@@ -19,25 +19,22 @@ enum IntMask : uint8_t
 struct HWState
 {
 
-	enum Flags : uint8_t
-	{
-		INT_MASTER_ENABLED = 0x01,
-		INT_MASTER_ACTIVE = 0x02,
-		CPU_HALT = 0x04,
-		TIMER_STOP = 0x08
+	enum Flags : uint8_t {
+		INT_MASTER_ENABLED = 0x01, INT_MASTER_ACTIVE = 0x02,
+		CPU_HALT = 0x04, TIMER_STOP = 0x08
 	};
 
 
 	bool GetIntMaster() const;
 	bool GetIntActive() const;
-	Flags GetFlags(Flags hwflags) const;
+	Flags GetFlags(const Flags hwflags) const;
 	uint8_t GetPendentInts() const;
 	void EnableIntMaster();
 	void EnableIntActive();
 	void DisableIntMaster();
 
-	void SetFlags(Flags hwflags);
-	void ClearFlags(Flags hwflags);
+	void SetFlags(const Flags hwflags);
+	void ClearFlags(const Flags hwflags);
 
 	void EnableInt(const IntMask intr);
 	void DisableInt(const IntMask inter);
@@ -70,7 +67,7 @@ inline bool HWState::GetIntActive() const
 }
 
 
-inline HWState::Flags HWState::GetFlags(Flags hwflags) const
+inline HWState::Flags HWState::GetFlags(const Flags hwflags) const
 {
 	return static_cast<Flags>(flags & hwflags);
 }
@@ -103,12 +100,12 @@ inline void HWState::DisableIntMaster()
 }
 
 
-inline void HWState::SetFlags(Flags hwflags)
+inline void HWState::SetFlags(const Flags hwflags)
 {
 	flags |= hwflags;
 }
 
-inline void HWState::ClearFlags(Flags hwflags)
+inline void HWState::ClearFlags(const Flags hwflags)
 {
 	flags &= ~hwflags;
 }
