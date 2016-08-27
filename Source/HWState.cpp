@@ -5,7 +5,7 @@ namespace gbx {
 
 
 
-void Gameboy::UpdateHWState(const uint8_t cycles)
+void Gameboy::UpdateTimers(const uint8_t cycles)
 {
 	if ((hwstate.div_clock + cycles) >= 0x100)
 		++hwstate.div;
@@ -25,8 +25,6 @@ void Gameboy::UpdateHWState(const uint8_t cycles)
 		}
 	}
 }
-
-
 
 
 

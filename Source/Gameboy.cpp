@@ -128,7 +128,7 @@ void Gameboy::Run(const uint32_t cycles)
 	do {
 		const uint8_t step_cycles = Step();
 		UpdateGPU(step_cycles);
-		UpdateHWState(step_cycles);
+		UpdateTimers(step_cycles);
 		UpdateInterrupts();
 	} while (cpu.clock < cycles);
 	cpu.clock = 0;
