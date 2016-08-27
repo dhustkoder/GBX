@@ -21,6 +21,7 @@ static uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart);
 static void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const cart);
 static uint8_t read_io(const uint16_t address, const Gameboy& gb);
 static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb);
+static void write_stat(const uint8_t value, GPU* const gpu);
 static void write_keys(const uint8_t value, Keys* const keys);
 static void write_tac(const uint8_t value, HWState* const hwstate);
 static void dma_transfer(const uint8_t value, Gameboy* const gb);
@@ -211,8 +212,8 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	case 0xFF06: return gb.hwstate.tma;
 	case 0xFF07: return gb.hwstate.tac;
 	case 0xFF0F: return gb.hwstate.int_flags;
-	case 0xFF40: return gb.gpu.lcdc;
-	case 0xFF41: return gb.gpu.stat;
+	case 0xFF40: return gb.gpu.lcdc.value;
+	case 0xFF41: return gb.gpu.stat.value;
 	case 0xFF42: return gb.gpu.scy;
 	case 0xFF43: return gb.gpu.scx;
 	case 0xFF44: return gb.gpu.ly;
@@ -241,8 +242,8 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
 	case 0xFF0F: gb->hwstate.int_flags = value; break;
-	case 0xFF40: gb->gpu.lcdc = value; break;
-	case 0xFF41: gb->gpu.stat = (value & 0xF8) | (gb->gpu.stat & 0x07); break;
+	case 0xFF40: gb->gpu.lcdc.value = value; break;
+	case 0xFF41: write_stat(value, &gb->gpu); break;
 	case 0xFF42: gb->gpu.scy = value; break;
 	case 0xFF43: gb->gpu.scx = value; break;
 	case 0xFF44: gb->gpu.ly = 0; break;
@@ -257,6 +258,13 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 		//debug_printf("required write hardware io address: %4x\n", address);
 		break;
 	}
+}
+
+
+
+static void write_stat(const uint8_t value, GPU* const gpu)
+{
+	gpu->stat.value = (value & 0xf8) | (gpu->stat.value & 0x07);
 }
 
 
