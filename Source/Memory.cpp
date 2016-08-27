@@ -272,8 +272,8 @@ static void write_stat(const uint8_t value, GPU* const gpu)
 static void write_keys(const uint8_t value, Keys* const keys)
 {
 	switch (value & 0x30) {
-	case 0x10: keys->value = 0xD0 | (keys->pad.all >> 4); break;
-	case 0x20: keys->value = 0xE0 | (keys->pad.all & 0x0f); break;
+	case 0x10: keys->value = 0xD0 | (keys->pad.value >> 4); break;
+	case 0x20: keys->value = 0xE0 | (keys->pad.value & 0x0f); break;
 	default: keys->value = 0xFF; break;
 	}
 }

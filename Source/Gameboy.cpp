@@ -66,7 +66,7 @@ bool Gameboy::Reset()
 
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
-	keys.pad.all = 0xFF;
+	keys.pad.value = 0xFF;
 
 	// Write8(0xFF05, 0x00); // TIMA, in HWState
 	// Write8(0xFF06, 0x00); // TMA, in HWState

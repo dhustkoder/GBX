@@ -106,19 +106,19 @@ constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint16_t second) {
 
 
 
-inline CPU::Flags CPU::GetFlags(const CPU::Flags flags) const 
+inline CPU::Flags CPU::GetFlags(const Flags flags) const 
 {
 	return static_cast<Flags>(f & flags);
 }
 
 
-inline void CPU::SetFlags(const CPU::Flags flags)
+inline void CPU::SetFlags(const Flags flags)
 {
 	f |= flags;
 }
 
 
-inline void CPU::ClearFlags(const CPU::Flags flags)
+inline void CPU::ClearFlags(const Flags flags)
 {
 	f &= ~flags;
 }

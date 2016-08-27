@@ -5,32 +5,12 @@ namespace gbx {
 
 
 
-enum StatusMask : uint8_t
-{
-	INT_ON_COINCIDENCE = 0x40,
-	INT_ON_OAM = 0x20,
-	INT_ON_VBLANK = 0x10,
-	INT_ON_HBLANK = 0x08,
-	COINCIDENCE_FLAG = 0x04,
-};
-
-
-
-
-
-
-
-
-
-
-
-
 void Gameboy::UpdateGPU(const uint8_t cycles)
 {
 	if (!gpu.lcdc.lcd_on) {
 		gpu.clock = 0;
 		gpu.ly = 0;
-		gpu.stat.mode = GPU::Mode::HBLANK;
+		gpu.stat.mode = GPU::Mode::VBLANK;
 		return;
 	}
 
