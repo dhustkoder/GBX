@@ -197,7 +197,7 @@ inline void res_r(const uint8_t bit, uint8_t* const reg) {
 
 inline void set_hlp(const uint8_t bit, Gameboy* const gb)
 {
-	const uint16_t hl = gb->cpu.GetHL();
+	const uint16_t hl = gb->cpu.hl.pair;
 	const uint8_t result = SetBit(bit, gb->Read8(hl));
 	gb->Write8(hl, result);
 }
@@ -205,7 +205,7 @@ inline void set_hlp(const uint8_t bit, Gameboy* const gb)
 
 inline void res_hlp(const uint8_t bit, Gameboy* const gb)
 {
-	const uint16_t hl = gb->cpu.GetHL();
+	const uint16_t hl = gb->cpu.hl.pair;
 	const uint8_t result = ResBit(bit, gb->Read8(hl));
 	gb->Write8(hl, result);
 }
@@ -655,7 +655,7 @@ void srl_3F(Gameboy* const gb)
 void bit_40(Gameboy* const gb)
 { 
 	// BIT 0, B
-	bit_r(0, gb->cpu.GetB(), &gb->cpu);
+	bit_r(0, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -663,7 +663,7 @@ void bit_40(Gameboy* const gb)
 void bit_41(Gameboy* const gb) 
 { 
 	// BIT 0, C
-	bit_r(0, gb->cpu.GetC(), &gb->cpu);
+	bit_r(0, gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 
@@ -685,7 +685,7 @@ void bit_46(Gameboy* const gb)
 void bit_47(Gameboy* const gb)
 { 
 	// BIT 0, A
-	bit_r(0, gb->cpu.GetA(), &gb->cpu);
+	bit_r(0, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -693,7 +693,7 @@ void bit_47(Gameboy* const gb)
 void bit_48(Gameboy* const gb)
 { 
 	// BIT 1, B
-	bit_r(1, gb->cpu.GetB(), &gb->cpu);
+	bit_r(1, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -701,7 +701,7 @@ void bit_48(Gameboy* const gb)
 void bit_49(Gameboy* const gb)
 {
 	// BIT 1, C
-	bit_r(1, gb->cpu.GetC(), &gb->cpu);
+	bit_r(1, gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 void bit_4A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -718,7 +718,7 @@ void bit_4E(Gameboy* const gb)
 void bit_4F(Gameboy* const gb)
 { 
 	// BIT 1, A
-	bit_r(1, gb->cpu.GetA(), &gb->cpu);
+	bit_r(1, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -730,7 +730,7 @@ void bit_4F(Gameboy* const gb)
 void bit_50(Gameboy* const gb)
 { 
 	// BIT 2, B
-	bit_r(2, gb->cpu.GetB(), &gb->cpu);
+	bit_r(2, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -750,14 +750,14 @@ void bit_56(Gameboy* const gb)
 void bit_57(Gameboy* const gb) 
 { 
 	// BIT 2, A
-	bit_r(2, gb->cpu.GetA(), &gb->cpu);
+	bit_r(2, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
 void bit_58(Gameboy* const gb) 
 { 
 	// BIT 3, B
-	bit_r(3, gb->cpu.GetB(), &gb->cpu);
+	bit_r(3, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -777,7 +777,7 @@ void bit_5E(Gameboy* const gb)
 void bit_5F(Gameboy* const gb)
 {
 	// BIT 3, A
-	bit_r(3, gb->cpu.GetA(), &gb->cpu);
+	bit_r(3, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -787,7 +787,7 @@ void bit_5F(Gameboy* const gb)
 void bit_60(Gameboy* const gb) 
 { 
 	// BIT 4, B
-	bit_r(4, gb->cpu.GetB(), &gb->cpu);
+	bit_r(4, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -795,7 +795,7 @@ void bit_60(Gameboy* const gb)
 void bit_61(Gameboy* const gb)
 { 
 	// BIT 4, C
-	bit_r(4, gb->cpu.GetC(), &gb->cpu);
+	bit_r(4, gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 
@@ -815,7 +815,7 @@ void bit_66(Gameboy* const gb)
 void bit_67(Gameboy* const gb)
 {
 	// BIT 4, A
-	bit_r(4, gb->cpu.GetA(), &gb->cpu);
+	bit_r(4, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -824,7 +824,7 @@ void bit_67(Gameboy* const gb)
 void bit_68(Gameboy* const gb)
 { 
 	// BIT 5, B
-	bit_r(5, gb->cpu.GetB(), &gb->cpu);
+	bit_r(5, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -834,7 +834,7 @@ void bit_68(Gameboy* const gb)
 void bit_69(Gameboy* const gb)
 { 
 	// BIT 5, C
-	bit_r(5, gb->cpu.GetC(), &gb->cpu);
+	bit_r(5, gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 
@@ -853,7 +853,7 @@ void bit_6E(Gameboy* const gb)
 void bit_6F(Gameboy* const gb)
 { 
 	// BIT 5, A
-	bit_r(5, gb->cpu.GetA(), &gb->cpu);
+	bit_r(5, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -864,7 +864,7 @@ void bit_6F(Gameboy* const gb)
 void bit_70(Gameboy* const gb) 
 {
 	// BIT 6, B
-	bit_r(6, gb->cpu.GetB(), &gb->cpu);
+	bit_r(6, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
@@ -872,7 +872,7 @@ void bit_70(Gameboy* const gb)
 void bit_71(Gameboy* const gb)
 { 
 	// BIT 6, C
-	bit_r(6, gb->cpu.GetC(), &gb->cpu);
+	bit_r(6, gb->cpu.bc.ind.c, &gb->cpu);
 }
 
 
@@ -892,7 +892,7 @@ void bit_76(Gameboy* const gb)
 void bit_77(Gameboy* const gb)
 { 
 	// BIT 6, A
-	bit_r(6, gb->cpu.GetA(), &gb->cpu);
+	bit_r(6, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
@@ -900,14 +900,14 @@ void bit_77(Gameboy* const gb)
 void bit_78(Gameboy* const gb) 
 { 
 	// BIT 7, B
-	bit_r(7, gb->cpu.GetB(), &gb->cpu);
+	bit_r(7, gb->cpu.bc.ind.b, &gb->cpu);
 }
 
 
 void bit_79(Gameboy* const gb) 
 { 
 	// BIT 7, C
-	bit_r(7, gb->cpu.GetC(), &gb->cpu);
+	bit_r(7, gb->cpu.bc.ind.c, &gb->cpu);
 }
 void bit_7A(Gameboy* const) { ASSERT_INSTR_IMPL(); }
 void bit_7B(Gameboy* const) { ASSERT_INSTR_IMPL(); }
@@ -927,7 +927,7 @@ void bit_7E(Gameboy* const gb)
 void bit_7F(Gameboy* const gb)
 { 
 	// BIT 7, A
-	bit_r(7, gb->cpu.GetA(), &gb->cpu);
+	bit_r(7, gb->cpu.af.ind.a, &gb->cpu);
 }
 
 
