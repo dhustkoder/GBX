@@ -718,7 +718,7 @@ void daa_27(Gameboy* const gb)
 			a -= 0x60;
 	}
 
-	if (a & 0xff00)
+	if (a & 0xFF00)
 		flags_result |= CPU::FLAG_C;
 	if ((a & 0xFF) == 0x00)
 		flags_result |= CPU::FLAG_Z;
