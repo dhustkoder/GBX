@@ -10,7 +10,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 	if (!gpu.lcdc.lcd_on) {
 		gpu.clock = 0;
 		gpu.ly = 0;
-		gpu.stat.mode = GPU::Mode::VBLANK;
+		gpu.stat.mode = GPU::Mode::HBLANK;
 		return;
 	}
 

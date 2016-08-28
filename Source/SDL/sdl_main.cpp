@@ -80,8 +80,7 @@ int main(int argc, char** argv)
 		}
 
 		gameboy->Run(69905);
-		if (gameboy->gpu.lcdc.lcd_on
-		    && (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBLANK))
+		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBLANK)
 			RenderGraphics(gameboy->gpu, gameboy->memory);
 		
 		SDL_Delay(15);
@@ -178,9 +177,14 @@ static Uint32* gfx_buffer;
 
 static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 {
-	using gbx::GPU;
+	const auto lcdc = gpu.lcdc;
 
 	SDL_RenderClear(renderer);
+	
+	if (!lcdc.lcd_on) {
+		SDL_RenderPresent(renderer);
+		return;
+	}
 
 	int pitch;
 	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) != 0) {
@@ -189,7 +193,6 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	}
 
 	const uint8_t bgp = gpu.bgp;
-	const auto lcdc = gpu.lcdc;
 	const bool unsigned_tiles = lcdc.tile_data != 0;
 	auto tile_data = unsigned_tiles ? reinterpret_cast<const Tile*>(memory.vram)
 	                                : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
