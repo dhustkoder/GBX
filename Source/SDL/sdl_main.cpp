@@ -112,8 +112,6 @@ SDL_QUIT_EVENT:
 
 namespace {
 
-
-
 constexpr const int WIN_WIDTH = 160;
 constexpr const int WIN_HEIGHT = 144;
 
@@ -128,10 +126,27 @@ enum Color : Uint32
 };
 
 
+
+struct Tile
+{
+	uint8_t data[8][2];
+};
+
+
 struct TileMap
 {
 	uint8_t data[32][32];
 };
+
+
+struct TilePack
+{
+	const Tile* const tile_data;
+	const TileMap* const tile_map;
+	const uint8_t pallete;
+	const bool unsig_tiles;
+};
+
 
 struct SpriteAttr
 {
@@ -141,22 +156,16 @@ struct SpriteAttr
 	uint8_t flags;
 };
 
-
-struct Tile
-{
-	uint8_t data[8][2];
-};
-
 struct Sprite
 {
 	uint8_t data[8][2];
 };
 
 
-
-static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
-static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t sx, uint8_t sy, uint8_t pallete, bool unsigned_map);
+static void DrawBG(const TilePack& pack, const uint8_t scx, const uint8_t scy);
+static void DrawWIN(const TilePack& pack, const uint8_t wx, const uint8_t wy);
 static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y);
+static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory);
 static void DrawSprite(const Sprite& sprite, const SpriteAttr& attr, const gbx::GPU& gpu);
 static Color SolvePallete(uint8_t color_number, uint8_t pallete);
 inline uint8_t SolveColorNumber(uint8_t upperrow, uint8_t downrow, uint8_t bit);
@@ -193,17 +202,16 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	}
 
 	const uint8_t bgp = gpu.bgp;
-	const bool unsigned_tiles = lcdc.tile_data != 0;
-	auto tile_data = unsigned_tiles ? reinterpret_cast<const Tile*>(memory.vram)
-	                                : reinterpret_cast<const Tile*>(memory.vram + 0x1000);
-
+	const bool unsig_tiles = lcdc.tile_data != 0;
+	auto tile_data = unsig_tiles
+		? reinterpret_cast<const Tile*>(memory.vram)
+		: reinterpret_cast<const Tile*>(memory.vram + 0x1000);
 
 	if (lcdc.bg_on) {
 		auto tile_map = lcdc.bg_map
 			? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
 			: reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
-
-		DrawTileMap(tile_data, tile_map, 0, 0, bgp, unsigned_tiles);
+		DrawBG({tile_data, tile_map, bgp, unsig_tiles}, gpu.scx, gpu.scy);
 	}
 
 	if (lcdc.win_on) {
@@ -213,8 +221,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 			auto tile_map = lcdc.win_map
 				? reinterpret_cast<const TileMap*>(memory.vram + 0x1C00)
 				: reinterpret_cast<const TileMap*>(memory.vram + 0x1800);
-
-			DrawTileMap(tile_data, tile_map, wx, wy, bgp, unsigned_tiles);
+			DrawWIN({tile_data, tile_map, bgp, unsig_tiles}, wx, wy);
 		}
 	}
 
@@ -226,6 +233,77 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
+
+
+
+
+static void DrawBG(const TilePack& pack, const uint8_t scx, const uint8_t scy)
+{
+	const Tile* const tile_data = pack.tile_data;
+	const TileMap* const map = pack.tile_map;
+	const uint8_t pallete = pack.pallete;
+	const bool unsig_tiles = pack.unsig_tiles;
+
+	for (uint8_t y = 0; y < 18; ++y) {
+		const uint8_t ypos = y * 8;
+		const uint8_t id_y = (y + scy / 8) & 31;
+		for (uint8_t x = 0; x < 20; ++x) {
+			const uint8_t xpos = x * 8;
+			const uint8_t id_x = (x + scx / 8) & 31;
+			const uint8_t tile_id = map->data[id_y][id_x];
+			const Tile* tile = unsig_tiles
+				? &tile_data[tile_id]
+				: &tile_data[static_cast<int8_t>(tile_id)];
+			DrawTile(*tile, pallete, xpos, ypos);
+		}
+	}
+}
+
+
+
+
+static void DrawWIN(const TilePack& pack, const uint8_t wx, const uint8_t wy)
+{
+	const Tile* const tile_data = pack.tile_data;
+	const TileMap* const map = pack.tile_map;
+	const uint8_t pallete = pack.pallete;
+	const bool unsig_tiles = pack.unsig_tiles;
+
+	for (uint8_t y = 0; y < 18; ++y) {
+		const uint8_t ypos = ((y * 8) + wy);
+		if (ypos > 136)
+			break;
+
+		for (uint8_t x = 0; x < 20; ++x) {
+			const uint8_t tile_id = map->data[y][x];
+			const uint8_t xpos = ((x * 8) + wx);
+			if (xpos > 152)
+				continue;
+
+			const Tile& tile = unsig_tiles
+				? tile_data[tile_id]
+				: tile_data[static_cast<int8_t>(tile_id)];
+			DrawTile(tile, pallete, xpos, ypos);
+		}
+	}
+}
+
+
+
+static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
+{
+	for (uint8_t row = 0; row < 8; ++row) {
+		const uint8_t upperrow = tile.data[row][1];
+		const uint8_t downrow = tile.data[row][0];
+
+		for (uint8_t bit = 0; bit < 8; ++bit) {
+			const auto col_num = SolveColorNumber(upperrow, downrow, bit);
+			const auto pixel = SolvePallete(col_num, pallete);
+			DrawPixel(pixel, x + bit, y + row);
+		}
+	}
+}
+
 
 
 static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory)
@@ -240,60 +318,6 @@ static void DrawOBJ(const gbx::GPU& gpu, const gbx::Memory& memory)
 }
 
 
-
-
-static void DrawTileMap(const Tile* tiles, const TileMap* map, uint8_t sx, uint8_t sy, uint8_t pallete, bool unsigned_map)
-{
-	if (unsigned_map) {
-		for (uint8_t y = 0; y < 18; ++y) {
-			const uint8_t ypos = ((y * 8) + sy);
-			if (ypos > 136)
-				break;
-
-			for (uint8_t x = 0; x < 20; ++x) {
-				const auto tile_id = map->data[y][x];
-				const uint8_t xpos = ((x * 8) + sx);
-				if (xpos > 152)
-					continue;
-				DrawTile(tiles[tile_id], pallete, xpos, ypos);
-			}
-		}
-	}
-	else {
-		for (uint8_t y = 0; y < 18; ++y) {
-			const uint8_t ypos = ((y * 8) + sy);
-			if (ypos > 136)
-				break;
-			
-			for (uint8_t x = 0; x < 20; ++x) {
-				const auto tile_id = static_cast<int8_t>(map->data[y][x]);
-				const uint8_t xpos = ((x * 8) + sx);
-				if (xpos > 152)
-					continue;	
-				DrawTile(tiles[tile_id], pallete, xpos, ypos);
-			}
-		}
-	}
-}
-
-
-
-
-
-
-
-static void DrawTile(const Tile& tile, uint8_t pallete, uint8_t x, uint8_t y)
-{
-	for (uint8_t row = 0; row < 8; ++row) {
-		const uint8_t upperrow = tile.data[row][1];
-		const uint8_t downrow = tile.data[row][0];
-		for (uint8_t bit = 0; bit < 8; ++bit) {
-			const auto col_num = SolveColorNumber(upperrow, downrow, bit);
-			const auto pixel = SolvePallete(col_num, pallete);
-			DrawPixel(pixel, x + bit, y + row);
-		}
-	}
-}
 
 
 
