@@ -14,13 +14,17 @@ enum Color : uint32_t
 };
 
 
-static void hblank(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx);
+static void draw_scanline(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx);
 
-static void draw_scanline(const uint8_t* const tile_data,
-	const uint8_t* const tile_map,
+static void draw_bg(const uint8_t* tile_data,
+	const uint8_t* tile_map,
 	const bool unsig_tiles,
+	const uint8_t bgp,
+	const uint8_t scx,
+	const uint8_t scy,
+	const uint8_t lydiv,
+	const uint8_t lymod,
 	uint32_t* const gfx_line);
-
 
 
 
@@ -66,7 +70,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 	switch (gpu.stat.mode) {
 	case GPU::Mode::HBLANK:
 		if (gpu.clock >= 204) {
-			hblank(&gpu, memory.vram, memory.gfx);
+			draw_scanline(&gpu, memory.vram, memory.gfx);
 
 			if (gpu.ly != 144) {
 				set_mode(GPU::Mode::OAM);
@@ -119,73 +123,96 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 
 
-static void hblank(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx)
+static void draw_scanline(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx)
 {
-	const auto lcdc = gpu->lcdc;
 	const auto ly = gpu->ly++;
+	const auto bgp = gpu->bgp;
+	const auto lcdc = gpu->lcdc;
 	const bool unsig_tiles = lcdc.tile_data != 0;
 	const auto tile_data = unsig_tiles ? vram : &vram[0x1000];
-	
-	const uint16_t ly_div = ly / 8;
-	const uint8_t ly_mod = ly % 8;
+
+	const uint8_t lydiv = ly / 8;
+	const uint8_t lymod = ly % 8;
 
 	auto gfx_line = &gfx[ly * 160];
 
 	if (lcdc.bg_on) {
-		auto data = tile_data;
-		auto map = lcdc.bg_map ? &vram[0x1C00] : &vram[0x1800];
-		
 		const auto scx = gpu->scx;
 		const auto scy = gpu->scy;
-		map += ((((scy / 8) + ly_div) & 31) * 32) + (scx / 8);
-		data += ((scy % 8) + ly_mod) * 2;
-
-		draw_scanline(data, map, unsig_tiles, gfx_line);
+		const auto map = lcdc.bg_map ? &vram[0x1C00] : &vram[0x1800];
+		draw_bg(tile_data, map, unsig_tiles, bgp, scx, scy, lydiv, lymod, gfx_line);
 	}
+
 }
 
 
 
 
 
-static void draw_scanline(const uint8_t* const tile_data,
-	const uint8_t* const tile_map,
+static void draw_bg(const uint8_t* data,
+	const uint8_t* map,
 	const bool unsig_tiles,
+	const uint8_t bgp,
+	const uint8_t scx,
+	const uint8_t scy,
+	const uint8_t lydiv,
+	const uint8_t lymod,
 	uint32_t* const gfx_line)
 {
-	uint32_t colors[4] = {
+	const uint8_t pallete[4] = {
+		static_cast<uint8_t>(bgp&0x03),
+		static_cast<uint8_t>((bgp&0x0C)>>2),
+		static_cast<uint8_t>((bgp&0x30)>>4), 
+		static_cast<uint8_t>((bgp&0xC0)>>6)
+	};
+
+	const uint32_t colors[4] = {
 		WHITE, LIGHT_GREY, 
 		DARK_GREY, BLACK
 	};
 
-	for (uint8_t x = 0; x < 20; ++x) {
-		const uint16_t data_offset = tile_map[x] * 16;
+	const uint8_t scydiv = scy / 8;
+	const uint8_t scymod = scy % 8;
+	const uint8_t scxdiv = scx / 8;
+	const uint8_t scxmod = scx % 8;
+
+	map += (((scydiv + lydiv)&31) * 32);
+	data += ((scymod + lymod)&7) * 2;
+
+	uint8_t pixbeg = scxmod;
+	const uint8_t xend = scxmod ? 21 : 20;
+	
+	for (uint8_t x = 0; x < xend; ++x) {
+		const uint8_t tile_id = map[(x+scxdiv)&31];
 		uint8_t lsbit;
 		uint8_t msbit;
-		
 		if (unsig_tiles) {
-			lsbit = tile_data[data_offset];
-			msbit = tile_data[data_offset + 1];
+			const uint16_t addr = tile_id * 16;
+			lsbit = data[addr];
+			msbit = data[addr + 1];
 		} else {
-			auto sig_offset = static_cast<int16_t>(data_offset);
-			lsbit = tile_data[sig_offset];
-			msbit = tile_data[sig_offset + 1];
+			const int16_t addr = static_cast<int8_t>(tile_id) * 16;
+			lsbit = *(data + addr);
+			msbit = *(data + addr + 1);
 		}
-		
-		uint8_t xpos = x * 8;
-		for (uint8_t pix = 0; pix < 8; ++pix, ++xpos) {
+
+		const uint8_t xpos = x * 8;
+		const uint8_t pixend = x < 20 ? 8 : scxmod;
+
+		for (uint8_t pix = pixbeg; pix < pixend; ++pix) {
 			uint8_t col_num = 0;
 			if (lsbit & (0x80 >> pix))
 				++col_num;
 			if (msbit & (0x80 >> pix))
 				col_num += 2;
-			
-			gfx_line[xpos] = colors[col_num];
+
+			const uint8_t offset = (xpos + pix) - scxmod;
+			gfx_line[offset] = colors[pallete[col_num]];
 		}
+
+		pixbeg = 0;
 	}
 }
-
-
 
 
 
