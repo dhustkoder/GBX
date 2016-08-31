@@ -113,11 +113,9 @@ namespace {
 constexpr const int WIN_WIDTH = 160;
 constexpr const int WIN_HEIGHT = 144;
 
-
 static SDL_Window* window;
 static SDL_Texture* texture;
 static SDL_Renderer* renderer;
-static uint32_t* gfx_buffer;
 
 
 
@@ -127,22 +125,20 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 
 	SDL_RenderClear(renderer);
 	
-	if (!lcdc.lcd_on) {
-		SDL_RenderPresent(renderer);
-		return;
+	if (lcdc.lcd_on) {
+		int pitch;
+		void* pixels;
+		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
+			const size_t size = sizeof(uint32_t) * WIN_WIDTH * WIN_HEIGHT;
+			memcpy(pixels, memory.gfx, size);
+			SDL_UnlockTexture(texture);
+			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		} else {
+			fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
+		}
 	}
 
-	int pitch;
-	if (SDL_LockTexture(texture, nullptr, (void**)&gfx_buffer, &pitch) == 0) {
-		const size_t size = sizeof(uint32_t) * WIN_WIDTH * WIN_HEIGHT;
-		memcpy(gfx_buffer, memory.gfx, size);
-		SDL_UnlockTexture(texture);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		SDL_RenderPresent(renderer);
-		
-	} else {
-		fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
-	}
+	SDL_RenderPresent(renderer);
 }
 
 
