@@ -14,7 +14,16 @@ enum Color : uint32_t
 };
 
 
-static void draw_scanline(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx);
+static const uint32_t colors[4] = {
+	WHITE, LIGHT_GREY, 
+	DARK_GREY, BLACK
+};
+
+
+
+static void draw_scanline(GPU* const gpu,
+	const uint8_t* const vram,
+	uint32_t* const gfx);
 
 static void draw_bg(const uint8_t* data,
 	const uint8_t* map,
@@ -136,7 +145,9 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 
 
-static void draw_scanline(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx)
+static void draw_scanline(GPU* const gpu, 
+	const uint8_t* const vram,
+	uint32_t* const gfx)
 {
 	const auto ly = gpu->ly++;
 	const auto bgp = gpu->bgp;
@@ -217,11 +228,6 @@ inline void draw_row(const uint16_t row,
 	const uint8_t* pallete,
 	uint32_t* gfx_line)
 {
-	static const uint32_t colors[4] = {
-		WHITE, LIGHT_GREY, 
-		DARK_GREY, BLACK
-	};
-
 	for (uint8_t pix = pixbeg; pix < pixend; ++pix) {
 		uint8_t col_num = 0;
 		if (row & (0x80 >> pix))
