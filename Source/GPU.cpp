@@ -16,8 +16,8 @@ enum Color : uint32_t
 
 static void draw_scanline(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx);
 
-static void draw_bg(const uint8_t* tile_data,
-	const uint8_t* tile_map,
+static void draw_bg(const uint8_t* data,
+	const uint8_t* map,
 	const bool unsig_tiles,
 	const uint8_t bgp,
 	const uint8_t scx,
@@ -25,6 +25,19 @@ static void draw_bg(const uint8_t* tile_data,
 	const uint8_t lydiv,
 	const uint8_t lymod,
 	uint32_t* const gfx_line);
+
+inline void draw_row(const uint16_t row,
+	const uint8_t pixbeg,
+	const uint8_t pixend,
+	const uint8_t xpos,
+	const uint8_t* pallete,
+	uint32_t* gfx_line);
+
+inline uint16_t get_row(const uint8_t* const data,
+	const uint8_t* const map,
+	const bool unsig_tiles,
+	const uint8_t map_id);
+
 
 
 
@@ -159,18 +172,6 @@ static void draw_bg(const uint8_t* data,
 	const uint8_t lymod,
 	uint32_t* const gfx_line)
 {
-	const uint8_t pallete[4] = {
-		static_cast<uint8_t>(bgp&0x03),
-		static_cast<uint8_t>((bgp&0x0C)>>2),
-		static_cast<uint8_t>((bgp&0x30)>>4), 
-		static_cast<uint8_t>((bgp&0xC0)>>6)
-	};
-
-	const uint32_t colors[4] = {
-		WHITE, LIGHT_GREY, 
-		DARK_GREY, BLACK
-	};
-
 	const uint8_t scydiv = scy / 8;
 	const uint8_t scymod = scy % 8;
 	const uint8_t scxdiv = scx / 8;
@@ -179,47 +180,76 @@ static void draw_bg(const uint8_t* data,
 	map += (((scydiv + lydiv)&31) * 32);
 	data += ((scymod + lymod)&7) * 2;
 
-	uint8_t pixbeg = scxmod;
-	const uint8_t xend = scxmod ? 21 : 20;
-	
-	for (uint8_t x = 0; x < xend; ++x) {
-		const uint8_t tile_id = map[(x+scxdiv)&31];
-		uint8_t lsbit;
-		uint8_t msbit;
-		if (unsig_tiles) {
-			const uint16_t addr = tile_id * 16;
-			lsbit = data[addr];
-			msbit = data[addr + 1];
-		} else {
-			const int16_t addr = static_cast<int8_t>(tile_id) * 16;
-			lsbit = *(data + addr);
-			msbit = *(data + addr + 1);
-		}
+	const auto get_row = [=] (const uint8_t map_id) {
+		return gbx::get_row(data, map, unsig_tiles, map_id);
+	};
 
-		const uint8_t xpos = x * 8;
-		const uint8_t pixend = x < 20 ? 8 : scxmod;
+	const uint8_t pallete[4] = {
+		static_cast<uint8_t>(bgp&0x03),
+		static_cast<uint8_t>((bgp&0x0C)>>2),
+		static_cast<uint8_t>((bgp&0x30)>>4), 
+		static_cast<uint8_t>((bgp&0xC0)>>6)
+	};
 
-		for (uint8_t pix = pixbeg; pix < pixend; ++pix) {
-			uint8_t col_num = 0;
-			if (lsbit & (0x80 >> pix))
-				++col_num;
-			if (msbit & (0x80 >> pix))
-				col_num += 2;
+	uint8_t x = 0;
 
-			const uint8_t offset = (xpos + pix) - scxmod;
-			gfx_line[offset] = colors[pallete[col_num]];
-		}
+	if (scxmod) {
+		++x;
+		const auto first_row = get_row(scxdiv);
+		const auto last_row = get_row(20 + scxdiv);
+		draw_row(first_row, scxmod, 8, 0 - scxmod, pallete, gfx_line);
+		draw_row(last_row, 0, scxmod, 160 - scxmod, pallete, gfx_line);
+	}
 
-		pixbeg = 0;
+	for (; x < 20; ++x) {
+		const auto row = get_row(x + scxdiv);
+		const uint8_t xpos = (x * 8) - scxmod;
+		draw_row(row, 0, 8, xpos, pallete, gfx_line);
 	}
 }
 
 
 
+inline void draw_row(const uint16_t row,
+	const uint8_t pixbeg,
+	const uint8_t pixend,
+	const uint8_t xpos,
+	const uint8_t* pallete,
+	uint32_t* gfx_line)
+{
+	static const uint32_t colors[4] = {
+		WHITE, LIGHT_GREY, 
+		DARK_GREY, BLACK
+	};
+
+	for (uint8_t pix = pixbeg; pix < pixend; ++pix) {
+		uint8_t col_num = 0;
+		if (row & (0x80 >> pix))
+			++col_num;
+		if (row & (0x8000 >> pix))
+			col_num += 2;
+
+		const uint8_t offset = xpos + pix;
+		gfx_line[offset] = colors[pallete[col_num]];
+	}
+}
 
 
 
-
+inline uint16_t get_row(const uint8_t* const data,
+	const uint8_t* const map,
+	const bool unsig_tiles,
+	const uint8_t map_id)
+{
+	const uint8_t tile_id = map[map_id&31];
+	if (unsig_tiles) {
+		const uint16_t addr = tile_id * 16;
+		return (data[addr + 1] << 8) | data[addr];
+	} else {
+		const int16_t addr = static_cast<int8_t>(tile_id) * 16;
+		return (*(data + addr + 1) << 8) | *(data + addr);
+	}
+}
 
 
 

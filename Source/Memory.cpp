@@ -282,23 +282,23 @@ static void write_keys(const uint8_t value, Keys* const keys)
 
 static void write_tac(const uint8_t value, HWState* const hwstate)
 {
-		hwstate->tac = value;
-		switch (value & 0x03) {
-		case 0x00: hwstate->tima_clock_limit = 0x400; break;
-		case 0x01: hwstate->tima_clock_limit = 0x10; break;
-		case 0x02: hwstate->tima_clock_limit = 0x40; break;
-		case 0x03: hwstate->tima_clock_limit = 0x100; break;
-		}
+	hwstate->tac = value;
+	switch (value & 0x03) {
+	case 0x00: hwstate->tima_clock_limit = 0x400; break;
+	case 0x01: hwstate->tima_clock_limit = 0x10; break;
+	case 0x02: hwstate->tima_clock_limit = 0x40; break;
+	case 0x03: hwstate->tima_clock_limit = 0x100; break;
+	}
 
-		const bool timer_stop = TestBit(2, value);
-		if (timer_stop) { 
-			if (hwstate->GetFlags(HWState::TIMER_STOP)) {
-				hwstate->ClearFlags(HWState::TIMER_STOP);
-				hwstate->tima = hwstate->tma;
-			}
-		} else {
-			hwstate->SetFlags(HWState::TIMER_STOP);
+	const bool timer_stop = TestBit(2, value);
+	if (timer_stop) { 
+		if (hwstate->GetFlags(HWState::TIMER_STOP)) {
+			hwstate->ClearFlags(HWState::TIMER_STOP);
+			hwstate->tima = hwstate->tma;
 		}
+	} else {
+		hwstate->SetFlags(HWState::TIMER_STOP);
+	}
 }
 
 
