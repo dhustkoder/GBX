@@ -20,10 +20,8 @@ static const uint32_t colors[4] = {
 };
 
 
+static void hblank(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx);
 
-static void draw_scanline(GPU* const gpu,
-	const uint8_t* const vram,
-	uint32_t* const gfx);
 
 static void draw_bg(const uint8_t* data,
 	const uint8_t* map,
@@ -35,17 +33,23 @@ static void draw_bg(const uint8_t* data,
 	const uint8_t lymod,
 	uint32_t* const gfx_line);
 
+
+inline uint16_t get_row_unsig(const uint8_t* const data,
+	const uint8_t* const map,
+	const uint8_t map_id);
+
+
+inline uint16_t get_row_sig(const uint8_t* const data,
+	const uint8_t* const map,
+	const uint8_t map_id);
+
+
 inline void draw_row(const uint16_t row,
 	const uint8_t pixbeg,
 	const uint8_t pixend,
 	const uint8_t xpos,
 	const uint8_t* pallete,
 	uint32_t* gfx_line);
-
-inline uint16_t get_row(const uint8_t* const data,
-	const uint8_t* const map,
-	const bool unsig_tiles,
-	const uint8_t map_id);
 
 
 
@@ -92,7 +96,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 	switch (gpu.stat.mode) {
 	case GPU::Mode::HBLANK:
 		if (gpu.clock >= 204) {
-			draw_scanline(&gpu, memory.vram, memory.gfx);
+			hblank(&gpu, memory.vram, memory.gfx);
 
 			if (gpu.ly != 144) {
 				set_mode(GPU::Mode::OAM);
@@ -145,9 +149,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 
 
-static void draw_scanline(GPU* const gpu, 
-	const uint8_t* const vram,
-	uint32_t* const gfx)
+static void hblank(GPU* const gpu, const uint8_t* const vram, uint32_t* const gfx)
 {
 	const auto ly = gpu->ly++;
 	const auto bgp = gpu->bgp;
@@ -191,10 +193,6 @@ static void draw_bg(const uint8_t* data,
 	map += (((scydiv + lydiv)&31) * 32);
 	data += ((scymod + lymod)&7) * 2;
 
-	const auto get_row = [=] (const uint8_t map_id) {
-		return gbx::get_row(data, map, unsig_tiles, map_id);
-	};
-
 	const uint8_t pallete[4] = {
 		static_cast<uint8_t>(bgp&0x03),
 		static_cast<uint8_t>((bgp&0x0C)>>2),
@@ -206,16 +204,44 @@ static void draw_bg(const uint8_t* data,
 
 	if (scxmod) {
 		++x;
-		const auto first_row = get_row(scxdiv);
-		const auto last_row = get_row(20 + scxdiv);
+		uint16_t first_row;
+		uint16_t last_row;
+
+		if (unsig_tiles) {
+			first_row = get_row_unsig(data, map, scxdiv);
+			last_row = get_row_unsig(data, map, scxdiv + 20);
+		} else {
+			first_row = get_row_sig(data, map, scxdiv);
+			last_row = get_row_sig(data, map, scxdiv + 20);
+		}
+
 		draw_row(first_row, scxmod, 8, 0 - scxmod, pallete, gfx_line);
 		draw_row(last_row, 0, scxmod, 160 - scxmod, pallete, gfx_line);
 	}
 
+	uint16_t rows[20];
+
+	if (unsig_tiles) {
+		for (uint8_t r = x; r < 20; ++r)
+			rows[r] = get_row_unsig(data, map, r + scxdiv);
+	} else {
+		for (uint8_t r = x; r < 20; ++r)
+			rows[r] = get_row_sig(data, map, r + scxdiv);
+	}
+
 	for (; x < 20; ++x) {
-		const auto row = get_row(x + scxdiv);
+		const uint16_t row = rows[x];
 		const uint8_t xpos = (x * 8) - scxmod;
-		draw_row(row, 0, 8, xpos, pallete, gfx_line);
+
+		for (uint8_t pix = 0; pix < 8; ++pix) {
+			uint8_t col_num = 0;
+			if (row & (0x80 >> pix))
+				++col_num;
+			if (row & (0x8000 >> pix))
+				col_num += 2;
+
+			gfx_line[xpos + pix] = colors[pallete[col_num]];
+		}
 	}
 }
 
@@ -242,20 +268,27 @@ inline void draw_row(const uint16_t row,
 
 
 
-inline uint16_t get_row(const uint8_t* const data,
+inline uint16_t get_row_unsig(const uint8_t* const data,
 	const uint8_t* const map,
-	const bool unsig_tiles,
 	const uint8_t map_id)
 {
-	const uint8_t tile_id = map[map_id&31];
-	if (unsig_tiles) {
-		const uint16_t addr = tile_id * 16;
-		return (data[addr + 1] << 8) | data[addr];
-	} else {
-		const int16_t addr = static_cast<int8_t>(tile_id) * 16;
-		return (*(data + addr + 1) << 8) | *(data + addr);
-	}
+	const uint8_t tile_id = map[map_id];
+	const uint16_t addr = tile_id * 16;
+	return (data[addr + 1] << 8) | data[addr];
 }
+
+
+
+inline uint16_t get_row_sig(const uint8_t* const data,
+	const uint8_t* const map,
+	const uint8_t map_id)
+{
+	const int8_t tile_id = map[map_id];
+	const int16_t addr = tile_id * 16;
+	return (*(data + addr + 1) << 8) | *(data + addr);
+}
+
+
 
 
 
