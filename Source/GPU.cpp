@@ -108,7 +108,6 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 			hblank(&gpu, memory.vram, memory.gfx);
 
 			if (gpu.ly != 144) {
-				draw_oam(gpu, memory.vram, memory.oam, memory.gfx);
 				set_mode(GPU::Mode::OAM);
 			} else {
 				hwstate.RequestInt(INT_VBLANK);
@@ -128,6 +127,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 			if (gpu.ly > 153) {
 				gpu.ly = 0;
 				set_mode(GPU::Mode::OAM);
+				draw_oam(gpu, memory.vram, memory.oam, memory.gfx);
 			}
 
 			compare_ly();
@@ -280,11 +280,15 @@ static void draw_sprite(const GPU& gpu,
 		static_cast<uint8_t>((obp&0x30) >> 4),
 		static_cast<uint8_t>((obp&0xC0) >> 6),
 	};
-	
-	for (uint8_t y = 0; y < 8; ++y) {
+
+	const uint8_t xend = (xpos > 152) ? 8 - (xpos-152) : 8;
+	const uint8_t yend = (ypos > 136) ? 8 - (ypos-136) : 8;
+
+
+	for (uint8_t y = 0; y < yend; ++y) {
 		const uint16_t row = (data[(y * 2) + 1] << 8) | data[y * 2];
 		uint32_t* const line = &gfx[(ypos + y) * 160];
-		draw_row(row, 0, 8, xpos, pallete, line);
+		draw_row(row, 0, xend, xpos, pallete, line);
 	}
 }
 
