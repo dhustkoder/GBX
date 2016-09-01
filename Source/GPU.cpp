@@ -20,12 +20,10 @@ static const uint32_t colors[4] = {
 };
 
 
-GPU::GFX GPU::gfx;
+uint16_t GPU::bg_scanlines[144][20];
 
 
 static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram);
-static void draw_bg_scanlines(const uint8_t bgp);
-
 
 
 
@@ -74,7 +72,6 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 			if (++gpu.ly != 144) {
 				set_mode(GPU::Mode::OAM);
 			} else {
-				draw_bg_scanlines(gpu.bgp);
 				hwstate.RequestInt(INT_VBLANK);
 				set_mode(GPU::Mode::VBLANK);
 			}
@@ -141,7 +138,7 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 	for (uint8_t x = 0; x < 20; ++x) {
 		const uint16_t addr = map[(x+scxdiv)&31] * 16;
 		const uint16_t row = (data[addr + 1] << 8) | data[addr];
-		GPU::gfx.bg_scanlines[ly][x] = row;
+		gpu.bg_scanlines[ly][x] = row;
 	}
 }
 
@@ -150,8 +147,9 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 
 
 
-static void draw_bg_scanlines(const uint8_t bgp)
+void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels)
 {
+	const auto bgp = gpu.bgp;
 	const uint8_t pallete[4] = {
 		static_cast<uint8_t>(bgp&0x03),
 		static_cast<uint8_t>((bgp&0x0C) >> 2),
@@ -160,10 +158,10 @@ static void draw_bg_scanlines(const uint8_t bgp)
 	};
 
 	for (uint8_t y = 0; y < 144; ++y) {
-		uint32_t* const line = &GPU::gfx.pixels[y][0];
+		uint32_t* const line = &pixels[y * 160];
 		for (uint8_t r = 0; r < 20; ++r) {
 			const uint8_t xpos = r * 8;
-			const uint16_t row = GPU::gfx.bg_scanlines[y][r];
+			const uint16_t row = gpu.bg_scanlines[y][r];
 			for (uint8_t pix = 0; pix < 8; ++pix) {
 				uint8_t col = 0;
 				if (row & (0x80 >> pix))

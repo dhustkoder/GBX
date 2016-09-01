@@ -53,17 +53,14 @@ struct GPU
 	uint8_t obp0;
 	uint8_t obp1;
 
-	static struct GFX {
-		uint32_t pixels[144][160];
-		uint16_t bg_scanlines[144][20];
-	}gfx;
+	static uint16_t bg_scanlines[144][20];
 };
 
 
 
 
 
-
+extern void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels);
 
 
 
