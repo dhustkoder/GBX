@@ -27,10 +27,9 @@ struct Memory
 {
 	Cartridge cart;
 	uint8_t hram[127];
-	uint8_t vram[8_Kib];
 	uint8_t wram[8_Kib];
+	uint8_t vram[8_Kib];
 	uint8_t oam[160];
-	uint32_t gfx[160 * 144];
 };
 
 

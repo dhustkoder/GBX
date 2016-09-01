@@ -13,7 +13,7 @@ namespace {
 static bool InitSDL();
 static void QuitSDL();
 static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
-static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory);
+static void RenderGraphics(const gbx::GPU& gpu);
 
 
 }
@@ -78,14 +78,15 @@ int main(int argc, char** argv)
 		}
 
 		gameboy->Run(69905);
-		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBLANK)
-			RenderGraphics(gameboy->gpu, gameboy->memory);
 		
-		SDL_Delay(15);
+		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBLANK)
+			RenderGraphics(gameboy->gpu);
+		
+		//SDL_Delay(15);
 
 		const auto ticks = SDL_GetTicks();
 		if (ticks > (last_ticks + 1000)) {
-			printf("ITR: %zu\n", itr);
+			printf("%zu\n", itr);
 			itr = 0;
 			last_ticks = ticks;
 		}
@@ -119,7 +120,7 @@ static SDL_Renderer* renderer;
 
 
 
-static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
+static void RenderGraphics(const gbx::GPU& gpu)
 {
 	const auto lcdc = gpu.lcdc;
 
@@ -130,7 +131,7 @@ static void RenderGraphics(const gbx::GPU& gpu, const gbx::Memory& memory)
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
 			const size_t size = sizeof(uint32_t) * WIN_WIDTH * WIN_HEIGHT;
-			memcpy(pixels, memory.gfx, size);
+			memcpy(pixels, gpu.gfx.pixels, size);
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {
