@@ -128,7 +128,7 @@ static void RenderGraphics(const gbx::GPU& gpu)
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			draw_bg_scanlines(gpu, static_cast<uint32_t*>(pixels));
+			draw_graphics(gpu, static_cast<uint32_t*>(pixels));
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {

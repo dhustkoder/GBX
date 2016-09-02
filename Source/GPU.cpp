@@ -159,10 +159,8 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 		const uint8_t lydiv = ly / 8;
 		const uint8_t lymod = ly % 8;
 		const uint8_t scxdiv = gpu.scx / 8;
-		const uint8_t scxmod = gpu.scx % 8;
 		const uint8_t scydiv = gpu.scy / 8;
-		const uint8_t scymod = gpu.scy % 8;
-		const auto data = tile_data + (((lymod + scymod)&7) * 2);
+		const auto data = &tile_data[lymod * 2];
 		auto map = lcdc.bg_map ? vram + 0x1C00 : vram + 0x1800;
 		map += ((lydiv + scydiv)&31) * 32;
 		fill_row(data, map, scxdiv, ly);
@@ -183,7 +181,7 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 
 
 
-void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels)
+void draw_graphics(const GPU& gpu, uint32_t* const pixels)
 {
 	const auto bgp = gpu.bgp;
 	const uint8_t pallete[4] = {

@@ -60,7 +60,7 @@ struct GPU
 
 
 
-extern void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels);
+extern void draw_graphics(const GPU& gpu, uint32_t* const pixels);
 
 
 
