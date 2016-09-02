@@ -21,8 +21,24 @@ static const uint32_t colors[4] = {
 
 uint16_t GPU::bg_scanlines[144][20];
 
-
+inline void mode_hblank(const uint8_t* const vram, GPU* const gpu, HWState* const hwstate);
+inline void mode_vblank(GPU* const gpu, HWState* const hwstate);
+inline void mode_oam(GPU* const gpu);
+inline void mode_transfer(GPU* const gpu, HWState* const hwstate);
+inline void set_gpu_mode(GPU::Mode mode, GPU* const gpu, HWState* const hwstate);
+inline void check_gpu_lyc(GPU* const gpu, HWState* const hwstate);
 static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram);
+
+inline void fill_row_unsig(const uint8_t* const data,
+	const uint8_t* const map,
+	const uint8_t mapx,
+	const uint8_t ly);
+
+inline void fill_row_sig(const uint8_t* const data,
+	const uint8_t* const map,
+	const uint8_t mapx,
+	const uint8_t ly);
+
 
 
 
@@ -35,116 +51,101 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 		return;
 	}
 
-	const auto compare_ly = [this] {
-		if (gpu.ly != gpu.lyc) {
-			if (gpu.stat.coincidence_flag)
-				gpu.stat.coincidence_flag = 0;
-		} else {
-			gpu.stat.coincidence_flag = 1;
-			if (gpu.stat.int_on_coincidence)
-				hwstate.RequestInt(INT_LCD_STAT);
-		}
-	};
-
-	const auto set_mode = [this](const GPU::Mode mode) {
-		const auto stat = gpu.stat;
-		uint8_t int_on = 0;
-		switch (mode) {
-		case GPU::Mode::HBLANK: int_on = stat.int_on_hblank; break;
-		case GPU::Mode::VBLANK: int_on = stat.int_on_vblank; break;
-		case GPU::Mode::OAM: int_on = stat.int_on_oam; break;
-		default: break;
-		}
-		if (int_on)
-			hwstate.RequestInt(INT_LCD_STAT);
-		gpu.stat.mode = mode;
-	};
-
 	gpu.clock += cycles;
-
+	
 	switch (gpu.stat.mode) {
-	case GPU::Mode::HBLANK:
-		if (gpu.clock >= 204) {
-			fill_bg_scanline(gpu, memory.vram);
+	case GPU::Mode::HBLANK: mode_hblank(memory.vram, &gpu, &hwstate); break;
+	case GPU::Mode::VBLANK: mode_vblank(&gpu, &hwstate); break;
+	case GPU::Mode::OAM: mode_oam(&gpu); break;
+	case GPU::Mode::TRANSFER: mode_transfer(&gpu, &hwstate); break;
+	default: break;
+	}
+}
 
-			if (++gpu.ly != 144) {
-				set_mode(GPU::Mode::OAM);
-			} else {
-				hwstate.RequestInt(INT_VBLANK);
-				set_mode(GPU::Mode::VBLANK);
-			}
 
-			compare_ly();
-			gpu.clock -= 204;
+inline void mode_hblank(const uint8_t* const vram, GPU* const gpu, HWState* const hwstate)
+{
+	if (gpu->clock >= 204) {
+		fill_bg_scanline(*gpu, vram);
+		if (++gpu->ly != 144) {
+			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
+		} else {
+			hwstate->RequestInt(INT_VBLANK);
+			set_gpu_mode(GPU::Mode::VBLANK, gpu, hwstate);
 		}
 
-		break;
+		check_gpu_lyc(gpu, hwstate);
+		gpu->clock -= 204;
+	}
+}
 
-	case GPU::Mode::VBLANK:
-		if (gpu.clock >= 456) {
-			++gpu.ly;
 
-			if (gpu.ly > 153) {
-				gpu.ly = 0;
-				set_mode(GPU::Mode::OAM);
-			}
-
-			compare_ly();
-			gpu.clock -= 456;
+inline void mode_vblank(GPU* const gpu, HWState* const hwstate)
+{
+	if (gpu->clock >= 456) {
+		if (++gpu->ly > 153) {
+			gpu->ly = 0;
+			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
 		}
 
-		break;
+		gpu->clock -= 456;
+		check_gpu_lyc(gpu, hwstate);
+	}
+}
 
-	case GPU::Mode::OAM:
-		if (gpu.clock >= 80) {
-			gpu.stat.mode = GPU::Mode::TRANSFER;
-			gpu.clock -= 80;
-		}
 
-		break;
+inline void mode_oam(GPU* const gpu)
+{
+	if (gpu->clock >= 80) {
+		gpu->stat.mode = GPU::Mode::TRANSFER;
+		gpu->clock -= 80;
+	}
+}
 
-	case GPU::Mode::TRANSFER:
-		if (gpu.clock >= 172) {
-			set_mode(GPU::Mode::HBLANK);
-			gpu.clock -= 172;
-		}
 
-		break;
+inline void mode_transfer(GPU* const gpu, HWState* const hwstate)
+{
+	if (gpu->clock >= 172) {
+		set_gpu_mode(GPU::Mode::HBLANK, gpu, hwstate);
+		gpu->clock -= 172;
 	}
 }
 
 
 
 
-
-inline void fill_row_unsig(const uint8_t* const data, 
-	const uint8_t* const map,
-	const uint8_t mapx,
-	const uint8_t ly)
+inline void set_gpu_mode(GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 {
-	for (uint8_t x = 0; x < 20; ++x) {
-		const uint16_t addr = map[(x + mapx) & 31] * 16;
-		const uint8_t lsb = data[addr];
-		const uint8_t msb = data[addr + 1];
-		const uint16_t row = (msb << 8) | lsb;
-		GPU::bg_scanlines[ly][x] = row;
+	const auto stat = gpu->stat;
+	uint8_t int_on = 0;
+	switch (mode) {
+	case GPU::Mode::HBLANK: int_on = stat.int_on_hblank; break;
+	case GPU::Mode::VBLANK: int_on = stat.int_on_vblank; break;
+	case GPU::Mode::OAM: int_on = stat.int_on_oam; break;
+	default: break;
 	}
-}
-
-inline void fill_row_sig(const uint8_t* const data, 
-	const uint8_t* const map,
-	const uint8_t mapx,
-	const uint8_t ly)
-{
-	for (uint8_t x = 0; x < 20; ++x) {
-		const int8_t id = map[(x + mapx) & 31];
-		const int16_t addr = id * 16;
-		const uint8_t lsb = *(data + addr);
-		const uint8_t msb = *(data + addr + 1);
-		const uint16_t row = (msb << 8) | lsb;
-		GPU::bg_scanlines[ly][x] = row;
-	}
+	if (int_on)
+		hwstate->RequestInt(INT_LCD_STAT);
+	gpu->stat.mode = mode;
 };
+
+
+
+inline void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
+{
+	if (gpu->ly != gpu->lyc) {
+		if (gpu->stat.coincidence_flag)
+			gpu->stat.coincidence_flag = 0;
+	} else {
+		gpu->stat.coincidence_flag = 1;
+		if (gpu->stat.int_on_coincidence)
+			hwstate->RequestInt(INT_LCD_STAT);
+	}
+}
+
+
+
+
 
 
 static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
@@ -177,6 +178,35 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 }
 
 
+
+inline void fill_row_unsig(const uint8_t* const data, 
+	const uint8_t* const map,
+	const uint8_t mapx,
+	const uint8_t ly)
+{
+	for (uint8_t x = 0; x < 20; ++x) {
+		const uint16_t addr = map[(x + mapx) & 31] * 16;
+		const uint8_t lsb = data[addr];
+		const uint8_t msb = data[addr + 1];
+		const uint16_t row = (msb << 8) | lsb;
+		GPU::bg_scanlines[ly][x] = row;
+	}
+}
+
+inline void fill_row_sig(const uint8_t* const data, 
+	const uint8_t* const map,
+	const uint8_t mapx,
+	const uint8_t ly)
+{
+	for (uint8_t x = 0; x < 20; ++x) {
+		const int8_t id = map[(x + mapx) & 31];
+		const int16_t addr = id * 16;
+		const uint8_t lsb = *(data + addr);
+		const uint8_t msb = *(data + addr + 1);
+		const uint16_t row = (msb << 8) | lsb;
+		GPU::bg_scanlines[ly][x] = row;
+	}
+};
 
 
 
