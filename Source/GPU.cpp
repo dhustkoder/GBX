@@ -65,8 +65,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 	switch (gpu.stat.mode) {
 	case GPU::Mode::HBLANK:
 		if (gpu.clock >= 204) {
-			if (gpu.lcdc.bg_on)
-				fill_bg_scanline(gpu, memory.vram);
+			fill_bg_scanline(gpu, memory.vram);
 
 			if (++gpu.ly != 144) {
 				set_mode(GPU::Mode::OAM);
@@ -118,26 +117,64 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 
 
+inline void fill_row_unsig(const uint8_t* const data, 
+	const uint8_t* const map,
+	const uint8_t mapx,
+	const uint8_t ly)
+{
+	for (uint8_t x = 0; x < 20; ++x) {
+		const uint16_t addr = map[(x + mapx) & 31] * 16;
+		const uint8_t lsb = data[addr];
+		const uint8_t msb = data[addr + 1];
+		const uint16_t row = (msb << 8) | lsb;
+		GPU::bg_scanlines[ly][x] = row;
+	}
+}
+
+inline void fill_row_sig(const uint8_t* const data, 
+	const uint8_t* const map,
+	const uint8_t mapx,
+	const uint8_t ly)
+{
+	for (uint8_t x = 0; x < 20; ++x) {
+		const int8_t id = map[(x + mapx) & 31];
+		const int16_t addr = id * 16;
+		const uint8_t lsb = *(data + addr);
+		const uint8_t msb = *(data + addr + 1);
+		const uint16_t row = (msb << 8) | lsb;
+		GPU::bg_scanlines[ly][x] = row;
+	}
+};
+
+
 static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 {
 	const auto ly = gpu.ly;
 	const auto lcdc = gpu.lcdc;
+	const bool unsig_data = lcdc.tile_data != 0;
+	const auto tile_data = unsig_data ? vram : vram + 0x1000;
+	const auto fill_row = unsig_data ? fill_row_unsig : fill_row_sig;
 
-	auto data = lcdc.tile_data ? vram : vram + 0x1000;
-	auto map = lcdc.bg_map ? vram + 0x1C00 : vram + 0x1800;
-	
-	const uint8_t lydiv = ly / 8;
-	const uint8_t lymod = ly % 8;
-	const uint8_t scxdiv = gpu.scx / 8;
-	const uint8_t scxmod = gpu.scx % 8;
+	if (lcdc.bg_on &&  (!lcdc.win_on || ly < gpu.wy)) {
+		const uint8_t lydiv = ly / 8;
+		const uint8_t lymod = ly % 8;
+		const uint8_t scxdiv = gpu.scx / 8;
+		const uint8_t scxmod = gpu.scx % 8;
+		const uint8_t scydiv = gpu.scy / 8;
+		const uint8_t scymod = gpu.scy % 8;
+		const auto data = tile_data + (((lymod + scymod)&7) * 2);
+		auto map = lcdc.bg_map ? vram + 0x1C00 : vram + 0x1800;
+		map += ((lydiv + scydiv)&31) * 32;
+		fill_row(data, map, scxdiv, ly);
+	}
 
-	map += ((lydiv + (gpu.scy/8))&31) * 32;
-	data += ((lymod + scxmod)&7) * 2;
-
-	for (uint8_t x = 0; x < 20; ++x) {
-		const uint16_t addr = map[(x+scxdiv)&31] * 16;
-		const uint16_t row = (data[addr + 1] << 8) | data[addr];
-		gpu.bg_scanlines[ly][x] = row;
+	if (lcdc.win_on && ly >= gpu.wy) {
+		const uint8_t wy = gpu.wy;
+		const uint8_t wx = gpu.wx - 7;
+		if (wy < 144 && wx < 160) {
+			const auto map = lcdc.win_map ? vram + 0x1C00 : vram + 0x1800;
+			fill_row(tile_data, map, 0, ly);
+		}
 	}
 }
 
