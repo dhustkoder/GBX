@@ -18,26 +18,16 @@ static const uint32_t colors[4] = {
 	DARK_GREY, BLACK
 };
 
+static uint16_t bg_scanlines[144][20];
 
-uint16_t GPU::bg_scanlines[144][20];
 
-inline void mode_hblank(const uint8_t* const vram, GPU* const gpu, HWState* const hwstate);
+inline void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate);
 inline void mode_vblank(GPU* const gpu, HWState* const hwstate);
 inline void mode_oam(GPU* const gpu);
 inline void mode_transfer(GPU* const gpu, HWState* const hwstate);
-inline void set_gpu_mode(GPU::Mode mode, GPU* const gpu, HWState* const hwstate);
+inline void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate);
 inline void check_gpu_lyc(GPU* const gpu, HWState* const hwstate);
 static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram);
-
-inline void fill_row_unsig(const uint8_t* const data,
-	const uint8_t* const map,
-	const uint8_t mapx,
-	const uint8_t ly);
-
-inline void fill_row_sig(const uint8_t* const data,
-	const uint8_t* const map,
-	const uint8_t mapx,
-	const uint8_t ly);
 
 
 
@@ -54,7 +44,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 	gpu.clock += cycles;
 	
 	switch (gpu.stat.mode) {
-	case GPU::Mode::HBLANK: mode_hblank(memory.vram, &gpu, &hwstate); break;
+	case GPU::Mode::HBLANK: mode_hblank(memory, &gpu, &hwstate); break;
 	case GPU::Mode::VBLANK: mode_vblank(&gpu, &hwstate); break;
 	case GPU::Mode::OAM: mode_oam(&gpu); break;
 	case GPU::Mode::TRANSFER: mode_transfer(&gpu, &hwstate); break;
@@ -63,10 +53,13 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 }
 
 
-inline void mode_hblank(const uint8_t* const vram, GPU* const gpu, HWState* const hwstate)
+
+
+
+inline void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 204) {
-		fill_bg_scanline(*gpu, vram);
+		fill_bg_scanline(*gpu, memory.vram);
 		if (++gpu->ly != 144) {
 			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
 		} else {
@@ -113,8 +106,7 @@ inline void mode_transfer(GPU* const gpu, HWState* const hwstate)
 
 
 
-
-inline void set_gpu_mode(GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
+inline void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 {
 	const auto stat = gpu->stat;
 	uint8_t int_on = 0;
@@ -126,7 +118,7 @@ inline void set_gpu_mode(GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 	}
 	if (int_on)
 		hwstate->RequestInt(INT_LCD_STAT);
-	gpu->stat.mode = mode;
+	gpu->stat.mode = static_cast<uint8_t>(mode);
 };
 
 
@@ -154,7 +146,29 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 	const auto lcdc = gpu.lcdc;
 	const bool unsig_data = lcdc.tile_data != 0;
 	const auto tile_data = unsig_data ? vram : vram + 0x1000;
-	const auto fill_row = unsig_data ? fill_row_unsig : fill_row_sig;
+
+	const auto fill_row =
+	[ly, unsig_data](const uint8_t* data, const uint8_t* map, uint8_t mapx) {
+		if (unsig_data) {
+			for (uint8_t x = 0; x < 20; ++x) {
+				const uint16_t addr = map[(x + mapx) & 31] * 16;
+				const uint8_t lsb = data[addr];
+				const uint8_t msb = data[addr + 1];
+				const uint16_t row = (msb << 8) | lsb;
+				bg_scanlines[ly][x] = row;
+			}
+		} else {
+			for (uint8_t x = 0; x < 20; ++x) {
+				const int8_t id = map[(x + mapx) & 31];
+				const int16_t addr = id * 16;
+				const uint8_t lsb = *(data + addr);
+				const uint8_t msb = *(data + addr + 1);
+				const uint16_t row = (msb << 8) | lsb;
+				bg_scanlines[ly][x] = row;
+			}
+		}
+	};
+
 
 	if (lcdc.bg_on &&  (!lcdc.win_on || ly < gpu.wy)) {
 		const uint8_t lydiv = ly / 8;
@@ -164,7 +178,7 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 		const auto data = &tile_data[lymod * 2];
 		auto map = lcdc.bg_map ? vram + 0x1C00 : vram + 0x1800;
 		map += ((lydiv + scydiv)&31) * 32;
-		fill_row(data, map, scxdiv, ly);
+		fill_row(data, map, scxdiv);
 	}
 
 	if (lcdc.win_on && ly >= gpu.wy) {
@@ -172,41 +186,12 @@ static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 		const uint8_t wx = gpu.wx - 7;
 		if (wy < 144 && wx < 160) {
 			const auto map = lcdc.win_map ? vram + 0x1C00 : vram + 0x1800;
-			fill_row(tile_data, map, 0, ly);
+			fill_row(tile_data, map, 0);
 		}
 	}
 }
 
 
-
-inline void fill_row_unsig(const uint8_t* const data, 
-	const uint8_t* const map,
-	const uint8_t mapx,
-	const uint8_t ly)
-{
-	for (uint8_t x = 0; x < 20; ++x) {
-		const uint16_t addr = map[(x + mapx) & 31] * 16;
-		const uint8_t lsb = data[addr];
-		const uint8_t msb = data[addr + 1];
-		const uint16_t row = (msb << 8) | lsb;
-		GPU::bg_scanlines[ly][x] = row;
-	}
-}
-
-inline void fill_row_sig(const uint8_t* const data, 
-	const uint8_t* const map,
-	const uint8_t mapx,
-	const uint8_t ly)
-{
-	for (uint8_t x = 0; x < 20; ++x) {
-		const int8_t id = map[(x + mapx) & 31];
-		const int16_t addr = id * 16;
-		const uint8_t lsb = *(data + addr);
-		const uint8_t msb = *(data + addr + 1);
-		const uint16_t row = (msb << 8) | lsb;
-		GPU::bg_scanlines[ly][x] = row;
-	}
-};
 
 
 
@@ -225,7 +210,7 @@ void draw_graphics(const GPU& gpu, uint32_t* const pixels)
 		uint32_t* const line = &pixels[y * 160];
 		for (uint8_t r = 0; r < 20; ++r) {
 			const uint8_t xpos = r * 8;
-			const uint16_t row = gpu.bg_scanlines[y][r];
+			const uint16_t row = bg_scanlines[y][r];
 			for (uint8_t pix = 0; pix < 8; ++pix) {
 				uint8_t col = 0;
 				if (row & (0x80 >> pix))

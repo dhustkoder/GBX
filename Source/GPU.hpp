@@ -52,8 +52,6 @@ struct GPU
 	uint8_t bgp;
 	uint8_t obp0;
 	uint8_t obp1;
-
-	static uint16_t bg_scanlines[144][20];
 };
 
 
