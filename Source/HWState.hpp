@@ -27,19 +27,19 @@ struct HWState
 
 	bool GetIntMaster() const;
 	bool GetIntActive() const;
-	Flags GetFlags(const Flags hwflags) const;
+	Flags GetFlags(Flags hwflags) const;
 	uint8_t GetPendentInts() const;
 	void EnableIntMaster();
 	void EnableIntActive();
 	void DisableIntMaster();
 
-	void SetFlags(const Flags hwflags);
-	void ClearFlags(const Flags hwflags);
+	void SetFlags(Flags hwflags);
+	void ClearFlags(Flags hwflags);
 
-	void EnableInt(const IntMask intr);
-	void DisableInt(const IntMask inter);
-	void RequestInt(const IntMask inter);
-	void ClearInt(const IntMask inter);
+	void EnableInt(IntMask intr);
+	void DisableInt(IntMask inter);
+	void RequestInt(IntMask inter);
+	void ClearInt(IntMask inter);
 
 	uint16_t tima_clock;
 	uint16_t tima_clock_limit;

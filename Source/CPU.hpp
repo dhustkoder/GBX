@@ -12,9 +12,9 @@ struct CPU
 		FLAG_H = 0x20, FLAG_C = 0x10
 	};
 
-	Flags GetFlags(const Flags flags) const;
-	void SetFlags(const Flags flags);
-	void ClearFlags(const Flags flags);
+	Flags GetFlags(Flags flags) const;
+	void SetFlags(Flags flags);
+	void ClearFlags(Flags flags);
 
 	uint32_t clock;
 	uint16_t pc;

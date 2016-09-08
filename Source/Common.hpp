@@ -52,13 +52,13 @@ constexpr uint8_t GetHighByte(const uint16_t value) {
 
 
 
-constexpr uint8_t GetLowNibble(uint8_t byte) {
+constexpr uint8_t GetLowNibble(const uint8_t byte) {
 	return byte & 0x0F;
 }
 
 
 
-constexpr uint8_t GetHighNibble(uint8_t byte) {
+constexpr uint8_t GetHighNibble(const uint8_t byte) {
 	return byte & 0xF0;
 }
 

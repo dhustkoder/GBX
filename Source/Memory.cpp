@@ -7,24 +7,26 @@
 
 namespace gbx {
 
-static uint8_t read_cart(const uint16_t address, const Cartridge& cart);
-static void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart);
-static uint8_t read_hram(const uint16_t address, const Gameboy& gb);
-static void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb);
-static uint8_t read_oam(const uint16_t address, const Memory& memory);
-static void write_oam(const uint16_t address, const uint8_t value, Memory* const memory);
-static uint8_t read_wram(const uint16_t address, const Memory& memory);
-static void write_wram(const uint16_t address, const uint8_t value, Memory* const memory);
-static uint8_t read_vram(const uint16_t address, const Memory& memory);
-static void write_vram(const uint16_t address, const uint8_t value, Memory* const memory);
-static uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart);
-static void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const cart);
-static uint8_t read_io(const uint16_t address, const Gameboy& gb);
-static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb);
-static void write_stat(const uint8_t value, GPU* const gpu);
-static void write_keys(const uint8_t value, Keys* const keys);
-static void write_tac(const uint8_t value, HWState* const hwstate);
-static void dma_transfer(const uint8_t value, Gameboy* const gb);
+static uint8_t read_cart(uint16_t address, const Cartridge& cart);
+static uint8_t read_hram(uint16_t address, const Gameboy& gb);
+static uint8_t read_oam(uint16_t address, const Memory& memory);
+static uint8_t read_wram(uint16_t address, const Memory& memory);
+static uint8_t read_vram(uint16_t address, const Memory& memory);
+static uint8_t read_cart_ram(uint16_t address, const Cartridge& cart);
+static uint8_t read_io(uint16_t address, const Gameboy& gb);
+
+static void write_cart(uint16_t address, uint8_t value, Cartridge* cart);
+static void write_hram(uint16_t address, uint8_t value, Gameboy* gb);
+static void write_oam(uint16_t address, uint8_t value, Memory* memory);
+static void write_wram(uint16_t address, uint8_t value, Memory* memory);
+static void write_vram(uint16_t address, uint8_t value, Memory* memory);
+static void write_cart_ram(uint16_t address, uint8_t value, Cartridge* cart);
+static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
+
+static void write_stat(uint8_t value, GPU* gpu);
+static void write_keys(uint8_t value, Keys* keys);
+static void write_tac(uint8_t value, HWState* hwstate);
+static void dma_transfer(uint8_t value, Gameboy* gb);
 
 
 

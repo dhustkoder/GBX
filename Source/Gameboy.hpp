@@ -23,21 +23,21 @@ struct Gameboy
 	Gameboy&operator=(Gameboy&&)=delete;
 
 
-	bool LoadRom(const char* const file);
+	bool LoadRom(const char* file);
 	bool Reset();
-	void Run(const uint32_t cycles);
+	void Run(uint32_t cycles);
 	uint8_t Step();
-	void UpdateGPU(const uint8_t cycles);
-	void UpdateTimers(const uint8_t cycles);
+	void UpdateGPU(uint8_t cycles);
+	void UpdateTimers(uint8_t cycles);
 	void UpdateInterrupts();
 
-	uint8_t Read8(const uint16_t address) const;
-	uint16_t Read16(const uint16_t address) const;
-	void Write8(const uint16_t address, const uint8_t value);
-	void Write16(const uint16_t address, const uint16_t value);
+	uint8_t Read8(uint16_t address) const;
+	uint16_t Read16(uint16_t address) const;
+	void Write8(uint16_t address, uint8_t value);
+	void Write16(uint16_t address, uint16_t value);
 
-	void PushStack8(const uint8_t value);
-	void PushStack16(const uint16_t value);
+	void PushStack8(uint8_t value);
+	void PushStack16(uint16_t value);
 	uint8_t PopStack8();
 	uint16_t PopStack16();
 
@@ -51,7 +51,7 @@ struct Gameboy
 
 
 extern Gameboy* create_gameboy();
-extern void destroy_gameboy(Gameboy* const);
+extern void destroy_gameboy(Gameboy* gb);
 
 
 

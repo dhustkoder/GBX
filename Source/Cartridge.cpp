@@ -5,7 +5,7 @@
 
 namespace gbx {
 
-static void fill_cartridge_info(Cartridge* const cart);
+static void fill_cartridge_info(Cartridge* cart);
 CartridgeInfo Cartridge::info;
 
 
