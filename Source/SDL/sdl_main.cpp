@@ -118,7 +118,7 @@ static SDL_Renderer* renderer;
 
 
 
-static void RenderGraphics(const gbx::GPU& gpu)
+void RenderGraphics(const gbx::GPU& gpu)
 {
 	const auto lcdc = gpu.lcdc;
 
@@ -143,7 +143,7 @@ static void RenderGraphics(const gbx::GPU& gpu)
 
 
 
-static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
+void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 {
 	switch (keycode) {
 	case SDL_SCANCODE_Z: keys->pad.a = state; break;
@@ -161,7 +161,7 @@ static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys
 
 
 
-static bool InitSDL()
+bool InitSDL()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		fprintf(stderr, "failed to init SDL2: %s\n", SDL_GetError());
@@ -214,7 +214,7 @@ free_sdl:
 
 
 
-static void QuitSDL()
+void QuitSDL()
 {
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);

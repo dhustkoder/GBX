@@ -122,20 +122,19 @@ uint16_t Gameboy::PopStack16()
 
 
 
-
-static uint8_t read_cart(const uint16_t address, const Cartridge& cart)
+uint8_t read_cart(const uint16_t address, const Cartridge& cart)
 {
 	return cart.rom_banks[address];
 }
 
-static void write_cart(const uint16_t address, const uint8_t value, Cartridge* const)
+void write_cart(const uint16_t address, const uint8_t value, Cartridge* const)
 {
 	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
 }
 
 
 
-static uint8_t read_hram(const uint16_t address, const Gameboy& gb)
+uint8_t read_hram(const uint16_t address, const Gameboy& gb)
 {
 	if (address != 0xFFFF)
 		return gb.memory.hram[address - 0xFF80];
@@ -144,7 +143,7 @@ static uint8_t read_hram(const uint16_t address, const Gameboy& gb)
 }
 
 
-static void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
+void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	if (address != 0xFFFF)
 		gb->memory.hram[address - 0xFF80] = value;
@@ -153,59 +152,59 @@ static void write_hram(const uint16_t address, const uint8_t value, Gameboy* con
 }
 
 
-static uint8_t read_oam(const uint16_t address, const Memory& memory)
+uint8_t read_oam(const uint16_t address, const Memory& memory)
 {
 	return address < 0xFEA0 ? memory.oam[address - 0xFE00] : 0;
 }
 
-static void write_oam(const uint16_t address, const uint8_t value, Memory* const memory)
+void write_oam(const uint16_t address, const uint8_t value, Memory* const memory)
 {
 	if (address < 0xFEA0)
 		memory->oam[address - 0xFE00] = value;
 }
 
 
-static uint8_t read_wram(const uint16_t address, const Memory& memory)
+uint8_t read_wram(const uint16_t address, const Memory& memory)
 {
 	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
 	return memory.wram[offset];
 }
 
 
-static void write_wram(const uint16_t address, const uint8_t value, Memory* const memory)
+void write_wram(const uint16_t address, const uint8_t value, Memory* const memory)
 {
 	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
 	memory->wram[offset] = value;
 }
 
 
-static uint8_t read_vram(const uint16_t address, const Memory& memory)
+uint8_t read_vram(const uint16_t address, const Memory& memory)
 {
 	return memory.vram[address - 0x8000];
 }
 
 
-static void write_vram(const uint16_t address, const uint8_t value, Memory* const memory)
+void write_vram(const uint16_t address, const uint8_t value, Memory* const memory)
 {
 	memory->vram[address - 0x8000] = value;
 }
 
 
 
-static uint8_t read_cart_ram(const uint16_t address, const Cartridge&)
+uint8_t read_cart_ram(const uint16_t address, const Cartridge&)
 {
 	debug_printf("Cartridge ram read required at %4x\n", address);
 	return 0;
 }
 
-static void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const)
+void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const)
 {
 	debug_printf("Cartridge ram write value %2x required at %4x\n", value, address);
 }
 
 
 
-static uint8_t read_io(const uint16_t address, const Gameboy& gb)
+uint8_t read_io(const uint16_t address, const Gameboy& gb)
 {
 	switch (address) {
 	case 0xFF00: return gb.keys.value;
@@ -235,7 +234,7 @@ static uint8_t read_io(const uint16_t address, const Gameboy& gb)
 
 
 
-static void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
+void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	switch (address) {
 	case 0xFF00: write_keys(value, &gb->keys); break;
@@ -264,14 +263,14 @@ static void write_io(const uint16_t address, const uint8_t value, Gameboy* const
 
 
 
-static void write_stat(const uint8_t value, GPU* const gpu)
+void write_stat(const uint8_t value, GPU* const gpu)
 {
 	gpu->stat.value = (value & 0xf8) | (gpu->stat.value & 0x07);
 }
 
 
 
-static void write_keys(const uint8_t value, Keys* const keys)
+void write_keys(const uint8_t value, Keys* const keys)
 {
 	switch (value & 0x30) {
 	case 0x10: keys->value = 0xD0 | (keys->pad.value >> 4); break;
@@ -282,7 +281,7 @@ static void write_keys(const uint8_t value, Keys* const keys)
 
 
 
-static void write_tac(const uint8_t value, HWState* const hwstate)
+void write_tac(const uint8_t value, HWState* const hwstate)
 {
 	hwstate->tac = value;
 	switch (value & 0x03) {
@@ -305,7 +304,7 @@ static void write_tac(const uint8_t value, HWState* const hwstate)
 
 
 
-static void dma_transfer(const uint8_t value, Gameboy* const gb)
+void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
 	uint16_t source_addr = value * 0x100;
 	const uint8_t nbytes = 0xA0;

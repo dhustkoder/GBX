@@ -30,7 +30,9 @@ void Gameboy::UpdateTimers(const uint8_t cycles)
 
 void Gameboy::UpdateInterrupts()
 {
-	if (hwstate.GetFlags(HWState::CPU_HALT) && (hwstate.int_flags&0x1f))
+	const uint8_t pendents = hwstate.GetPendentInts();
+
+	if (pendents && hwstate.GetFlags(HWState::CPU_HALT))
 		hwstate.ClearFlags(HWState::CPU_HALT);
 
 	if (!hwstate.GetIntMaster()) {
@@ -39,8 +41,6 @@ void Gameboy::UpdateInterrupts()
 		hwstate.EnableIntActive();
 		return;
 	}
-
-	const uint8_t pendents = hwstate.GetPendentInts();
 
 	if (!pendents)
 		return;

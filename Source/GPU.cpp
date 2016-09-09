@@ -59,7 +59,7 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 
 
 
-inline void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
+void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 204) {
 		fill_bg_scanline(*gpu, memory.vram);
@@ -76,7 +76,7 @@ inline void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hws
 }
 
 
-inline void mode_vblank(GPU* const gpu, HWState* const hwstate)
+void mode_vblank(GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 456) {
 		if (++gpu->ly > 153) {
@@ -90,7 +90,7 @@ inline void mode_vblank(GPU* const gpu, HWState* const hwstate)
 }
 
 
-inline void mode_oam(GPU* const gpu)
+void mode_oam(GPU* const gpu)
 {
 	if (gpu->clock >= 80) {
 		gpu->stat.mode = GPU::Mode::TRANSFER;
@@ -99,7 +99,7 @@ inline void mode_oam(GPU* const gpu)
 }
 
 
-inline void mode_transfer(GPU* const gpu, HWState* const hwstate)
+void mode_transfer(GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 172) {
 		set_gpu_mode(GPU::Mode::HBLANK, gpu, hwstate);
@@ -109,7 +109,7 @@ inline void mode_transfer(GPU* const gpu, HWState* const hwstate)
 
 
 
-inline void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
+void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 {
 	const auto stat = gpu->stat;
 	uint8_t int_on = 0;
@@ -126,7 +126,7 @@ inline void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hw
 
 
 
-inline void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
+void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->ly != gpu->lyc) {
 		if (gpu->stat.coincidence_flag)
@@ -143,7 +143,7 @@ inline void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 
 
 
-static void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
+void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 {
 	const auto ly = gpu.ly;
 	const auto lcdc = gpu.lcdc;

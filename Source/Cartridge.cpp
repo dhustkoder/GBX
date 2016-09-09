@@ -53,14 +53,8 @@ bool Gameboy::LoadRom(const char* const file_name)
 
 
 
-
-
-
-
-
-
 // parsers ROM header for common information
-static void fill_cartridge_info(Cartridge* const cart)
+void fill_cartridge_info(Cartridge* const cart)
 {
 	auto& cinfo = cart->info;
 
