@@ -5,8 +5,10 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wshadow -Weffc++ -Wstrict-aliasin
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O0 -g3")
 
-option(ADDRESS_SANITIZER OFF)
-option(UNDEFINED_SANITIZER OFF)
+option(ASAN OFF)
+option(USAN OFF)
+option(MSAN OFF)
+
 option(ENABLE_LTO OFF)
 option(ASM_OUTPUT OFF)
 
@@ -31,11 +33,11 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 
 # "Debug" full debug information, no optimization, asserts enabled
 elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	if (ADDRESS_SANIZIER)
+	if (ASAN)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 	endif()
 
-	if (UNDEFINED_SANITIZER)
+	if (USAN)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 	endif()
 endif()

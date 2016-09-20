@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <Utix/Malloc.h>
 #include "Instructions.hpp"
 #include "Cartridge.hpp"
 #include "Gameboy.hpp"
@@ -11,13 +11,14 @@ namespace gbx {
 
 Gameboy* create_gameboy() 
 {
-	Gameboy* const gb = utix::malloc_t<Gameboy>();
-	if (!gb) {
+	const auto gb = malloc(sizeof(Gameboy));
+	if (gb != nullptr) {
+		memset(gb, 0, sizeof(Gameboy));
+		return static_cast<Gameboy*>(gb);
+	} else {
 		perror("Couldn't allocate memory");
 		return nullptr;
 	}
-	memset(gb, 0, sizeof(Gameboy));
-	return gb;
 }
 
 void destroy_gameboy(Gameboy* const gb) 

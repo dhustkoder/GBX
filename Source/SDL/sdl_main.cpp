@@ -1,17 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-#include <Utix/ScopeExit.h>
 #include "Gameboy.hpp"
 
 
 
 namespace {
 
-static bool InitSDL();
-static void QuitSDL();
-static void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
-static void RenderGraphics(const gbx::GPU& gpu);
+static bool init_sdl();
+static void quit_sdl();
+static void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
+static void render_graphics(const gbx::GPU& gpu);
 
 
 }
@@ -28,26 +27,19 @@ int main(int argc, char** argv)
 
 	gbx::Gameboy* const gameboy = gbx::create_gameboy();
 	
-	if (!gameboy)
+	if (gameboy == nullptr)
 		return EXIT_FAILURE;
 
-	const auto gameboy_guard = utix::MakeScopeExit([=] {
-		gbx::destroy_gameboy(gameboy);
-	});
+	const auto gameboy_guard = gbx::MakeScopeExit([=] { gbx::destroy_gameboy(gameboy); });
 
 	if (!gameboy->LoadRom(argv[1]))
 		return EXIT_FAILURE;
 
-
-	if (!InitSDL())
+	if (!init_sdl())
 		return EXIT_FAILURE;
 
+	const auto sdl_guard = gbx::MakeScopeExit([] { quit_sdl(); });
 
-	const auto sdl_guard = utix::MakeScopeExit([] {
-		QuitSDL();
-	});
-
-	constexpr const auto ESCAPE = SDL_SCANCODE_ESCAPE;
 	SDL_Event event;
 	Uint32 last_ticks = 0;
 	size_t itr = 0;
@@ -56,20 +48,21 @@ int main(int argc, char** argv)
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 			case SDL_KEYDOWN:
-				if (event.key.keysym.scancode == ESCAPE)
-					goto SDL_QUIT_EVENT;
-
-				UpdateKey(gbx::KeyDown,
-					event.key.keysym.scancode,
-					&gameboy->keys);
+				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+					goto break_loop;
+				} else {
+					update_key(gbx::KeyDown,
+					           event.key.keysym.scancode,
+					           &gameboy->keys);
+				}
 				break;
 			case SDL_KEYUP:
-				UpdateKey(gbx::KeyUp,
-					event.key.keysym.scancode,
-					&gameboy->keys);
+				update_key(gbx::KeyUp,
+				           event.key.keysym.scancode,
+				           &gameboy->keys);
 				break;
 			case SDL_QUIT:
-				goto SDL_QUIT_EVENT;
+				goto break_loop;
 			default:
 				break;
 			}
@@ -78,7 +71,7 @@ int main(int argc, char** argv)
 		gameboy->Run(69905);
 		
 		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBlank)
-			RenderGraphics(gameboy->gpu);
+			render_graphics(gameboy->gpu);
 		
 		SDL_Delay(15);
 
@@ -92,8 +85,7 @@ int main(int argc, char** argv)
 		++itr;
 	}
 
-
-SDL_QUIT_EVENT:
+break_loop:
 
 
 	return EXIT_SUCCESS;
@@ -109,8 +101,8 @@ SDL_QUIT_EVENT:
 
 namespace {
 
-constexpr const int WIN_WIDTH = 160;
-constexpr const int WIN_HEIGHT = 144;
+constexpr const int WinWidth = 160;
+constexpr const int WinHeight = 144;
 
 static SDL_Window* window;
 static SDL_Texture* texture;
@@ -118,7 +110,7 @@ static SDL_Renderer* renderer;
 
 
 
-void RenderGraphics(const gbx::GPU& gpu)
+void render_graphics(const gbx::GPU& gpu)
 {
 	const auto lcdc = gpu.lcdc;
 
@@ -143,7 +135,7 @@ void RenderGraphics(const gbx::GPU& gpu)
 
 
 
-void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
+void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 {
 	switch (keycode) {
 	case SDL_SCANCODE_Z: keys->pad.a = state; break;
@@ -161,7 +153,7 @@ void UpdateKey(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 
 
 
-bool InitSDL()
+bool init_sdl()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		fprintf(stderr, "failed to init SDL2: %s\n", SDL_GetError());
@@ -171,16 +163,16 @@ bool InitSDL()
 	window = SDL_CreateWindow("GBX",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		WIN_WIDTH * 2, WIN_HEIGHT * 2, 0);
+		WinWidth * 2, WinHeight * 2, 0);
 
-	if (!window) {
+	if (window == nullptr) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n", SDL_GetError());
 		goto free_sdl;
 	}
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-	if (!renderer) {
+	if (renderer == nullptr) {
 		fprintf(stderr, "failed to create SDL_Renderer: %s\n", SDL_GetError());
 		goto free_window;
 	}
@@ -189,9 +181,9 @@ bool InitSDL()
 	texture = SDL_CreateTexture(renderer,
 		SDL_PIXELFORMAT_RGBA8888,
 		SDL_TEXTUREACCESS_STREAMING,
-		WIN_WIDTH, WIN_HEIGHT);
+		WinWidth, WinHeight);
 
-	if (!texture) {
+	if (texture == nullptr) {
 		fprintf(stderr, "failed to create SDL_Texture: %s\n", SDL_GetError());
 		goto free_renderer;
 	}
@@ -214,7 +206,7 @@ free_sdl:
 
 
 
-void QuitSDL()
+void quit_sdl()
 {
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);

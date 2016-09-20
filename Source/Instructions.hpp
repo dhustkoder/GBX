@@ -1,9 +1,8 @@
 #ifndef GBX_INSTRUCTIONS_HPP_
 #define GBX_INSTRUCTIONS_HPP_
-#include <Utix/Ints.h>
-#include <Utix/Assert.h>
+#include <stdint.h>
 #include "Debug.hpp"
-#define ASSERT_INSTR_IMPL() debug_puts(__func__); ASSERT_MSG(false, "Instruction Not Implemented!")
+#define ASSERT_INSTR_IMPL() debug_puts(__func__); assert((("Instruction Not Implemented"), false))
 
 namespace gbx {
 

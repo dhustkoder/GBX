@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <Utix/Assert.h>
 #include "Debug.hpp"
 #include "Gameboy.hpp"
 

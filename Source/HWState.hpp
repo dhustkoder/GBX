@@ -1,6 +1,6 @@
 #ifndef GBX_HWSTATE_HPP_
 #define GBX_HWSTATE_HPP_
-#include <Utix/Ints.h>
+#include <stdint.h>
 
 namespace gbx {
 
@@ -80,9 +80,6 @@ inline uint8_t HWState::GetPendentInts() const
 
 
 
-
-
-
 inline void HWState::EnableIntMaster() 
 {
 	flags |= INT_MASTER_ENABLED;
@@ -147,4 +144,7 @@ inline void HWState::ClearInt(const IntMask inter)
 
 
 }
+
 #endif
+
+

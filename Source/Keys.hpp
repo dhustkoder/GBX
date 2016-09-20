@@ -1,6 +1,6 @@
 #ifndef GBX_KEYS_HPP_
 #define GBX_KEYS_HPP_
-#include <Utix/Ints.h>
+#include <stdint.h>
 
 
 namespace gbx {

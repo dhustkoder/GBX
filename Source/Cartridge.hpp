@@ -1,6 +1,5 @@
 #ifndef GBX_CARTRIDGE_HPP_
 #define GBX_CARTRIDGE_HPP_
-#include <Utix/Ints.h>
 #include "Common.hpp"
 
 namespace gbx {

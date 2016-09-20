@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <Utix/ScopeExit.h>
+#include "Common.hpp"
 #include "Gameboy.hpp"
 
 namespace gbx {
@@ -22,7 +22,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 			return false;
 		}
 
-		const auto file_guard = utix::MakeScopeExit([=] { fclose(file); });
+		const auto file_guard = MakeScopeExit([=] { fclose(file); });
 	
 		fseek(file, 0, SEEK_END);
 

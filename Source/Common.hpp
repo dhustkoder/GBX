@@ -1,12 +1,27 @@
 #ifndef GBX_COMMON_HPP_
 #define GBX_COMMON_HPP_
-#include <Utix/Ints.h>
-
-
-
+#include <stdint.h>
+#include <stddef.h>
 
 namespace gbx {
 
+template<class F>
+struct ScopeExit
+{
+	ScopeExit(const ScopeExit&)=delete;
+	ScopeExit& operator=(const ScopeExit&)=delete;
+	constexpr ScopeExit(ScopeExit&& other) noexcept = default;
+	constexpr ScopeExit(F&& f) noexcept : m_f(static_cast<F&&>(f)) {}
+	~ScopeExit() noexcept { m_f(); }
+private:
+	const F m_f;
+};
+
+template<class F> 
+constexpr ScopeExit<F> MakeScopeExit(F&& f) {
+	return ScopeExit<F>(static_cast<F&&>(f));
+}
+	
 constexpr size_t operator""_Kib(unsigned long long kibs) {
 	return static_cast<size_t>(sizeof(uint8_t) * kibs * 1024);
 }
@@ -69,17 +84,8 @@ constexpr uint8_t GetHighNibble(const uint8_t byte) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 }
+
+
 #endif
+
