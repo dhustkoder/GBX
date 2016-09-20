@@ -59,12 +59,12 @@ int main(int argc, char** argv)
 				if (event.key.keysym.scancode == ESCAPE)
 					goto SDL_QUIT_EVENT;
 
-				UpdateKey(gbx::KEYDOWN,
+				UpdateKey(gbx::KeyDown,
 					event.key.keysym.scancode,
 					&gameboy->keys);
 				break;
 			case SDL_KEYUP:
-				UpdateKey(gbx::KEYUP,
+				UpdateKey(gbx::KeyUp,
 					event.key.keysym.scancode,
 					&gameboy->keys);
 				break;
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 
 		gameboy->Run(69905);
 		
-		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBLANK)
+		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBlank)
 			RenderGraphics(gameboy->gpu);
 		
 		SDL_Delay(15);

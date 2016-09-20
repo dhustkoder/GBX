@@ -5,30 +5,31 @@
 
 namespace gbx {
 
-constexpr const size_t CARTRIDGE_MAX_SIZE = 32_Kib;
-constexpr const size_t CARTRIDGE_MIN_SIZE = 32_Kib;
+constexpr const size_t CartridgeMaxSize = 32_Kib;
+constexpr const size_t CartridgeMinSize = 32_Kib;
 
 enum class CartridgeType : uint8_t 
 {
-	ROM_ONLY = 0x0,
-	ROM_MBC1 = 0x1,
+	RomOnly = 0x0,
+	RomMBC1 = 0x1,
 };
 
-enum class System : uint8_t 
+enum class System : uint8_t  
 {
-	GAMEBOY, GAMEBOY_COLOR, SUPER_GAMEBOY
+	Gameboy, 
+	GameboyColor, 
+	SuperGameboy
 };
 
-struct CartridgeInfo
+struct CartridgeInfo 
 {
-	char internal_name[17];
+	char internal_name[0x11];
 	size_t size;
 	CartridgeType type;
 	System system;
 };
 
-
-struct Cartridge
+struct Cartridge 
 {
 	uint8_t rom_banks[32_Kib];
 	static CartridgeInfo info;

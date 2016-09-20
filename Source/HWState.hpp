@@ -7,11 +7,11 @@ namespace gbx {
 
 enum IntMask : uint8_t
 {
-	INT_VBLANK = 0x01,
-	INT_LCD_STAT = 0x02,
-	INT_TIMER = 0x04,
-	INT_SERIAL = 0x08,
-	INT_JOYPAD = 0x10
+	IntVBlank = 0x01,
+	IntLcdStat = 0x02,
+	IntTimer = 0x04,
+	IntSerial = 0x08,
+	IntJoypad = 0x10
 };
 
 

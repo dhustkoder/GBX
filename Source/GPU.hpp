@@ -10,8 +10,8 @@ namespace gbx {
 struct GPU
 {
 	enum Mode : uint8_t {
-		HBLANK = 0x0, VBLANK = 0x1,
-		OAM = 0x2, TRANSFER = 0x3
+		HBlank = 0x0, VBlank = 0x1,
+		OAM = 0x2, Transfer = 0x3
 	};
 
 	uint16_t clock;

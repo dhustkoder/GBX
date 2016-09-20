@@ -18,7 +18,7 @@ void Gameboy::UpdateTimers(const uint8_t cycles)
 				++hwstate.tima;
 			} else {
 				hwstate.tima = hwstate.tma;
-				hwstate.RequestInt(INT_TIMER);
+				hwstate.RequestInt(IntTimer);
 			}
 
 			hwstate.tima_clock -= hwstate.tima_clock_limit;
@@ -54,20 +54,20 @@ void Gameboy::UpdateInterrupts()
 		cpu.clock += 12;
 	};
 
-	if (pendents & INT_VBLANK)
-		trigger(INT_VBLANK, 0x40);
+	if (pendents & IntVBlank)
+		trigger(IntVBlank, 0x40);
 
-	if (pendents & INT_LCD_STAT)
-		trigger(INT_LCD_STAT, 0x48);
+	if (pendents & IntLcdStat)
+		trigger(IntLcdStat, 0x48);
 
-	if (pendents & INT_TIMER)
-		trigger(INT_TIMER, 0x50);
+	if (pendents & IntTimer)
+		trigger(IntTimer, 0x50);
 
-	if (pendents & INT_SERIAL)
-		trigger(INT_SERIAL, 0x58);
+	if (pendents & IntSerial)
+		trigger(IntSerial, 0x58);
 
-	if (pendents & INT_JOYPAD)
-		trigger(INT_JOYPAD, 0x60);
+	if (pendents & IntJoypad)
+		trigger(IntJoypad, 0x60);
 }
 
 

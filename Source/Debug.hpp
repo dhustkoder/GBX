@@ -1,6 +1,6 @@
 #ifndef GBX_DEBUG_HPP_
 #define GBX_DEBUG_HPP_
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(DEBUG)
 #include <stdio.h>
 #include <stdarg.h>
 #endif
@@ -8,7 +8,7 @@
 namespace gbx {
 
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(DEBUG)
 inline void debug_puts(const char* str) 
 {
 	puts(str);

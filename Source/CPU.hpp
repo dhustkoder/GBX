@@ -5,11 +5,11 @@
 namespace gbx {
 
 
-struct CPU
+struct CPU 
 {
 	enum Flags : uint8_t {
-		FLAG_Z = 0x80, FLAG_N = 0x40, 
-		FLAG_H = 0x20, FLAG_C = 0x10
+		Flag_Z = 0x80, Flag_N = 0x40, 
+		Flag_H = 0x20, Flag_C = 0x10
 	};
 
 	Flags GetFlags(Flags flags) const;
@@ -64,43 +64,43 @@ constexpr CPU::Flags operator&(const CPU::Flags f1, const CPU::Flags f2) {
 
 
 constexpr CPU::Flags CheckZ(const uint8_t result) {
-	return result ? static_cast<CPU::Flags>(0) : CPU::FLAG_Z;
+	return result ? static_cast<CPU::Flags>(0) : CPU::Flag_Z;
 }
 
 
 
 constexpr CPU::Flags CheckH_bit3(const uint8_t first, const uint16_t second) {
-	return (((first&0x0f) + (second&0x0f)) & 0x10) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
+	return (((first&0x0f) + (second&0x0f)) & 0x10) ? CPU::Flag_H : static_cast<CPU::Flags>(0);
 }
 
 
 
 constexpr CPU::Flags CheckH_bit11(const uint16_t first, const uint16_t second) {
-	return (((first&0xf00) + (second&0xf00)) & 0x1000) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
+	return (((first&0xf00) + (second&0xf00)) & 0x1000) ? CPU::Flag_H : static_cast<CPU::Flags>(0);
 }
 
 
 
 constexpr CPU::Flags CheckC_bit7(const uint16_t result) {
-	return (result & 0xff00) ? CPU::FLAG_C : static_cast<CPU::Flags>(0);
+	return (result & 0xff00) ? CPU::Flag_C : static_cast<CPU::Flags>(0);
 }
 
 
 
 constexpr CPU::Flags CheckC_bit15(const uint32_t result) {
-	return (result & 0xffff0000) ? CPU::FLAG_C : static_cast<CPU::Flags>(0);
+	return (result & 0xffff0000) ? CPU::Flag_C : static_cast<CPU::Flags>(0);
 }
 
 
 
 constexpr CPU::Flags CheckC_borrow(const uint8_t first, const uint16_t second) {
-	return first < second ? CPU::FLAG_C : static_cast<CPU::Flags>(0);
+	return first < second ? CPU::Flag_C : static_cast<CPU::Flags>(0);
 }
 
 
 
 constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint16_t second) {
-	return (((first&0xf) - (second&0xf)) < 0) ? CPU::FLAG_H : static_cast<CPU::Flags>(0);
+	return (((first&0xf) - (second&0xf)) < 0) ? CPU::Flag_H : static_cast<CPU::Flags>(0);
 }
 
 

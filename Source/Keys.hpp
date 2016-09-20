@@ -7,8 +7,8 @@ namespace gbx {
 
 enum KeyState : uint8_t
 {
-	KEYDOWN = 0x00,
-	KEYUP = 0x01
+	KeyDown = 0x00,
+	KeyUp = 0x01
 };
 
 

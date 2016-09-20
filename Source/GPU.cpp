@@ -6,16 +6,16 @@ namespace gbx {
 
 enum Color : uint32_t
 {
-	BLACK = 0x00000000,
-	WHITE = 0xFFFFFF00,
-	LIGHT_GREY = 0x90909000,
-	DARK_GREY = 0x55555500,
+	Black = 0x00000000,
+	White = 0xFFFFFF00,
+	LightGrey = 0x90909000,
+	DarkGrey = 0x55555500,
 };
 
 
 static const uint32_t colors[4] = {
-	WHITE, LIGHT_GREY, 
-	DARK_GREY, BLACK
+	White, LightGrey, 
+	DarkGrey, Black
 };
 
 static uint16_t bg_scanlines[144][20];
@@ -40,17 +40,17 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 	if (!gpu.lcdc.lcd_on) {
 		gpu.clock = 0;
 		gpu.ly = 0;
-		gpu.stat.mode = GPU::Mode::HBLANK;
+		gpu.stat.mode = GPU::Mode::HBlank;
 		return;
 	}
 
 	gpu.clock += cycles;
 	
 	switch (gpu.stat.mode) {
-	case GPU::Mode::HBLANK: mode_hblank(memory, &gpu, &hwstate); break;
-	case GPU::Mode::VBLANK: mode_vblank(&gpu, &hwstate); break;
+	case GPU::Mode::HBlank: mode_hblank(memory, &gpu, &hwstate); break;
+	case GPU::Mode::VBlank: mode_vblank(&gpu, &hwstate); break;
 	case GPU::Mode::OAM: mode_oam(&gpu); break;
-	case GPU::Mode::TRANSFER: mode_transfer(&gpu, &hwstate); break;
+	case GPU::Mode::Transfer: mode_transfer(&gpu, &hwstate); break;
 	default: break;
 	}
 }
@@ -66,8 +66,8 @@ void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
 		if (++gpu->ly != 144) {
 			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
 		} else {
-			hwstate->RequestInt(INT_VBLANK);
-			set_gpu_mode(GPU::Mode::VBLANK, gpu, hwstate);
+			hwstate->RequestInt(IntVBlank);
+			set_gpu_mode(GPU::Mode::VBlank, gpu, hwstate);
 		}
 
 		check_gpu_lyc(gpu, hwstate);
@@ -93,7 +93,7 @@ void mode_vblank(GPU* const gpu, HWState* const hwstate)
 void mode_oam(GPU* const gpu)
 {
 	if (gpu->clock >= 80) {
-		gpu->stat.mode = GPU::Mode::TRANSFER;
+		gpu->stat.mode = GPU::Mode::Transfer;
 		gpu->clock -= 80;
 	}
 }
@@ -102,7 +102,7 @@ void mode_oam(GPU* const gpu)
 void mode_transfer(GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 172) {
-		set_gpu_mode(GPU::Mode::HBLANK, gpu, hwstate);
+		set_gpu_mode(GPU::Mode::HBlank, gpu, hwstate);
 		gpu->clock -= 172;
 	}
 }
@@ -114,13 +114,13 @@ void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 	const auto stat = gpu->stat;
 	uint8_t int_on = 0;
 	switch (mode) {
-	case GPU::Mode::HBLANK: int_on = stat.int_on_hblank; break;
-	case GPU::Mode::VBLANK: int_on = stat.int_on_vblank; break;
+	case GPU::Mode::HBlank: int_on = stat.int_on_hblank; break;
+	case GPU::Mode::VBlank: int_on = stat.int_on_vblank; break;
 	case GPU::Mode::OAM: int_on = stat.int_on_oam; break;
 	default: break;
 	}
 	if (int_on)
-		hwstate->RequestInt(INT_LCD_STAT);
+		hwstate->RequestInt(IntLcdStat);
 	gpu->stat.mode = static_cast<uint8_t>(mode);
 };
 
@@ -134,7 +134,7 @@ void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 	} else {
 		gpu->stat.coincidence_flag = 1;
 		if (gpu->stat.int_on_coincidence)
-			hwstate->RequestInt(INT_LCD_STAT);
+			hwstate->RequestInt(IntLcdStat);
 	}
 }
 
