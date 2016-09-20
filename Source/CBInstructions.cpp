@@ -2,7 +2,6 @@
 #include "Instructions.hpp"
 
 namespace gbx {
-        
 
 static uint8_t rlc(const uint8_t value, CPU* const cpu)
 {
@@ -19,8 +18,6 @@ static uint8_t rlc(const uint8_t value, CPU* const cpu)
 
 	return result;
 }
-
-
 
 
 static uint8_t rrc(const uint8_t value, CPU* const cpu)
@@ -40,8 +37,6 @@ static uint8_t rrc(const uint8_t value, CPU* const cpu)
 }
 
 
-
-
 static uint8_t rl(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 0 C
@@ -55,8 +50,6 @@ static uint8_t rl(const uint8_t value, CPU* const cpu)
 
 	return result;
 }
-
-
 
 
 static uint8_t rr(const uint8_t value, CPU* const cpu)
@@ -74,8 +67,6 @@ static uint8_t rr(const uint8_t value, CPU* const cpu)
 }
 
 
-
-
 static uint8_t sla(const uint8_t value, CPU* const cpu)
 {
 	// flags  effect: Z 0 0 C
@@ -88,7 +79,6 @@ static uint8_t sla(const uint8_t value, CPU* const cpu)
 
 	return result;
 }
-
 
 
 static uint8_t sra(const uint8_t value, CPU* const cpu)
@@ -105,8 +95,6 @@ static uint8_t sra(const uint8_t value, CPU* const cpu)
 }
 
 
-
-
 static uint8_t swap(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 0 0
@@ -114,8 +102,6 @@ static uint8_t swap(const uint8_t value, CPU* const cpu)
 	cpu->f = CheckZ(result);
 	return result;
 }
-
-
 
 
 static uint8_t srl(const uint8_t value, CPU* const cpu)
@@ -132,8 +118,6 @@ static uint8_t srl(const uint8_t value, CPU* const cpu)
 }
 
 
-
-
 static void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 1 -
@@ -142,36 +126,43 @@ static void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
 }
 
 
-
-inline void rlc_r(uint8_t* const reg, CPU* const cpu) {
+inline void rlc_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = rlc(*reg, cpu);
 }
 
-inline void rrc_r(uint8_t* const reg, CPU* const cpu) {
+inline void rrc_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = rrc(*reg, cpu);
 }
 
-inline void rl_r(uint8_t* const reg, CPU* const cpu) {
+inline void rl_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = rl(*reg, cpu);
 }
 
-inline void rr_r(uint8_t* const reg, CPU* const cpu) {
+inline void rr_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = rr(*reg, cpu);
 }
 
-inline void sla_r(uint8_t* const reg, CPU* const cpu) {
+inline void sla_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = sla(*reg, cpu);
 }
 
-inline void sra_r(uint8_t* const reg, CPU* const cpu) {
+inline void sra_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = sra(*reg, cpu);
 }
 
-inline void swap_r(uint8_t* const reg, CPU* const cpu) {
+inline void swap_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = swap(*reg, cpu);
 }
 
-inline void srl_r(uint8_t* const reg, CPU* const cpu) {
+inline void srl_r(uint8_t* const reg, CPU* const cpu)
+{
 	*reg = srl(*reg, cpu);
 }
 
@@ -185,12 +176,14 @@ inline void op_hlp(uint8_t(*op)(uint8_t,CPU*), Gameboy* const gb)
 
 
 
-inline void set_r(const uint8_t bit, uint8_t* const reg) {
+inline void set_r(const uint8_t bit, uint8_t* const reg)
+{
 	*reg = SetBit(bit, *reg);
 }
 
 
-inline void res_r(const uint8_t bit, uint8_t* const reg) {
+inline void res_r(const uint8_t bit, uint8_t* const reg)
+{
 	*reg = ResBit(bit, *reg);
 }
 
@@ -211,17 +204,15 @@ inline void res_hlp(const uint8_t bit, Gameboy* const gb)
 }
 
 
-
-inline void bit_r(const uint8_t bit, const uint8_t reg, CPU* const cpu) {
+inline void bit_r(const uint8_t bit, const uint8_t reg, CPU* const cpu)
+{
 	bit_n(bit, reg, cpu);
 }
 
-inline void bit_hlp(const uint8_t bit, Gameboy* const gb) {
+inline void bit_hlp(const uint8_t bit, Gameboy* const gb)
+{
 	bit_n(bit, gb->Read8(gb->cpu.hl), &gb->cpu);
 }
-
-
-
 
 
 
@@ -2051,4 +2042,4 @@ const instruction_table_t cb_instruction[256] = {
 
 
 
-}
+} // namespace gbx

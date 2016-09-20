@@ -5,41 +5,42 @@
 
 namespace gbx {
 
-
-
 /* common names:
  * d8:  immediate 8 bit value
  * d16: immediate 16 bit value
- * a8:  8 bit unsigned data, which are added to $FF00 in certain instructions (replacement for missing IN and OUT instructions)
+ * a8:  8 bit unsigned data, which are added to $FF00 in certain instructions
  * a16: 16 bit address
  * r8: means 8 bit signed data, which are added to program counter
  * n: 8 bit data
  * nn: 16 bit data
  */
 
-
-inline uint8_t get_d8(Gameboy* const gb) {
+inline uint8_t get_d8(Gameboy* const gb) 
+{
 	return gb->Read8(gb->cpu.pc++);
 }
 
-inline int8_t get_r8(Gameboy* const gb) {
+inline int8_t get_r8(Gameboy* const gb) 
+{
 	return static_cast<int8_t>(get_d8(gb));
 }
 
-inline uint16_t get_a8(Gameboy* const gb) {
+inline uint16_t get_a8(Gameboy* const gb) 
+{
 	return 0xFF00 + get_d8(gb);
 }
 
-inline uint16_t get_d16(Gameboy* const gb) {
+inline uint16_t get_d16(Gameboy* const gb) 
+{
 	const uint16_t d16 = gb->Read16(gb->cpu.pc);
 	gb->cpu.pc += 2;
 	return d16;
 }
 
-inline uint16_t get_a16(Gameboy* const gb) {
+inline uint16_t get_a16(Gameboy* const gb) 
+{
 	return get_d16(gb);
 }
-
 
 
 static uint8_t inc(const uint8_t first, CPU* const cpu)
@@ -58,7 +59,6 @@ static uint8_t inc(const uint8_t first, CPU* const cpu)
 }
 
 
-
 static uint8_t dec(const uint8_t first, CPU* const cpu)
 {
 	// flags effect: Z 1 H -
@@ -73,8 +73,6 @@ static uint8_t dec(const uint8_t first, CPU* const cpu)
 	cpu->f = flags;
 	return result;
 }
-
-
 
 
 static void add_hl_nn(const uint16_t second, CPU* const cpu)
@@ -92,9 +90,6 @@ static void add_hl_nn(const uint16_t second, CPU* const cpu)
 	cpu->f = cpu->GetFlags(CPU::Flag_Z) | hc;
 	cpu->hl = static_cast<uint16_t>(result);
 }
-
-
-
 
 
 static void add_a_n(const uint8_t second, CPU* const cpu)
@@ -116,7 +111,6 @@ static void add_a_n(const uint8_t second, CPU* const cpu)
 }
 
 
-
 static void sub_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 1 H C
@@ -134,7 +128,6 @@ static void sub_a_n(const uint8_t second, CPU* const cpu)
 	cpu->f = flags;
 	cpu->a = static_cast<uint8_t>(result);
 }
-
 
 
 static void adc_a_n(const uint8_t second, CPU* const cpu)
@@ -158,10 +151,6 @@ static void adc_a_n(const uint8_t second, CPU* const cpu)
 }
 
 
-
-
-
-
 static void sbc_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 1 H C
@@ -182,8 +171,6 @@ static void sbc_a_n(const uint8_t second, CPU* const cpu)
 }
 
 
-
-
 static void and_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 0 1 0
@@ -192,7 +179,6 @@ static void and_a_n(const uint8_t second, CPU* const cpu)
 	cpu->f = CheckZ(result) | CPU::Flag_H;
 	cpu->a = result;
 }
-
 
 
 static void xor_a_n(const uint8_t second, CPU* const cpu)
@@ -205,7 +191,6 @@ static void xor_a_n(const uint8_t second, CPU* const cpu)
 }
 
 
-
 static void or_a_n(const uint8_t second, CPU* const cpu)
 {
 	// flags effect: Z 0 0 0
@@ -214,8 +199,6 @@ static void or_a_n(const uint8_t second, CPU* const cpu)
 	cpu->f = CheckZ(result);
 	cpu->a = result;
 }
-
-
 
 
 static void cp_a_n(const uint8_t value, CPU* const cpu)
@@ -236,8 +219,6 @@ static void cp_a_n(const uint8_t value, CPU* const cpu)
 }
 
 
-
-
 static void jp(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
@@ -247,7 +228,6 @@ static void jp(const bool cond, Gameboy* const gb)
 		gb->cpu.pc += 2;
 	}
 }
-
 
 
 static void jr(const bool cond, Gameboy* const gb)
@@ -262,7 +242,6 @@ static void jr(const bool cond, Gameboy* const gb)
 }
 
 
-
 static void ret(const bool cond, Gameboy* const gb)
 {
 	if (cond) {
@@ -270,7 +249,6 @@ static void ret(const bool cond, Gameboy* const gb)
 		gb->cpu.clock += 12;
 	}
 }
-
 
 
 static void call(const bool cond, Gameboy* const gb)
@@ -286,12 +264,13 @@ static void call(const bool cond, Gameboy* const gb)
 }
 
 
-
-inline void inc_r(uint8_t* const reg, CPU* const cpu) {
+inline void inc_r(uint8_t* const reg, CPU* const cpu) 
+{
 	*reg = inc(*reg, cpu);
 }
 
-inline void dec_r(uint8_t* const reg, CPU* const cpu) {
+inline void dec_r(uint8_t* const reg, CPU* const cpu) 
+{
 	*reg = dec(*reg, cpu);
 }
 
@@ -317,11 +296,6 @@ inline void rst(const uint16_t addr, Gameboy* const gb)
 	gb->PushStack16(gb->cpu.pc);
 	gb->cpu.pc = addr;
 }
-
-
-
-
-
 
 
 
@@ -2474,4 +2448,4 @@ extern const uint8_t clock_table[256] = {
 };
 
 
-}
+} // namespace gbx

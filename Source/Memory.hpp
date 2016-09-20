@@ -20,11 +20,7 @@ namespace gbx {
  *	FFFF        Interrupt Enable Register
  */
 
-
-
-
-struct Memory
-{
+struct Memory {
 	Cartridge cart;
 	uint8_t hram[127];
 	uint8_t wram[8_Kib];
@@ -34,12 +30,6 @@ struct Memory
 
 
 
-
-
-
-
-
-
-
-}
+} // namespace gbx
 #endif
+

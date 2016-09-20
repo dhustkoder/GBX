@@ -8,11 +8,6 @@
 
 namespace gbx {
 
-
-
-
-
-
 struct Gameboy 
 {
 	Gameboy()=delete;
@@ -21,7 +16,6 @@ struct Gameboy
 	~Gameboy()=delete;
 	Gameboy&operator=(Gameboy&)=delete;
 	Gameboy&operator=(Gameboy&&)=delete;
-
 
 	bool LoadRom(const char* file);
 	bool Reset();
@@ -54,9 +48,5 @@ extern Gameboy* create_gameboy();
 extern void destroy_gameboy(Gameboy* gb);
 
 
-
-
-
-
-}
+} // namespace gbx
 #endif

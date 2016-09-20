@@ -4,7 +4,6 @@
 
 namespace gbx {
 
-
 struct CPU 
 {
 	enum Flags : uint8_t {
@@ -49,8 +48,6 @@ struct CPU
 	};
 	
 };
-
-
 
 
 constexpr CPU::Flags operator|(const CPU::Flags f1, const CPU::Flags f2) {
@@ -125,18 +122,5 @@ inline void CPU::ClearFlags(const Flags flags)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
+} // namespace gbx
 #endif

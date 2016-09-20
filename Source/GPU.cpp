@@ -3,9 +3,7 @@
 
 namespace gbx {
 
-
-enum Color : uint32_t
-{
+enum Color : uint32_t {
 	Black = 0x00000000,
 	White = 0xFFFFFF00,
 	LightGrey = 0x90909000,
@@ -19,9 +17,6 @@ static const uint32_t colors[4] = {
 };
 
 static uint16_t bg_scanlines[144][20];
-
-
-
 
 
 inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
@@ -108,7 +103,6 @@ void mode_transfer(GPU* const gpu, HWState* const hwstate)
 }
 
 
-
 void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 {
 	const auto stat = gpu->stat;
@@ -137,8 +131,6 @@ void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 			hwstate->RequestInt(IntLcdStat);
 	}
 }
-
-
 
 
 
@@ -196,9 +188,6 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 
 
 
-
-
-
 void draw_graphics(const GPU& gpu, uint32_t* const pixels)
 {
 	const auto bgp = gpu.bgp;
@@ -230,17 +219,4 @@ void draw_graphics(const GPU& gpu, uint32_t* const pixels)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
+} // namespace gbx

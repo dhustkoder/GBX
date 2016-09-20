@@ -4,7 +4,6 @@
 #include "Gameboy.hpp"
 
 
-
 namespace {
 
 static bool init_sdl();
@@ -12,10 +11,7 @@ static void quit_sdl();
 static void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
 static void render_graphics(const gbx::GPU& gpu);
 
-
 }
-
-
 
 
 int main(int argc, char** argv)
@@ -92,13 +88,6 @@ break_loop:
 }
 
 
-
-
-
-
-
-
-
 namespace {
 
 constexpr const int WinWidth = 160;
@@ -107,7 +96,6 @@ constexpr const int WinHeight = 144;
 static SDL_Window* window;
 static SDL_Texture* texture;
 static SDL_Renderer* renderer;
-
 
 
 void render_graphics(const gbx::GPU& gpu)
@@ -132,9 +120,6 @@ void render_graphics(const gbx::GPU& gpu)
 }
 
 
-
-
-
 void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 {
 	switch (keycode) {
@@ -149,8 +134,6 @@ void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
 	default: break;
 	}
 }
-
-
 
 
 bool init_sdl()
@@ -202,10 +185,6 @@ free_sdl:
 }
 
 
-
-
-
-
 void quit_sdl()
 {
 	SDL_DestroyTexture(texture);
@@ -218,12 +197,5 @@ void quit_sdl()
 
 
 
+} // anonymous namespace
 
-
-
-
-
-
-
-
-}

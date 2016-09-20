@@ -31,18 +31,5 @@ inline void debug_printf(const char*, ...) {}
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
+} // namespace gbx
 #endif

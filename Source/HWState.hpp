@@ -4,9 +4,7 @@
 
 namespace gbx {
 
-
-enum IntMask : uint8_t
-{
+enum IntMask : uint8_t {
 	IntVBlank = 0x01,
 	IntLcdStat = 0x02,
 	IntTimer = 0x04,
@@ -15,15 +13,12 @@ enum IntMask : uint8_t
 };
 
 
-
-struct HWState
+struct HWState 
 {
-
 	enum Flags : uint8_t {
 		INT_MASTER_ENABLED = 0x01, INT_MASTER_ACTIVE = 0x02,
 		CPU_HALT = 0x04, TIMER_STOP = 0x08
 	};
-
 
 	bool GetIntMaster() const;
 	bool GetIntActive() const;
@@ -52,9 +47,6 @@ struct HWState
 	uint8_t int_enable;
 	uint8_t int_flags;
 };
-
-
-
 
 inline bool HWState::GetIntMaster() const 
 {
@@ -132,19 +124,7 @@ inline void HWState::ClearInt(const IntMask inter)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-}
+} // namespace gbx
 
 #endif
-
 

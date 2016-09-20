@@ -7,7 +7,7 @@ namespace gbx {
 
 
 
-struct GPU
+struct GPU 
 {
 	enum Mode : uint8_t {
 		HBlank = 0x0, VBlank = 0x1,
@@ -55,15 +55,12 @@ struct GPU
 };
 
 
-
-
-
 extern void draw_graphics(const GPU& gpu, uint32_t* const pixels);
 
 
 
 
+} // namespace gbx
 
-
-}
 #endif
+

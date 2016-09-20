@@ -7,8 +7,6 @@
 
 namespace gbx {
 
-
-
 Gameboy* create_gameboy() 
 {
 	const auto gb = malloc(sizeof(Gameboy));
@@ -104,9 +102,6 @@ bool Gameboy::Reset()
 }
 
 
-
-
-
 uint8_t Gameboy::Step()
 {
 	if (!hwstate.GetFlags(HWState::CPU_HALT)) {
@@ -120,8 +115,6 @@ uint8_t Gameboy::Step()
 		return 4;
 	}
 }
-
-
 
 
 void Gameboy::Run(const uint32_t cycles)
@@ -139,13 +132,5 @@ void Gameboy::Run(const uint32_t cycles)
 
 
 
-
-
-
-
-
-
-
-
-}
+} // namespace gbx
 

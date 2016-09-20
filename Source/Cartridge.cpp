@@ -6,10 +6,8 @@
 namespace gbx {
 
 static void fill_cartridge_info(Cartridge* cart);
-CartridgeInfo Cartridge::info;
 
-
-
+Cartridge::Info Cartridge::info;
 
 // copies the ROM file (if it is a 32_Kib ROM)
 // into the fixed_home - home in memory
@@ -47,12 +45,6 @@ bool Gameboy::LoadRom(const char* const file_name)
 }
 
 
-
-
-
-
-
-
 // parsers ROM header for common information
 void fill_cartridge_info(Cartridge* const cart)
 {
@@ -64,13 +56,14 @@ void fill_cartridge_info(Cartridge* const cart)
 
 	const uint8_t super_gb_check = cart->rom_banks[0x146];
 	if (super_gb_check == 0x03) {
-		cinfo.system = System::SuperGameboy;
+		cinfo.system = Cartridge::System::SuperGameboy;
 	} else {
 		const uint8_t color_check = cart->rom_banks[0x143];
-		cinfo.system = color_check == 0x80 ? System::GameboyColor : System::Gameboy;
+		cinfo.system = color_check == 0x80 ? Cartridge::System::GameboyColor
+		                                   : Cartridge::System::Gameboy;
 	}
 
-	cinfo.type = static_cast<CartridgeType>(cart->rom_banks[0x147]);
+	cinfo.type = static_cast<Cartridge::Type>(cart->rom_banks[0x147]);
 
 	const uint8_t size_code = cart->rom_banks[0x148];
 	switch (size_code) {
@@ -87,13 +80,4 @@ void fill_cartridge_info(Cartridge* const cart)
 
 
 
-
-
-
-
-
-
-
-
-
-}
+} // namespace gbx

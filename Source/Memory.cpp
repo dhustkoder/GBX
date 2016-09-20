@@ -31,8 +31,6 @@ static void dma_transfer(uint8_t value, Gameboy* gb);
 
 
 
-
-
 uint8_t Gameboy::Read8(const uint16_t address) const 
 {
 	if (address < 0x8000)
@@ -50,8 +48,6 @@ uint8_t Gameboy::Read8(const uint16_t address) const
 	else
 		return read_vram(address, memory);
 }
-
-
 
 
 void Gameboy::Write8(const uint16_t address, const uint8_t value) 
@@ -73,12 +69,10 @@ void Gameboy::Write8(const uint16_t address, const uint8_t value)
 }
 
 
-
 uint16_t Gameboy::Read16(const uint16_t address) const 
 {
 	return ConcatBytes(Read8(address + 1), Read8(address));
 }
-
 
 
 void Gameboy::Write16(const uint16_t address, const uint16_t value) 
@@ -113,9 +107,6 @@ uint16_t Gameboy::PopStack16()
 	cpu.sp += 2;
 	return val;
 }
-
-
-
 
 
 
@@ -279,7 +270,6 @@ void write_keys(const uint8_t value, Keys* const keys)
 }
 
 
-
 void write_tac(const uint8_t value, HWState* const hwstate)
 {
 	hwstate->tac = value;
@@ -302,10 +292,9 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 }
 
 
-
 void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
-	constexpr const uint8_t nbytes = sizeof(uint8_t) * 0xA0;
+	constexpr const auto nbytes = sizeof(uint8_t) * 0xA0;
 	uint16_t source_addr = value * 0x100;
 	if (source_addr == 0xC000) {
 		memcpy(gb->memory.oam, gb->memory.wram, nbytes);
@@ -322,13 +311,6 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 
 
 
+} // namespace gbx
 
 
-
-
-
-
-
-
-
-}
