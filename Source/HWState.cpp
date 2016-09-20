@@ -9,7 +9,7 @@ void Gameboy::UpdateTimers(const uint8_t cycles)
 		++hwstate.div;
 	hwstate.div_clock += cycles;
 
-	if (!hwstate.GetFlags(HWState::TIMER_STOP)) {
+	if (!hwstate.GetFlags(HWState::TimerStop)) {
 		hwstate.tima_clock += cycles;
 		if (hwstate.tima_clock >= hwstate.tima_clock_limit) {
 			if (hwstate.tima < 0xff) {
@@ -29,8 +29,8 @@ void Gameboy::UpdateInterrupts()
 {
 	const uint8_t pendents = hwstate.GetPendentInts();
 
-	if (pendents && hwstate.GetFlags(HWState::CPU_HALT))
-		hwstate.ClearFlags(HWState::CPU_HALT);
+	if (pendents && hwstate.GetFlags(HWState::CpuHalt))
+		hwstate.ClearFlags(HWState::CpuHalt);
 
 	if (!hwstate.GetIntMaster()) {
 		return;

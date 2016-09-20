@@ -104,7 +104,7 @@ bool Gameboy::Reset()
 
 uint8_t Gameboy::Step()
 {
-	if (!hwstate.GetFlags(HWState::CPU_HALT)) {
+	if (!hwstate.GetFlags(HWState::CpuHalt)) {
 		const uint8_t opcode = Read8(cpu.pc++);
 		main_instructions[opcode](this);
 		const uint8_t cycles = clock_table[opcode];

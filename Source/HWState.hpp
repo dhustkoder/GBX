@@ -16,8 +16,10 @@ enum IntMask : uint8_t {
 struct HWState 
 {
 	enum Flags : uint8_t {
-		INT_MASTER_ENABLED = 0x01, INT_MASTER_ACTIVE = 0x02,
-		CPU_HALT = 0x04, TIMER_STOP = 0x08
+		IntMasterEnable = 0x01,
+		IntMasterActive = 0x02,
+		CpuHalt = 0x04,
+		TimerStop = 0x08
 	};
 
 	bool GetIntMaster() const;
@@ -50,12 +52,12 @@ struct HWState
 
 inline bool HWState::GetIntMaster() const 
 {
-	return (flags & INT_MASTER_ENABLED) != 0;
+	return (flags & IntMasterEnable) != 0;
 }
 
 inline bool HWState::GetIntActive() const 
 {
-	return (flags & INT_MASTER_ACTIVE) != 0;
+	return (flags & IntMasterActive) != 0;
 }
 
 
@@ -74,18 +76,18 @@ inline uint8_t HWState::GetPendentInts() const
 
 inline void HWState::EnableIntMaster() 
 {
-	flags |= INT_MASTER_ENABLED;
+	flags |= IntMasterEnable;
 }
 
 inline void HWState::EnableIntActive()
 {
-	flags |= INT_MASTER_ACTIVE;
+	flags |= IntMasterActive;
 }
 
 inline void HWState::DisableIntMaster() 
 {
-	flags &= ~(INT_MASTER_ENABLED 
-	           | INT_MASTER_ACTIVE);
+	flags &= ~(IntMasterEnable 
+	           | IntMasterActive);
 }
 
 

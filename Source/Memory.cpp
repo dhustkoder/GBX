@@ -282,12 +282,12 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 
 	const bool timer_stop = TestBit(2, value);
 	if (timer_stop) { 
-		if (hwstate->GetFlags(HWState::TIMER_STOP)) {
-			hwstate->ClearFlags(HWState::TIMER_STOP);
+		if (hwstate->GetFlags(HWState::TimerStop)) {
+			hwstate->ClearFlags(HWState::TimerStop);
 			hwstate->tima = hwstate->tma;
 		}
 	} else {
-		hwstate->SetFlags(HWState::TIMER_STOP);
+		hwstate->SetFlags(HWState::TimerStop);
 	}
 }
 

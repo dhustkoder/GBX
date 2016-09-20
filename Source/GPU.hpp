@@ -5,8 +5,6 @@
 
 namespace gbx {
 
-
-
 struct GPU 
 {
 	enum Mode : uint8_t {

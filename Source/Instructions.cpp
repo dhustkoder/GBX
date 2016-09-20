@@ -1344,7 +1344,7 @@ void ld_75(Gameboy* const gb)
 
 void halt_76(Gameboy* const gb)
 {
-	gb->hwstate.SetFlags(HWState::CPU_HALT);
+	gb->hwstate.SetFlags(HWState::CpuHalt);
 }
 
 

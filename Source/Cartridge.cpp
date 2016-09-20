@@ -23,11 +23,11 @@ bool Gameboy::LoadRom(const char* const file_name)
 		const auto file_guard = MakeScopeExit([=] { fclose(file); });
 	
 		fseek(file, 0, SEEK_END);
-
 		const auto file_size = static_cast<size_t>(ftell(file));
-		if (file_size > CartridgeMaxSize 
-		    || file_size < CartridgeMinSize) {
-			fprintf(stderr, "size of \'%s\': %zu bytes is incompatible!\n", file_name, file_size);
+		
+		if (file_size > CartridgeMaxSize || file_size < CartridgeMinSize) {
+			fprintf(stderr, "size of \'%s\': %zu bytes is incompatible!\n",
+			        file_name, file_size);
 			return false;
 		}
 
@@ -54,18 +54,20 @@ void fill_cartridge_info(Cartridge* const cart)
 	memcpy(cinfo.internal_name, &cart->rom_banks[0x134], 0x10);
 	cinfo.internal_name[0x10] = '\0';
 
-	const uint8_t super_gb_check = cart->rom_banks[0x146];
+	const auto super_gb_check = cart->rom_banks[0x146];
 	if (super_gb_check == 0x03) {
 		cinfo.system = Cartridge::System::SuperGameboy;
 	} else {
-		const uint8_t color_check = cart->rom_banks[0x143];
-		cinfo.system = color_check == 0x80 ? Cartridge::System::GameboyColor
-		                                   : Cartridge::System::Gameboy;
+		const auto color_check = cart->rom_banks[0x143];
+		if (color_check == 0x80)
+			cinfo.system = Cartridge::System::GameboyColor;
+		else
+			cinfo.system = Cartridge::System::Gameboy;
 	}
 
 	cinfo.type = static_cast<Cartridge::Type>(cart->rom_banks[0x147]);
-
 	const uint8_t size_code = cart->rom_banks[0x148];
+
 	switch (size_code) {
 	case 0x00: cinfo.size = 32_Kib; break;    // 2 banks
 	case 0x01: cinfo.size = 64_Kib; break;    // 4 banks

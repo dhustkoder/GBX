@@ -10,14 +10,8 @@ enum Color : uint32_t {
 	DarkGrey = 0x55555500,
 };
 
-
-static const uint32_t colors[4] = {
-	White, LightGrey, 
-	DarkGrey, Black
-};
-
+static const uint32_t colors[4] = { White, LightGrey, DarkGrey, Black };
 static uint16_t bg_scanlines[144][20];
-
 
 inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
 inline void mode_vblank(GPU* gpu, HWState* hwstate);
@@ -26,8 +20,6 @@ inline void mode_transfer(GPU* gpu, HWState* hwstate);
 inline void check_gpu_lyc(GPU* gpu, HWState* hwstate);
 inline void set_gpu_mode(GPU::Mode mode, GPU* gpu, HWState* hwstate);
 static void fill_bg_scanline(const GPU& gpu, const uint8_t* vram);
-
-
 
 
 void Gameboy::UpdateGPU(const uint8_t cycles)
@@ -51,9 +43,6 @@ void Gameboy::UpdateGPU(const uint8_t cycles)
 }
 
 
-
-
-
 void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 204) {
@@ -64,7 +53,7 @@ void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
 			hwstate->RequestInt(IntVBlank);
 			set_gpu_mode(GPU::Mode::VBlank, gpu, hwstate);
 		}
-
+		
 		check_gpu_lyc(gpu, hwstate);
 		gpu->clock -= 204;
 	}
@@ -119,7 +108,6 @@ void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 };
 
 
-
 void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->ly != gpu->lyc) {
@@ -131,8 +119,6 @@ void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 			hwstate->RequestInt(IntLcdStat);
 	}
 }
-
-
 
 
 void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
@@ -164,8 +150,7 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 		}
 	};
 
-
-	if (lcdc.bg_on &&  (!lcdc.win_on || ly < gpu.wy)) {
+	if (lcdc.bg_on && (!lcdc.win_on || ly < gpu.wy)) {
 		const uint8_t lydiv = ly / 8;
 		const uint8_t lymod = ly % 8;
 		const uint8_t scxdiv = gpu.scx / 8;
@@ -185,7 +170,6 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t* const vram)
 		}
 	}
 }
-
 
 
 void draw_graphics(const GPU& gpu, uint32_t* const pixels)
