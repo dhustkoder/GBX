@@ -306,15 +306,15 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 
 void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
+	constexpr const uint8_t nbytes = sizeof(uint8_t) * 0xA0;
 	uint16_t source_addr = value * 0x100;
-	const uint8_t nbytes = 0xA0;
 	if (source_addr == 0xC000) {
-		memcpy(gb->memory.oam, gb->memory.wram, sizeof(uint8_t) * nbytes);
+		memcpy(gb->memory.oam, gb->memory.wram, nbytes);
 	} else if (source_addr == 0x8000) {
-		memcpy(gb->memory.oam, gb->memory.vram, sizeof(uint8_t) * nbytes);
+		memcpy(gb->memory.oam, gb->memory.vram, nbytes);
 	} else {
-		for (size_t i = 0; i < nbytes; ++i)
-			gb->memory.oam[i] = gb->Read8(source_addr++);
+		for (auto& byte : gb->memory.oam)
+			byte = gb->Read8(source_addr++);
 	}
 }
 

@@ -2,25 +2,22 @@ cmake_minimum_required(VERSION 2.8.8)
 project(gbx)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wshadow -Weffc++ -Wstrict-aliasing -Werror -fno-exceptions -fno-rtti")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
+set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O0 -g3")
 
 option(ADDRESS_SANITIZER OFF)
 option(UNDEFINED_SANITIZER OFF)
 option(ENABLE_LTO OFF)
+option(ASM_OUTPUT OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type selected! default to Debug")
 	set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-
-
 # "Release" full optimization , no debug info.
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG -O3 -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
-
 	set(LINK_FLAGS "-nodefaultlibs -s -Wl,--gc-sections")
-
 	if(ENABLE_LTO)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
 		set(LINK_FLAGS "${LINK_FLAGS} -flto") 
@@ -32,21 +29,15 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 	set(CMAKE_STATIC_LIBRARY_LINK_CXX_FLAGS "${LINK_FLAGS}")
 
 
-
 # "Debug" full debug information, no optimization, asserts enabled
 elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_DEBUG -O0 -g3")
-
-
-	if(ADDRESS_SANIZIER)
+	if (ADDRESS_SANIZIER)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 	endif()
 
-	if(UNDEFINED_SANITIZER)
+	if (UNDEFINED_SANITIZER)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 	endif()
-
 endif()
 
 #directories
@@ -65,3 +56,10 @@ add_executable(${PROJECT_NAME} ${GBX_SRC})
 
 # link libraries
 target_link_libraries(${PROJECT_NAME} -lc -lSDL2)
+
+if (ASM_OUTPUT)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S")
+	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAG "-save-temps")
+endif()
+
+
