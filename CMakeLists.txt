@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8.8)
 project(gbx)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wshadow -Weffc++ -Wstrict-aliasing -Werror -fno-exceptions -fno-rtti")
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fomit-frame-pointer -ffunction-sections -fdata-sections \
+                             -fno-unwind-tables -fno-asynchronous-unwind-tables")
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O0 -g3")
 
 option(ASAN OFF)

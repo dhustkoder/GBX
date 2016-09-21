@@ -121,8 +121,8 @@ static uint8_t srl(const uint8_t value, CPU* const cpu)
 static void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 1 -
-	cpu->f = CheckZ(value & (0x01 << bit)) | CPU::Flag_H | 
-	                cpu->GetFlags(CPU::Flag_C);
+	cpu->f = CheckZ(value & (0x01 << bit))
+	         | CPU::Flag_H | cpu->GetFlags(CPU::Flag_C);
 }
 
 

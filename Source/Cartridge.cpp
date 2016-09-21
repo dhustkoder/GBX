@@ -15,7 +15,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 {
 	{
 		FILE* const file = fopen(file_name, "r");
-		if (!file) {
+		if (file == nullptr) {
 			perror("Couldn't open file");
 			return false;
 		}
@@ -45,7 +45,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 }
 
 
-// parsers ROM header for common information
+// parse ROM header for information
 void fill_cartridge_info(Cartridge* const cart)
 {
 	auto& cinfo = cart->info;

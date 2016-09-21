@@ -9,8 +9,8 @@ template<class F>
 struct ScopeExit {
 	ScopeExit(const ScopeExit&)=delete;
 	ScopeExit& operator=(const ScopeExit&)=delete;
+	constexpr explicit ScopeExit(F&& f) noexcept : m_f(static_cast<F&&>(f)) {}
 	constexpr ScopeExit(ScopeExit&& other) noexcept = default;
-	constexpr ScopeExit(F&& f) noexcept : m_f(static_cast<F&&>(f)) {}
 	~ScopeExit() noexcept { m_f(); }
 private:
 	const F m_f;
@@ -24,12 +24,12 @@ constexpr ScopeExit<F> MakeScopeExit(F&& f)
 	
 constexpr size_t operator""_Kib(unsigned long long kibs)
 {
-	return static_cast<size_t>(sizeof(uint8_t) * kibs * 1024);
+	return static_cast<size_t>(kibs * 1024);
 }
 
 constexpr size_t operator""_Mib(unsigned long long mibs) 
 {
-	return static_cast<size_t>(sizeof(uint8_t) * mibs * 1024 * 1024);
+	return static_cast<size_t>(mibs * 1024 * 1024);
 }
 
 

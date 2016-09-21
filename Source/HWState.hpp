@@ -33,7 +33,7 @@ struct HWState
 	void SetFlags(Flags hwflags);
 	void ClearFlags(Flags hwflags);
 
-	void EnableInt(IntMask intr);
+	void EnableInt(IntMask inter);
 	void DisableInt(IntMask inter);
 	void RequestInt(IntMask inter);
 	void ClearInt(IntMask inter);

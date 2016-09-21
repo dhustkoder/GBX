@@ -17,7 +17,7 @@ struct Gameboy
 	Gameboy&operator=(Gameboy&)=delete;
 	Gameboy&operator=(Gameboy&&)=delete;
 
-	bool LoadRom(const char* file);
+	bool LoadRom(const char* file_name);
 	bool Reset();
 	void Run(uint32_t cycles);
 	uint8_t Step();
