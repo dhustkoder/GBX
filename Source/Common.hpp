@@ -69,17 +69,6 @@ constexpr uint8_t get_high_byte(const uint16_t value)
 	return (value & 0xFF00) >> 8;
 }
 
-constexpr uint8_t get_low_nibble(const uint8_t byte) 
-{
-	return byte & 0x0F;
-}
-
-constexpr uint8_t get_high_nibble(const uint8_t byte) 
-{
-	return byte & 0xF0;
-}
-
-
 
 
 } // namespace gbx
