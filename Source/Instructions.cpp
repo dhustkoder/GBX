@@ -2004,7 +2004,7 @@ void PREFIX_CB(Gameboy* const gb)
 
 	cb_instruction[cb_opcode](gb);
 	
-	const uint8_t lownibble = GetLowNibble(cb_opcode);
+	const uint8_t lownibble = get_low_nibble(cb_opcode);
 
 	if (lownibble == 0x06 || lownibble == 0x0E)
 		gb->cpu.clock += 16;

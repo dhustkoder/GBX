@@ -26,7 +26,9 @@ int main(int argc, char** argv)
 	if (gameboy == nullptr)
 		return EXIT_FAILURE;
 
-	const auto gameboy_guard = gbx::MakeScopeExit([=] { gbx::destroy_gameboy(gameboy); });
+	const auto gameboy_guard = gbx::finally([=]{
+		gbx::destroy_gameboy(gameboy); 
+	});
 
 	if (!gameboy->LoadRom(argv[1]))
 		return EXIT_FAILURE;
@@ -34,7 +36,9 @@ int main(int argc, char** argv)
 	if (!init_sdl())
 		return EXIT_FAILURE;
 
-	const auto sdl_guard = gbx::MakeScopeExit([] { quit_sdl(); });
+	const auto sdl_guard = gbx::finally([]{
+		quit_sdl();
+	});
 
 	SDL_Event event;
 	Uint32 last_ticks = 0;

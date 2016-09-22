@@ -71,14 +71,14 @@ void Gameboy::Write8(const uint16_t address, const uint8_t value)
 
 uint16_t Gameboy::Read16(const uint16_t address) const 
 {
-	return ConcatBytes(Read8(address + 1), Read8(address));
+	return concat_bytes(Read8(address + 1), Read8(address));
 }
 
 
 void Gameboy::Write16(const uint16_t address, const uint16_t value) 
 {
-	Write8(address, GetLowByte(value));
-	Write8(address + 1, GetHighByte(value));
+	Write8(address, get_low_byte(value));
+	Write8(address + 1, get_high_byte(value));
 }
 
 
@@ -280,7 +280,7 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	case 0x03: hwstate->tima_clock_limit = 0x100; break;
 	}
 
-	const bool timer_stop = TestBit(2, value);
+	const bool timer_stop = test_bit(2, value);
 	if (timer_stop) { 
 		if (hwstate->GetFlags(HWState::TimerStop)) {
 			hwstate->ClearFlags(HWState::TimerStop);

@@ -20,7 +20,9 @@ bool Gameboy::LoadRom(const char* const file_name)
 			return false;
 		}
 
-		const auto file_guard = MakeScopeExit([=] { fclose(file); });
+		const auto file_guard = finally([=]{
+			fclose(file);
+		});
 	
 		fseek(file, 0, SEEK_END);
 		const auto file_size = static_cast<size_t>(ftell(file));
