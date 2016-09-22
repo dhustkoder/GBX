@@ -39,22 +39,23 @@ constexpr uint16_t concat_bytes(const uint8_t high_byte, const uint8_t low_byte)
 	return (high_byte << 8) | low_byte;
 }
 
-constexpr bool test_bit(const uint8_t bit, const uint16_t value) 
+template<class T>
+constexpr bool test_bit(const uint8_t bit, const T value) 
 {
-	return (value & (0x01 << bit)) != 0;
+	return (value & (static_cast<T>(0x01) << bit)) != 0;
 }
 
 
 template<class T>
 constexpr T set_bit(const uint8_t bit, const T value) 
 {
-	return (value | (0x01 << bit));
+	return (value | (static_cast<T>(0x01) << bit));
 }
 
 template<class T>
 constexpr T res_bit(const uint8_t bit, const T value) 
 {
-	return (value & ~(0x01 << bit));
+	return (value & ~(static_cast<T>(0x01) << bit));
 }
 
 
@@ -71,5 +72,8 @@ constexpr uint8_t get_high_byte(const uint16_t value)
 
 
 
+
 } // namespace gbx
 #endif
+
+
