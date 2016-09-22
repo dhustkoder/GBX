@@ -76,4 +76,3 @@ constexpr uint8_t get_high_byte(const uint16_t value)
 } // namespace gbx
 #endif
 
-

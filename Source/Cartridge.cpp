@@ -40,7 +40,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 			perror("error while reading from file");
 			return false;
 		}
-	} // close file in the end of this scope
+	} 
 
 	fill_cartridge_info(&memory.cart);
 	return this->Reset();
@@ -85,3 +85,4 @@ void fill_cartridge_info(Cartridge* const cart)
 
 
 } // namespace gbx
+

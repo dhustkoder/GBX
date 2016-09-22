@@ -2043,3 +2043,4 @@ const instruction_table_t cb_instruction[256] = {
 
 
 } // namespace gbx
+

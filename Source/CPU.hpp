@@ -124,3 +124,4 @@ inline void CPU::ClearFlags(const Flags flags)
 
 } // namespace gbx
 #endif
+

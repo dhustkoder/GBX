@@ -19,7 +19,8 @@ struct HWState
 		IntMasterEnable = 0x01,
 		IntMasterActive = 0x02,
 		CpuHalt = 0x04,
-		TimerStop = 0x08
+		TimerStop = 0x08,
+		OamDirty = 0x10
 	};
 
 	bool GetIntMaster() const;
@@ -127,6 +128,5 @@ inline void HWState::ClearInt(const IntMask inter)
 
 
 } // namespace gbx
-
 #endif
 

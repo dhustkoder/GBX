@@ -9,7 +9,7 @@ namespace {
 static bool init_sdl();
 static void quit_sdl();
 static void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
-static void render_graphics(const gbx::GPU& gpu);
+static void render_graphics(gbx::Gameboy* gb);
 
 }
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 		gameboy->Run(69905);
 		
 		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBlank)
-			render_graphics(gameboy->gpu);
+			render_graphics(gameboy);
 		
 		SDL_Delay(15);
 
@@ -102,9 +102,9 @@ static SDL_Texture* texture;
 static SDL_Renderer* renderer;
 
 
-void render_graphics(const gbx::GPU& gpu)
+void render_graphics(gbx::Gameboy* const gb)
 {
-	const auto lcdc = gpu.lcdc;
+	const auto lcdc = gb->gpu.lcdc;
 
 	SDL_RenderClear(renderer);
 	
@@ -112,7 +112,7 @@ void render_graphics(const gbx::GPU& gpu)
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			draw_graphics(gpu, static_cast<uint32_t*>(pixels));
+			draw_graphics(gb->gpu, gb->memory, &gb->hwstate, static_cast<uint32_t*>(pixels));
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {

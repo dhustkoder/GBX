@@ -117,12 +117,6 @@ uint8_t read_cart(const uint16_t address, const Cartridge& cart)
 	return cart.rom_banks[address];
 }
 
-void write_cart(const uint16_t address, const uint8_t value, Cartridge* const)
-{
-	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
-}
-
-
 
 uint8_t read_hram(const uint16_t address, const Gameboy& gb)
 {
@@ -130,6 +124,39 @@ uint8_t read_hram(const uint16_t address, const Gameboy& gb)
 		return gb.memory.hram[address - 0xFF80];
 	else
 		return gb.hwstate.int_enable;
+}
+
+
+uint8_t read_oam(const uint16_t address, const Memory& memory)
+{
+	return address < 0xFEA0 ? memory.oam[address - 0xFE00] : 0;
+}
+
+
+uint8_t read_wram(const uint16_t address, const Memory& memory)
+{
+	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
+	return memory.wram[offset];
+}
+
+
+uint8_t read_vram(const uint16_t address, const Memory& memory)
+{
+	return memory.vram[address - 0x8000];
+}
+
+
+uint8_t read_cart_ram(const uint16_t address, const Cartridge&)
+{
+	debug_printf("Cartridge ram read required at %4x\n", address);
+	return 0;
+}
+
+
+
+void write_cart(const uint16_t address, const uint8_t value, Cartridge* const)
+{
+	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
 }
 
 
@@ -142,22 +169,10 @@ void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
 }
 
 
-uint8_t read_oam(const uint16_t address, const Memory& memory)
-{
-	return address < 0xFEA0 ? memory.oam[address - 0xFE00] : 0;
-}
-
 void write_oam(const uint16_t address, const uint8_t value, Memory* const memory)
 {
 	if (address < 0xFEA0)
 		memory->oam[address - 0xFE00] = value;
-}
-
-
-uint8_t read_wram(const uint16_t address, const Memory& memory)
-{
-	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
-	return memory.wram[offset];
 }
 
 
@@ -168,24 +183,11 @@ void write_wram(const uint16_t address, const uint8_t value, Memory* const memor
 }
 
 
-uint8_t read_vram(const uint16_t address, const Memory& memory)
-{
-	return memory.vram[address - 0x8000];
-}
-
-
 void write_vram(const uint16_t address, const uint8_t value, Memory* const memory)
 {
 	memory->vram[address - 0x8000] = value;
 }
 
-
-
-uint8_t read_cart_ram(const uint16_t address, const Cartridge&)
-{
-	debug_printf("Cartridge ram read required at %4x\n", address);
-	return 0;
-}
 
 void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const)
 {
@@ -223,7 +225,6 @@ uint8_t read_io(const uint16_t address, const Gameboy& gb)
 }
 
 
-
 void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	switch (address) {
@@ -252,12 +253,10 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 }
 
 
-
 void write_stat(const uint8_t value, GPU* const gpu)
 {
 	gpu->stat.value = (value & 0xf8) | (gpu->stat.value & 0x07);
 }
-
 
 
 void write_keys(const uint8_t value, Keys* const keys)
