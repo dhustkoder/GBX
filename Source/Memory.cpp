@@ -293,6 +293,7 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 
 void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
+	gb->hwstate.SetFlags(HWState::OamDirty);
 	constexpr const auto nbytes = sizeof(uint8_t) * 0xA0;
 	uint16_t source_addr = value * 0x100;
 	if (source_addr == 0xC000) {

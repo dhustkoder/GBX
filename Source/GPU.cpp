@@ -10,7 +10,7 @@ enum Color : uint32_t {
 	DarkGrey = 0x55555500,
 };
 
-static const uint32_t colors[4] = { White, LightGrey, DarkGrey, Black };
+static const uint32_t colors[4] = {White, LightGrey, DarkGrey, Black};
 static uint16_t bg_scanlines[144][20];
 
 inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
@@ -22,6 +22,8 @@ inline void set_gpu_mode(GPU::Mode mode, GPU* gpu, HWState* hwstate);
 static void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]);
 static void draw_bg_scanlines(const GPU& gpu, uint32_t* pixels);
 static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t* pixels);
+
+
 
 void Gameboy::UpdateGPU(const uint8_t cycles)
 {
@@ -138,7 +140,7 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]
 				const uint8_t msb = data[addr + 1];
 				const uint16_t row = (msb << 8) | lsb;
 				bg_scanlines[ly][x] = row;
-			}
+			} 
 		} else {
 			for (uint8_t x = 0; x < 20; ++x) {
 				const int8_t id = map[(x + mapx) & 31];
@@ -212,9 +214,50 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels)
 }
 
 
-void draw_sprites(const GPU& /*gpu*/, const Memory& /*memory*/, uint32_t* const /*pixels*/)
+void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t* const pixels)
 {
+	// TODO: check sprite flags for pallete/priority/flips
+	
+	const auto obp0 = gpu.obp0;
+	//const auto obp1 = gpu.obp1;
+	const uint8_t pallete0[4] = {
+		static_cast<uint8_t>(obp0&0x03),
+		static_cast<uint8_t>((obp0&0x0C) >> 2),
+		static_cast<uint8_t>((obp0&0x30) >> 4),
+		static_cast<uint8_t>((obp0&0xC0) >> 6)
+	};
+	/*
+	const uint8_t pallete1[4] = {
+		static_cast<uint8_t>(obp1&0x03),
+		static_cast<uint8_t>((obp1&0x0C) >> 2),
+		static_cast<uint8_t>((obp1&0x30) >> 4),
+		static_cast<uint8_t>((obp1&0xC0) >> 6)
+	};
+	*/
 
+	const auto& oam = memory.oam;
+	for (uint8_t i = 0; i < sizeof(oam); i += 4) {
+		const uint8_t ypos = oam[i] - 16;
+		const uint8_t xpos = oam[i + 1] - 8;
+		
+		if (ypos >= 136 || xpos >= 152)
+			continue;
+
+		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
+		//const uint8_t flags = oam[i + 3];	
+		for (uint8_t r = 0; r < 8; ++r) {
+			const uint16_t row = (tile[r*2 + 1] << 8) | tile[r*2];
+			uint32_t* const line = &pixels[(ypos+r) * 160];
+			for (uint8_t p = 0; p < 8; ++p) {
+				uint8_t col = 0;
+				if (row & (0x80 >> p))
+					++col;
+				if (row & (0x8000 >> p))
+					col += 2;
+				line[xpos + p] = colors[pallete0[col]];
+			}
+		}
+	}
 }
 
 
