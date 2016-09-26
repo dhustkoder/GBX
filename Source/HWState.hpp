@@ -4,14 +4,19 @@
 
 namespace gbx {
 
-enum IntMask : uint8_t {
-	IntVBlank = 0x01,
-	IntLcdStat = 0x02,
-	IntTimer = 0x04,
-	IntSerial = 0x08,
-	IntJoypad = 0x10
+struct Interrupt {
+	const uint8_t mask;
+	const uint16_t addr;
 };
 
+namespace Interrupts {
+	constexpr const Interrupt vblank { 0x01, 0x40 };
+	constexpr const Interrupt lcd    { 0x02, 0x48 };
+	constexpr const Interrupt timer  { 0x04, 0x50 };
+	constexpr const Interrupt serial { 0x08, 0x58 };
+	constexpr const Interrupt joypad { 0x10, 0x60 };
+	constexpr const Interrupt array[] = { vblank, lcd, timer, serial, joypad };
+}
 
 struct HWState 
 {
@@ -33,10 +38,10 @@ struct HWState
 	void SetFlags(Flags hwflags);
 	void ClearFlags(Flags hwflags);
 
-	void EnableInt(IntMask inter);
-	void DisableInt(IntMask inter);
-	void RequestInt(IntMask inter);
-	void ClearInt(IntMask inter);
+	void EnableInt(Interrupt inter);
+	void DisableInt(Interrupt inter);
+	void RequestInt(Interrupt inter);
+	void ClearInt(Interrupt inter);
 
 	uint16_t tima_clock;
 	uint16_t tima_clock_limit;
@@ -103,25 +108,25 @@ inline void HWState::ClearFlags(const Flags hwflags)
 
 
 
-inline void HWState::EnableInt(const IntMask inter)
+inline void HWState::EnableInt(const Interrupt inter)
 {
-	int_enable |= inter;
+	int_enable |= inter.mask;
 }
 
-inline void HWState::DisableInt(const IntMask inter)
+inline void HWState::DisableInt(const Interrupt inter)
 {
-	int_enable &= ~inter;
+	int_enable &= ~inter.mask;
 }
 
-inline void HWState::RequestInt(const IntMask inter)
+inline void HWState::RequestInt(const Interrupt inter)
 {
-	int_flags |= inter;
+	int_flags |= inter.mask;
 }
 
 
-inline void HWState::ClearInt(const IntMask inter)
+inline void HWState::ClearInt(const Interrupt inter)
 {
-	int_flags &= ~inter;
+	int_flags &= ~inter.mask;
 }
 
 

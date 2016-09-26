@@ -10,7 +10,7 @@ enum Color : uint32_t {
 	DarkGrey = 0x55555500,
 };
 
-static const uint32_t colors[4] = {White, LightGrey, DarkGrey, Black};
+static const uint32_t colors[4] = { White, LightGrey, DarkGrey, Black };
 static uint16_t bg_scanlines[144][20];
 
 inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
@@ -53,7 +53,7 @@ void mode_hblank(const Memory& mem, GPU* const gpu, HWState* const hwstate)
 		if (++gpu->ly != 144) {
 			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
 		} else {
-			hwstate->RequestInt(IntVBlank);
+			hwstate->RequestInt(Interrupts::vblank);
 			set_gpu_mode(GPU::Mode::VBlank, gpu, hwstate);
 		}
 		
@@ -106,7 +106,7 @@ void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 	default: break;
 	}
 	if (int_on)
-		hwstate->RequestInt(IntLcdStat);
+		hwstate->RequestInt(Interrupts::lcd);
 	gpu->stat.mode = static_cast<uint8_t>(mode);
 };
 
@@ -119,7 +119,7 @@ void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 	} else {
 		gpu->stat.coincidence_flag = 1;
 		if (gpu->stat.int_on_coincidence)
-			hwstate->RequestInt(IntLcdStat);
+			hwstate->RequestInt(Interrupts::lcd);
 	}
 }
 

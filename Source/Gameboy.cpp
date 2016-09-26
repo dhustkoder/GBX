@@ -27,7 +27,7 @@ owner<Gameboy*> create_gameboy()
 }
 
 
-void destroy_gameboy(owner<Gameboy* const> gb)
+void destroy_gameboy(const owner<Gameboy*> gb)
 {
 	assert(gb != nullptr);
 	free(gb);
@@ -156,7 +156,7 @@ void update_timers(const uint8_t cycles, HWState* const hwstate)
 				++hwstate->tima;
 			} else {
 				hwstate->tima = hwstate->tma;
-				hwstate->RequestInt(IntTimer);
+				hwstate->RequestInt(Interrupts::timer);
 			}
 
 			hwstate->tima_clock -= hwstate->tima_clock_limit;
@@ -184,28 +184,15 @@ void update_interrupts(Gameboy* const gb)
 		return;
 
 	hwstate.DisableIntMaster();
-
-	const auto trigger = [gb](const IntMask inter, const uint16_t addr) {
-		gb->hwstate.ClearInt(inter);
-		gb->PushStack16(gb->cpu.pc);
-		gb->cpu.pc = addr;
-		gb->cpu.clock += 12;
-	};
-
-	if (pendents & IntVBlank)
-		trigger(IntVBlank, 0x40);
-
-	if (pendents & IntLcdStat)
-		trigger(IntLcdStat, 0x48);
-
-	if (pendents & IntTimer)
-		trigger(IntTimer, 0x50);
-
-	if (pendents & IntSerial)
-		trigger(IntSerial, 0x58);
-
-	if (pendents & IntJoypad)
-		trigger(IntJoypad, 0x60);
+	
+	for (const auto inter : Interrupts::array) {
+		if (pendents & inter.mask) {
+			hwstate.ClearInt(inter);
+			gb->PushStack16(gb->cpu.pc);
+			gb->cpu.pc = inter.addr;
+			gb->cpu.clock += 12;
+		}
+	}
 }
 
 
