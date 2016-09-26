@@ -112,7 +112,7 @@ void render_graphics(gbx::Gameboy* const gb)
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			draw_graphics(gb->gpu, gb->memory, &gb->hwstate, static_cast<uint32_t*>(pixels));
+			draw_graphics(gb->gpu, gb->memory, static_cast<uint32_t*>(pixels));
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {

@@ -19,8 +19,7 @@ struct HWState
 		IntMasterEnable = 0x01,
 		IntMasterActive = 0x02,
 		CpuHalt = 0x04,
-		TimerStop = 0x08,
-		OamDirty = 0x10
+		TimerStop = 0x08
 	};
 
 	bool GetIntMaster() const;

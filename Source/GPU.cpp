@@ -175,13 +175,10 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]
 }
 
 
-void draw_graphics(const GPU& gpu, const Memory& memory, HWState* const hwstate, uint32_t* const pixels)
+void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t* const pixels)
 {
 	draw_bg_scanlines(gpu, pixels);
-	if (hwstate->GetFlags(HWState::OamDirty)) {
-		draw_sprites(gpu, memory, pixels);
-		hwstate->ClearFlags(HWState::OamDirty);
-	}
+	draw_sprites(gpu, memory, pixels);
 }
 
 
