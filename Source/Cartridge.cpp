@@ -13,8 +13,9 @@ Cartridge::Info Cartridge::info;
 // into the fixed_home - home in memory
 bool Gameboy::LoadRom(const char* const file_name) 
 {
+	Cartridge::info.loaded = false;
 	{
-		FILE* const file = fopen(file_name, "r");
+		owner<FILE* const> file = fopen(file_name, "r");
 		if (file == nullptr) {
 			perror("Couldn't open file");
 			return false;
@@ -40,8 +41,9 @@ bool Gameboy::LoadRom(const char* const file_name)
 			perror("error while reading from file");
 			return false;
 		}
-	} 
+	}
 
+	Cartridge::info.loaded = true;
 	fill_cartridge_info(&memory.cart);
 	return this->Reset();
 }

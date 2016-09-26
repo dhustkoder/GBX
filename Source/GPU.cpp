@@ -20,8 +20,8 @@ inline void mode_transfer(GPU* gpu, HWState* hwstate);
 inline void check_gpu_lyc(GPU* gpu, HWState* hwstate);
 inline void set_gpu_mode(GPU::Mode mode, GPU* gpu, HWState* hwstate);
 static void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]);
-static void draw_bg_scanlines(const GPU& gpu, uint32_t* pixels);
-static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t* pixels);
+static void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160]);
+static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 
 
 
@@ -175,14 +175,14 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]
 }
 
 
-void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t* const pixels)
+void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	draw_bg_scanlines(gpu, pixels);
 	draw_sprites(gpu, memory, pixels);
 }
 
 
-void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels)
+void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 {
 	const auto bgp = gpu.bgp;
 	const uint8_t pallete[4] = {
@@ -193,7 +193,7 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels)
 	};
 
 	for (uint8_t y = 0; y < 144; ++y) {
-		uint32_t* const line = &pixels[y * 160];
+		uint32_t* const line = &pixels[y][0];
 		for (uint8_t r = 0; r < 20; ++r) {
 			const uint8_t xpos = r * 8;
 			const uint16_t row = bg_scanlines[y][r];
@@ -211,7 +211,7 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t* const pixels)
 }
 
 
-void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t* const pixels)
+void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	// TODO: check sprite flags for pallete/priority/flips
 	
@@ -241,10 +241,10 @@ void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t* const pixels)
 			continue;
 
 		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
-		//const uint8_t flags = oam[i + 3];	
+		//const uint8_t flags = oam[i + 3];
 		for (uint8_t r = 0; r < 8; ++r) {
 			const uint16_t row = (tile[r*2 + 1] << 8) | tile[r*2];
-			uint32_t* const line = &pixels[(ypos+r) * 160];
+			uint32_t* const line = &pixels[ypos+r][0];
 			for (uint8_t p = 0; p < 8; ++p) {
 				uint8_t col = 0;
 				if (row & (0x80 >> p))

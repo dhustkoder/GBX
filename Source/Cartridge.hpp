@@ -26,6 +26,7 @@ struct Cartridge
 		size_t size;
 		Cartridge::Type type;
 		Cartridge::System system;
+		bool loaded = false;
 	} info;
 };
 

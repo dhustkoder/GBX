@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "Instructions.hpp"
 #include "Cartridge.hpp"
 #include "Gameboy.hpp"
 
 namespace gbx {
 
-Gameboy* create_gameboy() 
+owner<Gameboy*> create_gameboy() 
 {
 	const auto gb = malloc(sizeof(Gameboy));
 	if (gb != nullptr) {
@@ -19,8 +20,9 @@ Gameboy* create_gameboy()
 	}
 }
 
-void destroy_gameboy(Gameboy* const gb) 
+void destroy_gameboy(owner<Gameboy* const> gb) 
 {
+	assert(gb != nullptr);
 	free(gb);
 }
 
@@ -28,6 +30,7 @@ void destroy_gameboy(Gameboy* const gb)
 
 bool Gameboy::Reset() 
 {
+	assert(Cartridge::info.loaded);
 	const auto& cart_info = Cartridge::info;
 
 	printf("Cartridge information\n"

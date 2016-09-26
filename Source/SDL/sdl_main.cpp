@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	gbx::Gameboy* const gameboy = gbx::create_gameboy();
+	gbx::owner<gbx::Gameboy* const> gameboy = gbx::create_gameboy();
 	
 	if (gameboy == nullptr)
 		return EXIT_FAILURE;
@@ -97,9 +97,9 @@ namespace {
 constexpr const int WinWidth = 160;
 constexpr const int WinHeight = 144;
 
-static SDL_Window* window;
-static SDL_Texture* texture;
-static SDL_Renderer* renderer;
+static gbx::owner<SDL_Window*> window = nullptr;
+static gbx::owner<SDL_Texture*> texture = nullptr;
+static gbx::owner<SDL_Renderer*> renderer = nullptr;
 
 
 void render_graphics(gbx::Gameboy* const gb)
@@ -112,7 +112,7 @@ void render_graphics(gbx::Gameboy* const gb)
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			draw_graphics(gb->gpu, gb->memory, static_cast<uint32_t*>(pixels));
+			draw_graphics(gb->gpu, gb->memory, *static_cast<uint32_t(*)[144][160]>(pixels));
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {

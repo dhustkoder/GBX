@@ -44,8 +44,8 @@ struct Gameboy
 };
 
 
-extern Gameboy* create_gameboy();
-extern void destroy_gameboy(Gameboy* gb);
+extern owner<Gameboy*> create_gameboy();
+extern void destroy_gameboy(owner<Gameboy*> gb);
 
 
 } // namespace gbx
