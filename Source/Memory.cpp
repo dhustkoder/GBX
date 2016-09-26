@@ -34,7 +34,7 @@ static void dma_transfer(uint8_t value, Gameboy* gb);
 uint8_t Gameboy::Read8(const uint16_t address) const 
 {
 	if (address < 0x8000)
-		return read_cart(address, memory.cart);
+		return read_cart(address, cart);
 	else if (address >= 0xFF80)
 		return read_hram(address, *this);
 	else if (address >= 0xFF00)
@@ -44,7 +44,7 @@ uint8_t Gameboy::Read8(const uint16_t address) const
 	else if (address >= 0xC000)
 		return read_wram(address, memory);
 	else if (address >= 0xA000)
-		return read_cart_ram(address, memory.cart);
+		return read_cart_ram(address, cart);
 	else
 		return read_vram(address, memory);
 }
@@ -61,11 +61,11 @@ void Gameboy::Write8(const uint16_t address, const uint8_t value)
 	else if (address >= 0xC000)
 		write_wram(address, value, &memory);
 	else if (address >= 0xA000)
-		write_cart_ram(address, value, &memory.cart);
+		write_cart_ram(address, value, &cart);
 	else if (address >= 0x8000)
 		write_vram(address, value, &memory);
 	else
-		write_cart(address, value, &memory.cart);
+		write_cart(address, value, &cart);
 }
 
 

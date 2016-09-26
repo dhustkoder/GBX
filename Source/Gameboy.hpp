@@ -35,6 +35,7 @@ struct Gameboy
 	GPU gpu;
 	Keys keys;
 	HWState hwstate;
+	Cartridge cart;
 	Memory memory;
 };
 

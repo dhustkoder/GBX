@@ -19,7 +19,7 @@ inline void mode_oam(GPU* gpu);
 inline void mode_transfer(GPU* gpu, HWState* hwstate);
 inline void check_gpu_lyc(GPU* gpu, HWState* hwstate);
 inline void set_gpu_mode(GPU::Mode mode, GPU* gpu, HWState* hwstate);
-static void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]);
+static void fill_bg_scanline(const GPU& gpu, const Memory& mem);
 static void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 
@@ -46,10 +46,10 @@ void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate,
 }
 
 
-void mode_hblank(const Memory& memory, GPU* const gpu, HWState* const hwstate)
+void mode_hblank(const Memory& mem, GPU* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 204) {
-		fill_bg_scanline(*gpu, memory.vram);
+		fill_bg_scanline(*gpu, mem);
 		if (++gpu->ly != 144) {
 			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
 		} else {
@@ -124,12 +124,12 @@ void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 }
 
 
-void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)])
+void fill_bg_scanline(const GPU& gpu, const Memory& mem)
 {
 	const auto ly = gpu.ly;
 	const auto lcdc = gpu.lcdc;
 	const bool unsig_data = lcdc.tile_data != 0;
-	const auto tile_data = unsig_data ? &vram[0] : &vram[0x1000];
+	const auto tile_data = unsig_data ? &mem.vram[0] : &mem.vram[0x1000];
 
 	const auto fill_row =
 	[ly, unsig_data](const uint8_t* data, const uint8_t* map, uint8_t mapx) {
@@ -159,7 +159,7 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]
 		const uint8_t scxdiv = gpu.scx / 8;
 		const uint8_t scydiv = gpu.scy / 8;
 		const auto data = &tile_data[lymod * 2];
-		auto map = lcdc.bg_map ? &vram[0x1C00] : &vram[0x1800];
+		auto map = lcdc.bg_map ? &mem.vram[0x1C00] : &mem.vram[0x1800];
 		map += ((lydiv + scydiv)&31) * 32;
 		fill_row(data, map, scxdiv);
 	}
@@ -168,7 +168,7 @@ void fill_bg_scanline(const GPU& gpu, const uint8_t(&vram)[sizeof(Memory::vram)]
 		const uint8_t wy = gpu.wy;
 		const uint8_t wx = gpu.wx - 7;
 		if (wy < 144 && wx < 160) {
-			const auto map = lcdc.win_map ? &vram[0x1C00] : &vram[0x1800];
+			auto map = lcdc.win_map ? &mem.vram[0x1C00] : &mem.vram[0x1800];
 			fill_row(tile_data, map, 0);
 		}
 	}

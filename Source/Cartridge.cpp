@@ -36,7 +36,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 		}
 
 		fseek(file, 0, SEEK_SET);
-		fread(memory.cart.rom_banks, sizeof(uint8_t), file_size, file);
+		fread(cart.rom_banks, sizeof(uint8_t), file_size, file);
 
 		if (ferror(file)) {
 			perror("error while reading from file");
@@ -45,7 +45,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 	}
 
 	Cartridge::info.loaded = true;
-	fill_cartridge_info(&memory.cart);
+	fill_cartridge_info(&cart);
 	return this->Reset();
 }
 

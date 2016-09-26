@@ -167,7 +167,6 @@ void update_timers(const uint8_t cycles, HWState* const hwstate)
 
 void update_interrupts(Gameboy* const gb)
 {
-	auto& cpu = gb->cpu;
 	auto& hwstate = gb->hwstate;
 	const uint8_t pendents = hwstate.GetPendentInts();
 
@@ -186,11 +185,11 @@ void update_interrupts(Gameboy* const gb)
 
 	hwstate.DisableIntMaster();
 
-	const auto trigger = [&](const IntMask inter, const uint16_t addr) {
-		hwstate.ClearInt(inter);
-		gb->PushStack16(cpu.pc);
-		cpu.pc = addr;
-		cpu.clock += 12;
+	const auto trigger = [gb](const IntMask inter, const uint16_t addr) {
+		gb->hwstate.ClearInt(inter);
+		gb->PushStack16(gb->cpu.pc);
+		gb->cpu.pc = addr;
+		gb->cpu.clock += 12;
 	};
 
 	if (pendents & IntVBlank)
