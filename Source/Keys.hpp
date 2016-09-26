@@ -5,15 +5,16 @@
 
 namespace gbx {
 
-enum KeyState : uint8_t {
-	KeyDown = 0x00,
-	KeyUp = 0x01
-};
-
 
 struct Keys 
 {
+	enum State : uint8_t {
+		Up = 0x01,
+		Down = 0x00
+	};
+
 	uint8_t value;
+
 	union {
 		struct {
 			uint8_t right  : 1;

@@ -8,7 +8,7 @@ namespace {
 
 static bool init_sdl();
 static void quit_sdl();
-static void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys);
+static void update_key(gbx::Keys::State state, SDL_Scancode keycode, gbx::Keys* keys);
 static void render_graphics(gbx::Gameboy* gb);
 
 }
@@ -51,13 +51,13 @@ int main(int argc, char** argv)
 				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
 					goto break_loop;
 				} else {
-					update_key(gbx::KeyDown,
+					update_key(gbx::Keys::State::Down,
 					           event.key.keysym.scancode,
 					           &gameboy->keys);
 				}
 				break;
 			case SDL_KEYUP:
-				update_key(gbx::KeyUp,
+				update_key(gbx::Keys::State::Up,
 				           event.key.keysym.scancode,
 				           &gameboy->keys);
 				break;
@@ -124,7 +124,7 @@ void render_graphics(gbx::Gameboy* const gb)
 }
 
 
-void update_key(gbx::KeyState state, SDL_Scancode keycode, gbx::Keys* keys)
+void update_key(gbx::Keys::State state, SDL_Scancode keycode, gbx::Keys* keys)
 {
 	switch (keycode) {
 	case SDL_SCANCODE_Z: keys->pad.a = state; break;
