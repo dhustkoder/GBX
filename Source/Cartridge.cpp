@@ -14,6 +14,7 @@ Cartridge::Info Cartridge::info;
 bool Gameboy::LoadRom(const char* const file_name) 
 {
 	Cartridge::info.loaded = false;
+
 	{
 		owner<FILE* const> file = fopen(file_name, "r");
 		if (file == nullptr) {

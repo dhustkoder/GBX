@@ -108,13 +108,10 @@ uint8_t Gameboy::Step()
 	if (!hwstate.GetFlags(HWState::CpuHalt)) {
 		const uint8_t opcode = Read8(cpu.pc++);
 		main_instructions[opcode](this);
-		const uint8_t cycles = clock_table[opcode];
-		cpu.clock += cycles;
-		return cycles;
-	} else {
-		cpu.clock += 4;
-		return 4;
+		return clock_table[opcode];
 	}
+	
+	return 4;
 }
 
 
@@ -122,10 +119,12 @@ void Gameboy::Run(const uint32_t cycles)
 {
 	do {
 		const uint8_t step_cycles = Step();
+		cpu.clock += step_cycles;
 		UpdateGPU(step_cycles);
 		UpdateTimers(step_cycles);
 		UpdateInterrupts();
 	} while (cpu.clock < cycles);
+
 	cpu.clock = 0;
 }
 
