@@ -20,10 +20,6 @@ struct Gameboy
 	bool LoadRom(const char* file_name);
 	bool Reset();
 	void Run(uint32_t cycles);
-	uint8_t Step();
-	void UpdateGPU(uint8_t cycles);
-	void UpdateTimers(uint8_t cycles);
-	void UpdateInterrupts();
 
 	uint8_t Read8(uint16_t address) const;
 	uint16_t Read16(uint16_t address) const;
@@ -34,7 +30,6 @@ struct Gameboy
 	void PushStack16(uint16_t value);
 	uint8_t PopStack8();
 	uint16_t PopStack16();
-
 
 	CPU cpu;
 	GPU gpu;

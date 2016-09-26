@@ -15,5 +15,6 @@ extern const instruction_table_t cb_instruction[256];
 extern const uint8_t clock_table[256];
 
 
-}
+} // namespace gbx
 #endif
+

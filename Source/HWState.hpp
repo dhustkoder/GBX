@@ -40,7 +40,7 @@ struct HWState
 
 	uint16_t tima_clock;
 	uint16_t tima_clock_limit;
-	uint8_t div_clock;
+	uint16_t div_clock;
 	uint8_t flags;
 	uint8_t div;
 	uint8_t tima;

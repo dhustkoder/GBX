@@ -16,7 +16,7 @@ bool Gameboy::LoadRom(const char* const file_name)
 	Cartridge::info.loaded = false;
 
 	{
-		owner<FILE* const> file = fopen(file_name, "r");
+		const owner<FILE*> file = fopen(file_name, "r");
 		if (file == nullptr) {
 			perror("Couldn't open file");
 			return false;

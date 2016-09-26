@@ -8,7 +8,13 @@
 
 namespace gbx {
 
-owner<Gameboy*> create_gameboy() 
+extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, GPU* gpu);
+static void update_timers(uint8_t cycles, HWState* hwstate);
+static void update_interrupts(Gameboy* gb);
+static uint8_t step_machine(Gameboy* gb);
+
+
+owner<Gameboy*> create_gameboy()
 {
 	const auto gb = malloc(sizeof(Gameboy));
 	if (gb != nullptr) {
@@ -20,15 +26,15 @@ owner<Gameboy*> create_gameboy()
 	}
 }
 
-void destroy_gameboy(owner<Gameboy* const> gb) 
+
+void destroy_gameboy(owner<Gameboy* const> gb)
 {
 	assert(gb != nullptr);
 	free(gb);
 }
 
 
-
-bool Gameboy::Reset() 
+bool Gameboy::Reset()
 {
 	assert(Cartridge::info.loaded);
 	const auto& cart_info = Cartridge::info;
@@ -103,11 +109,27 @@ bool Gameboy::Reset()
 }
 
 
-uint8_t Gameboy::Step()
+void Gameboy::Run(const uint32_t cycles)
 {
-	if (!hwstate.GetFlags(HWState::CpuHalt)) {
-		const uint8_t opcode = Read8(cpu.pc++);
-		main_instructions[opcode](this);
+	assert(Cartridge::info.loaded);
+
+	do {
+		const uint8_t step_cycles = step_machine(this);
+		cpu.clock += step_cycles;
+		update_gpu(step_cycles, memory, &hwstate, &gpu);
+		update_timers(step_cycles, &hwstate);
+		update_interrupts(this);
+	} while (cpu.clock < cycles);
+
+	cpu.clock = 0;
+}
+
+
+uint8_t step_machine(Gameboy* const gb)
+{
+	if (!gb->hwstate.GetFlags(HWState::CpuHalt)) {
+		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
+		main_instructions[opcode](gb);
 		return clock_table[opcode];
 	}
 	
@@ -115,17 +137,76 @@ uint8_t Gameboy::Step()
 }
 
 
-void Gameboy::Run(const uint32_t cycles)
+void update_timers(const uint8_t cycles, HWState* const hwstate)
 {
-	do {
-		const uint8_t step_cycles = Step();
-		cpu.clock += step_cycles;
-		UpdateGPU(step_cycles);
-		UpdateTimers(step_cycles);
-		UpdateInterrupts();
-	} while (cpu.clock < cycles);
+	hwstate->div_clock += cycles;
 
-	cpu.clock = 0;
+	if (hwstate->div_clock >= 0x100) {
+		++hwstate->div;
+		hwstate->div_clock = 0;
+	}
+
+	if (!hwstate->GetFlags(HWState::TimerStop)) {
+		
+		hwstate->tima_clock += cycles;
+		
+		if (hwstate->tima_clock >= hwstate->tima_clock_limit) {
+			
+			if (hwstate->tima < 0xff) {
+				++hwstate->tima;
+			} else {
+				hwstate->tima = hwstate->tma;
+				hwstate->RequestInt(IntTimer);
+			}
+
+			hwstate->tima_clock -= hwstate->tima_clock_limit;
+		}
+	}
+}
+
+
+void update_interrupts(Gameboy* const gb)
+{
+	auto& cpu = gb->cpu;
+	auto& hwstate = gb->hwstate;
+	const uint8_t pendents = hwstate.GetPendentInts();
+
+	if (pendents && hwstate.GetFlags(HWState::CpuHalt))
+		hwstate.ClearFlags(HWState::CpuHalt);
+
+	if (!hwstate.GetIntMaster()) {
+		return;
+	} else if (!hwstate.GetIntActive()) {
+		hwstate.EnableIntActive();
+		return;
+	}
+
+	if (!pendents)
+		return;
+
+	hwstate.DisableIntMaster();
+
+	const auto trigger = [&](const IntMask inter, const uint16_t addr) {
+		hwstate.ClearInt(inter);
+		gb->PushStack16(cpu.pc);
+		cpu.pc = addr;
+		cpu.clock += 12;
+	};
+
+	if (pendents & IntVBlank)
+		trigger(IntVBlank, 0x40);
+
+	if (pendents & IntLcdStat)
+		trigger(IntLcdStat, 0x48);
+
+	if (pendents & IntTimer)
+		trigger(IntTimer, 0x50);
+
+	if (pendents & IntSerial)
+		trigger(IntSerial, 0x58);
+
+	if (pendents & IntJoypad)
+		trigger(IntJoypad, 0x60);
 }
 
 

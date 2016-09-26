@@ -25,22 +25,22 @@ static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)
 
 
 
-void Gameboy::UpdateGPU(const uint8_t cycles)
+void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, GPU* const gpu)
 {
-	if (!gpu.lcdc.lcd_on) {
-		gpu.clock = 0;
-		gpu.ly = 0;
-		gpu.stat.mode = GPU::Mode::HBlank;
+	if (!gpu->lcdc.lcd_on) {
+		gpu->clock = 0;
+		gpu->ly = 0;
+		gpu->stat.mode = GPU::Mode::HBlank;
 		return;
 	}
 
-	gpu.clock += cycles;
+	gpu->clock += cycles;
 	
-	switch (gpu.stat.mode) {
-	case GPU::Mode::HBlank: mode_hblank(memory, &gpu, &hwstate); break;
-	case GPU::Mode::VBlank: mode_vblank(&gpu, &hwstate); break;
-	case GPU::Mode::OAM: mode_oam(&gpu); break;
-	case GPU::Mode::Transfer: mode_transfer(&gpu, &hwstate); break;
+	switch (gpu->stat.mode) {
+	case GPU::Mode::HBlank: mode_hblank(mem, gpu, hwstate); break;
+	case GPU::Mode::VBlank: mode_vblank(gpu, hwstate); break;
+	case GPU::Mode::OAM: mode_oam(gpu); break;
+	case GPU::Mode::Transfer: mode_transfer(gpu, hwstate); break;
 	default: break;
 	}
 }

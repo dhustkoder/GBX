@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	gbx::owner<gbx::Gameboy* const> gameboy = gbx::create_gameboy();
+	const gbx::owner<gbx::Gameboy*> gameboy = gbx::create_gameboy();
 	
 	if (gameboy == nullptr)
 		return EXIT_FAILURE;

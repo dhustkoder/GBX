@@ -311,5 +311,3 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 
 
 } // namespace gbx
-
-
