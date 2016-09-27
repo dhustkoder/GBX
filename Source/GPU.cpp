@@ -13,6 +13,7 @@ enum Color : uint32_t {
 static const uint32_t colors[4] = { White, LightGrey, DarkGrey, Black };
 static uint16_t bg_scanlines[144][20];
 
+extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, GPU* gpu);
 inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
 inline void mode_vblank(GPU* gpu, HWState* hwstate);
 inline void mode_oam(GPU* gpu);

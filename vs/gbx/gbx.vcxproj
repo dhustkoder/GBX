@@ -23,7 +23,6 @@
     <ClCompile Include="..\..\Source\CBInstructions.cpp" />
     <ClCompile Include="..\..\Source\Gameboy.cpp" />
     <ClCompile Include="..\..\Source\GPU.cpp" />
-    <ClCompile Include="..\..\Source\HWState.cpp" />
     <ClCompile Include="..\..\Source\Instructions.cpp" />
     <ClCompile Include="..\..\Source\Memory.cpp" />
     <ClCompile Include="..\..\Source\SDL\sdl_main.cpp" />
