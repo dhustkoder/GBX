@@ -100,14 +100,17 @@ void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 {
 	const auto stat = gpu->stat;
 	uint8_t int_on = 0;
+
 	switch (mode) {
 	case GPU::Mode::HBlank: int_on = stat.int_on_hblank; break;
 	case GPU::Mode::VBlank: int_on = stat.int_on_vblank; break;
 	case GPU::Mode::OAM: int_on = stat.int_on_oam; break;
 	default: break;
 	}
+
 	if (int_on)
 		hwstate->RequestInt(Interrupts::lcd);
+
 	gpu->stat.mode = static_cast<uint8_t>(mode);
 };
 
