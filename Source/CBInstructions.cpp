@@ -167,7 +167,7 @@ inline void srl_r(uint8_t* const reg, CPU* const cpu)
 }
 
 
-inline void op_hlp(uint8_t(*op)(uint8_t,CPU*), Gameboy* const gb)
+inline void op_hlp(uint8_t(&op)(uint8_t,CPU*), Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.hl;
 	const uint8_t result = op(gb->Read8(hl), &gb->cpu);

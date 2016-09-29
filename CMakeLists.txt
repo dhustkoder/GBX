@@ -3,8 +3,8 @@ project(gbx)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow -Wstrict-aliasing -Werror -fno-exceptions -fno-rtti")
 
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -march=native -fomit-frame-pointer -ffunction-sections -fdata-sections \
-                             -fno-unwind-tables -fno-asynchronous-unwind-tables")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fstrict-aliasing -march=native \
+	-fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O0 -g3")
 
