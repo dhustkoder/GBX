@@ -10,10 +10,10 @@ static uint8_t rlc(const uint8_t value, CPU* const cpu)
 	uint8_t result;
 	if (old_bit7) {
 		result = (value << 1) | 0x01;
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	} else {
 		result = value << 1;
-		cpu->f = CheckZ(result);
+		cpu->f = fcheck_z(result);
 	}
 
 	return result;
@@ -27,10 +27,10 @@ static uint8_t rrc(const uint8_t value, CPU* const cpu)
 	uint8_t result;
 	if (old_bit0) {
 		result = (value >> 1) | 0x80;
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	} else {
 		result = value >> 1;
-		cpu->f =CheckZ(result);
+		cpu->f =fcheck_z(result);
 	}
 
 	return result;
@@ -44,9 +44,9 @@ static uint8_t rl(const uint8_t value, CPU* const cpu)
 	const uint8_t old_carry = cpu->GetFlags(CPU::Flag_C);
 	const uint8_t result = old_carry ? (value << 1) | 0x01 : (value << 1);
 	if (old_bit7)
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	else
-		cpu->f = CheckZ(result);
+		cpu->f = fcheck_z(result);
 
 	return result;
 }
@@ -59,9 +59,9 @@ static uint8_t rr(const uint8_t value, CPU* const cpu)
 	const uint8_t old_bit0 = value & 0x01;
 	const uint8_t result = old_carry ? ((value >> 1) | 0x80) : (value >> 1);
 	if (old_bit0)
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	else
-		cpu->f = CheckZ(result);
+		cpu->f = fcheck_z(result);
 
 	return result;
 }
@@ -73,9 +73,9 @@ static uint8_t sla(const uint8_t value, CPU* const cpu)
 	const uint8_t old_bit7 = value & 0x80;
 	const uint8_t result = value << 1;
 	if (old_bit7)
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	else
-		cpu->f = CheckZ(result);
+		cpu->f = fcheck_z(result);
 
 	return result;
 }
@@ -87,9 +87,9 @@ static uint8_t sra(const uint8_t value, CPU* const cpu)
 	const uint8_t old_bit0 = value & 0x01;
 	const uint8_t result = (value & 0x80) | (value >> 1);
 	if (old_bit0)
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	else
-		cpu->f = CheckZ(result);
+		cpu->f = fcheck_z(result);
 
 	return result;
 }
@@ -99,7 +99,7 @@ static uint8_t swap(const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 0 0
 	const uint8_t result = ((value & 0x0f) << 4) | ((value & 0xf0) >> 4);
-	cpu->f = CheckZ(result);
+	cpu->f = fcheck_z(result);
 	return result;
 }
 
@@ -110,9 +110,9 @@ static uint8_t srl(const uint8_t value, CPU* const cpu)
 	const uint8_t old_bit0 = value & 0x01;
 	const uint8_t result = value >> 1;
 	if (old_bit0)
-		cpu->f = CheckZ(result) | CPU::Flag_C;
+		cpu->f = fcheck_z(result) | CPU::Flag_C;
 	else
-		cpu->f = CheckZ(result);
+		cpu->f = fcheck_z(result);
 
 	return result;
 }
@@ -121,7 +121,7 @@ static uint8_t srl(const uint8_t value, CPU* const cpu)
 static void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
 {
 	// flags effect: Z 0 1 -
-	cpu->f = CheckZ(value & (0x01 << bit))
+	cpu->f = fcheck_z(value & (0x01 << bit))
 	         | CPU::Flag_H | cpu->GetFlags(CPU::Flag_C);
 }
 

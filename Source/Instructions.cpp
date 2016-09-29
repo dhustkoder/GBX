@@ -49,9 +49,9 @@ static uint8_t inc(const uint8_t first, CPU* const cpu)
 	const uint8_t result = first + 1;
 	uint8_t flags = cpu->GetFlags(CPU::Flag_C);
 
-	if (CheckZ(result))
+	if (fcheck_z(result))
 		flags |= CPU::Flag_Z;
-	if (CheckH_bit3(first, 1))
+	if (fcheck_h_bit3(first, 1))
 		flags |= CPU::Flag_H;
 
 	cpu->f = flags;
@@ -65,9 +65,9 @@ static uint8_t dec(const uint8_t first, CPU* const cpu)
 	const uint8_t result = first - 1;
 	uint8_t flags = CPU::Flag_N | cpu->GetFlags(CPU::Flag_C);
 
-	if (CheckZ(result))
+	if (fcheck_z(result))
 		flags |= CPU::Flag_Z;
-	if (CheckH_borrow(first, 1))
+	if (fcheck_h_borrow(first, 1))
 		flags |= CPU::Flag_H;
 
 	cpu->f = flags;
@@ -82,7 +82,7 @@ static void add_hl_nn(const uint16_t second, CPU* const cpu)
 	const uint32_t result = first + second;
 	uint8_t hc = 0x00;
 
-	if (CheckC_bit15(result))
+	if (fcheck_c_bit15(result))
 		hc = CPU::Flag_C;
 	if ((result ^ first ^ second) & 0x1000)
 		hc |= CPU::Flag_H;
@@ -99,11 +99,11 @@ static void add_a_n(const uint8_t second, CPU* const cpu)
 	const uint16_t result = first + second;
 	uint8_t flags = 0x00;
 
-	if (CheckZ(result & 0xff))
+	if (fcheck_z(result & 0xff))
 		flags = CPU::Flag_Z;
-	if (CheckH_bit3(first, second))
+	if (fcheck_h_bit3(first, second))
 		flags |= CPU::Flag_H;
-	if (CheckC_bit7(result))
+	if (fcheck_c_bit7(result))
 		flags |= CPU::Flag_C;
 
 	cpu->f = flags;
@@ -118,11 +118,11 @@ static void sub_a_n(const uint8_t second, CPU* const cpu)
 	const uint16_t result = first - second;
 	uint8_t flags = CPU::Flag_N;
 
-	if (CheckZ(result & 0xff))
+	if (fcheck_z(result & 0xff))
 		flags |= CPU::Flag_Z;
-	if (CheckH_borrow(first, second))
+	if (fcheck_h_borrow(first, second))
 		flags |= CPU::Flag_H;
-	if (CheckC_borrow(first, second))
+	if (fcheck_c_borrow(first, second))
 		flags |= CPU::Flag_C;
 
 	cpu->f = flags;
@@ -139,9 +139,9 @@ static void adc_a_n(const uint8_t second, CPU* const cpu)
 	const uint16_t result = first + sec_n_carry;
 	uint8_t flags = 0x00;
 
-	if (CheckC_bit7(result))
+	if (fcheck_c_bit7(result))
 		flags = CPU::Flag_C;
-	if (CheckZ(result & 0xFF))
+	if (fcheck_z(result & 0xFF))
 		flags |= CPU::Flag_Z;
 	if (((first & 0xf) + (second & 0xf) + carry) > 0x0f)
 		flags |= CPU::Flag_H;
@@ -159,9 +159,9 @@ static void sbc_a_n(const uint8_t second, CPU* const cpu)
 	const uint32_t result = first - sec_n_carry;
 	uint8_t flags = CPU::Flag_N;
 
-	if (CheckC_borrow(first, sec_n_carry))
+	if (fcheck_c_borrow(first, sec_n_carry))
 		flags |= CPU::Flag_C;
-	if (CheckZ(result & 0xFF))
+	if (fcheck_z(result & 0xFF))
 		flags |= CPU::Flag_Z;
 	if (((result ^ second ^ first) & 0x10) == 0x10)
 		flags |= CPU::Flag_H;
@@ -176,7 +176,7 @@ static void and_a_n(const uint8_t second, CPU* const cpu)
 	// flags effect: Z 0 1 0
 	const uint8_t first = cpu->a;
 	const uint8_t result = first & second;
-	cpu->f = CheckZ(result) | CPU::Flag_H;
+	cpu->f = fcheck_z(result) | CPU::Flag_H;
 	cpu->a = result;
 }
 
@@ -186,7 +186,7 @@ static void xor_a_n(const uint8_t second, CPU* const cpu)
 	// flags effect: Z 0 0 0
 	const uint8_t first = cpu->a;
 	const uint8_t result = first ^ second;
-	cpu->f = CheckZ(result);
+	cpu->f = fcheck_z(result);
 	cpu->a = result;
 }
 
@@ -196,7 +196,7 @@ static void or_a_n(const uint8_t second, CPU* const cpu)
 	// flags effect: Z 0 0 0
 	const uint8_t first = cpu->a;
 	const uint8_t result = first | second;
-	cpu->f = CheckZ(result);
+	cpu->f = fcheck_z(result);
 	cpu->a = result;
 }
 
@@ -208,11 +208,11 @@ static void cp_a_n(const uint8_t value, CPU* const cpu)
 	const uint16_t result = first - value;
 	uint8_t flags = CPU::Flag_N;
 
-	if (CheckZ(result & 0xff))
+	if (fcheck_z(result & 0xff))
 		flags |= CPU::Flag_Z;
-	if (CheckH_borrow(first, value))
+	if (fcheck_h_borrow(first, value))
 		flags |= CPU::Flag_H;
-	if (CheckC_borrow(first, value))
+	if (fcheck_c_borrow(first, value))
 		flags |= CPU::Flag_C;
 
 	cpu->f = flags;

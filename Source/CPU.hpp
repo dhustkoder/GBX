@@ -60,43 +60,43 @@ constexpr CPU::Flags operator&(const CPU::Flags f1, const CPU::Flags f2) {
 
 
 
-constexpr CPU::Flags CheckZ(const uint8_t result) {
+constexpr CPU::Flags fcheck_z(const uint8_t result) {
 	return result ? static_cast<CPU::Flags>(0) : CPU::Flag_Z;
 }
 
 
 
-constexpr CPU::Flags CheckH_bit3(const uint8_t first, const uint16_t second) {
+constexpr CPU::Flags fcheck_h_bit3(const uint8_t first, const uint16_t second) {
 	return (((first&0x0f) + (second&0x0f)) & 0x10) ? CPU::Flag_H : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckH_bit11(const uint16_t first, const uint16_t second) {
+constexpr CPU::Flags fcheck_h_bit11(const uint16_t first, const uint16_t second) {
 	return (((first&0xf00) + (second&0xf00)) & 0x1000) ? CPU::Flag_H : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckC_bit7(const uint16_t result) {
+constexpr CPU::Flags fcheck_c_bit7(const uint16_t result) {
 	return (result & 0xff00) ? CPU::Flag_C : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckC_bit15(const uint32_t result) {
+constexpr CPU::Flags fcheck_c_bit15(const uint32_t result) {
 	return (result & 0xffff0000) ? CPU::Flag_C : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckC_borrow(const uint8_t first, const uint16_t second) {
+constexpr CPU::Flags fcheck_c_borrow(const uint8_t first, const uint16_t second) {
 	return first < second ? CPU::Flag_C : static_cast<CPU::Flags>(0);
 }
 
 
 
-constexpr CPU::Flags CheckH_borrow(const uint8_t first, const uint16_t second) {
+constexpr CPU::Flags fcheck_h_borrow(const uint8_t first, const uint16_t second) {
 	return (((first&0xf) - (second&0xf)) < 0) ? CPU::Flag_H : static_cast<CPU::Flags>(0);
 }
 
