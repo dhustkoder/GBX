@@ -218,7 +218,7 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	// TODO: check sprite flags for pallete/priority/flips
-	
+
 	const auto obp0 = gpu.obp0;
 	//const auto obp1 = gpu.obp1;
 	const uint8_t pallete0[4] = {
@@ -236,20 +236,25 @@ void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 	};
 	*/
 
+	const auto limit = [](const uint8_t len) { return len > 8 ? 8 : len; };
 	const auto& oam = memory.oam;
+
 	for (uint8_t i = 0; i < sizeof(oam); i += 4) {
 		const uint8_t ypos = oam[i] - 16;
 		const uint8_t xpos = oam[i + 1] - 8;
-		
-		if (ypos >= 136 || xpos >= 152)
+
+		if (ypos >= 144 || xpos >= 160)
 			continue;
 
 		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
-		//const uint8_t flags = oam[i + 3];
-		for (uint8_t r = 0; r < 8; ++r) {
+		//const uint8_t flags = oam[i + 3]; sprite flags, unused right now
+		const uint8_t rlimit = limit(144 - ypos);
+		const uint8_t plimit = limit(160 - xpos);
+
+		for (uint8_t r = 0; r < rlimit; ++r) {
 			const uint16_t row = (tile[r*2 + 1] << 8) | tile[r*2];
 			uint32_t* const line = &pixels[ypos+r][0];
-			for (uint8_t p = 0; p < 8; ++p) {
+			for (uint8_t p = 0; p < plimit; ++p) {
 				uint8_t col = 0;
 				if (row & (0x80 >> p))
 					++col;

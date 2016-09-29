@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBlank)
 			render_graphics(gameboy);
 		
-		//SDL_Delay(15);
+		SDL_Delay(15);
 
 		const auto ticks = SDL_GetTicks();
 		if (ticks > (last_ticks + 1000)) {
