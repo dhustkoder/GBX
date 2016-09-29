@@ -135,8 +135,7 @@ static void adc_a_n(const uint8_t second, CPU* const cpu)
 	// flags effect Z 0 H C
 	const uint8_t carry = cpu->GetFlags(CPU::Flag_C) ? 1 : 0;
 	const uint8_t first = cpu->a;
-	const uint16_t sec_n_carry = second + carry;
-	const uint16_t result = first + sec_n_carry;
+	const uint16_t result = first + (second + carry);
 	uint8_t flags = 0x00;
 
 	if (fcheck_c_bit7(result))
