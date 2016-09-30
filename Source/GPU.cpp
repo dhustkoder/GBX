@@ -18,14 +18,11 @@ struct Pallete {
 		          static_cast<uint8_t>((pal&0xC0)>>6)} 
 	{
 	}
-	constexpr Color operator[](const uint8_t idx) const { return colors[colnums[idx]]; }
-	static constexpr const Color colors[4] = { White, LightGrey, DarkGrey, Black };
 	const uint8_t colnums[4];
 };
 
-constexpr const Color Pallete::colors[4];
+constexpr const Color colors[4] = { White, LightGrey, DarkGrey, Black };
 static uint16_t bg_scanlines[144][20];
-
 
 
 extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, GPU* gpu);
@@ -38,7 +35,7 @@ inline void set_gpu_mode(GPU::Mode mode, GPU* gpu, HWState* hwstate);
 static void fill_bg_scanline(const GPU& gpu, const Memory& mem);
 static void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
-
+static void draw_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
 
 
 void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, GPU* const gpu)
@@ -204,22 +201,9 @@ void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][
 void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 {
 	const Pallete pallete{gpu.bgp};
-
 	for (uint8_t y = 0; y < 144; ++y) {
-		uint32_t* const line = &pixels[y][0];
-		for (uint8_t r = 0; r < 20; ++r) {
-			const uint8_t xpos = r * 8;
-			const uint16_t row = bg_scanlines[y][r];
-			for (uint8_t pix = 0; pix < 8; ++pix) {
-				uint8_t colnum = 0;
-				if (row & (0x80 >> pix))
-					++colnum;
-				if (row & (0x8000 >> pix))
-					colnum += 2;
-
-				line[xpos + pix] = pallete[colnum];
-			}
-		}
+		for (uint8_t x = 0; x < 20; ++x)
+			draw_row(bg_scanlines[y][x], 8, pallete, &pixels[y][x*8]);
 	}
 }
 
@@ -243,21 +227,26 @@ void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 
 		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
 		//const uint8_t flags = oam[i + 3]; sprite flags, unused right now
-		const uint8_t rlimit = limit(144 - ypos);
-		const uint8_t plimit = limit(160 - xpos);
+		const uint8_t ylimit = limit(144 - ypos);
+		const uint8_t xlimit = limit(160 - xpos);
 
-		for (uint8_t r = 0; r < rlimit; ++r) {
-			const uint16_t row = (tile[r*2 + 1] << 8) | tile[r*2];
-			uint32_t* const line = &pixels[ypos+r][0];
-			for (uint8_t p = 0; p < plimit; ++p) {
-				uint8_t colnum = 0;
-				if (row & (0x80 >> p))
-					++colnum;
-				if (row & (0x8000 >> p))
-					colnum += 2;
-				line[xpos + p] = pallete0[colnum];
-			}
+		for (uint8_t y = 0; y < ylimit; ++y) {
+			const uint16_t row = (tile[y*2 + 1] << 8) | tile[y*2];
+			draw_row(row, xlimit, pallete0, &pixels[ypos+y][xpos]);
 		}
+	}
+}
+
+
+void draw_row(const uint16_t row, const uint8_t length, const Pallete& pal, uint32_t* const line)
+{
+	for (uint8_t p = 0; p < length; ++p) {
+		uint8_t n = 0;
+		if (row & (0x80 >> p))
+			++n;
+		if (row & (0x8000 >> p))
+			n += 2;
+		line[p] = colors[pal.colnums[n]];
 	}
 }
 
