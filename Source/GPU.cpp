@@ -7,7 +7,7 @@ enum Color : uint32_t {
 	Black = 0x00000000,
 	White = 0xFFFFFF00,
 	LightGrey = 0x90909000,
-	DarkGrey = 0x55555500,
+	DarkGrey = 0x55555500
 };
 
 struct Pallete {
@@ -211,11 +211,9 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	// TODO: check sprite flags for pallete/priority/flips
-
+	
 	const Pallete pallete0{gpu.obp0};
-	//const Pallete pallete1{gpu.obp1};
-
-	const auto limit = [](const uint8_t len) { return len > 8 ? 8 : len; };
+	const auto limit = [](const uint8_t len)->uint8_t { return len > 8 ? 8 : len; };
 	const auto& oam = memory.oam;
 
 	for (uint8_t i = 0; i < sizeof(oam); i += 4) {
@@ -226,7 +224,6 @@ void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 			continue;
 
 		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
-		//const uint8_t flags = oam[i + 3]; sprite flags, unused right now
 		const uint8_t ylimit = limit(144 - ypos);
 		const uint8_t xlimit = limit(160 - xpos);
 
