@@ -10,8 +10,23 @@ enum Color : uint32_t {
 	DarkGrey = 0x55555500,
 };
 
-static const uint32_t colors[4] = { White, LightGrey, DarkGrey, Black };
+struct Pallete {
+	constexpr explicit Pallete(const uint8_t pal)
+		: colnums{static_cast<uint8_t>((pal&0x03)),
+		          static_cast<uint8_t>((pal&0x0C)>>2),
+		          static_cast<uint8_t>((pal&0x30)>>4),
+		          static_cast<uint8_t>((pal&0xC0)>>6)} 
+	{
+	}
+	constexpr Color operator[](const uint8_t idx) const { return colors[colnums[idx]]; }
+	static constexpr const Color colors[4] = { White, LightGrey, DarkGrey, Black };
+	const uint8_t colnums[4];
+};
+
+constexpr const Color Pallete::colors[4];
 static uint16_t bg_scanlines[144][20];
+
+
 
 extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, GPU* gpu);
 inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
@@ -188,13 +203,7 @@ void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][
 
 void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 {
-	const auto bgp = gpu.bgp;
-	const uint8_t pallete[4] = {
-		static_cast<uint8_t>(bgp&0x03),
-		static_cast<uint8_t>((bgp&0x0C) >> 2),
-		static_cast<uint8_t>((bgp&0x30) >> 4),
-		static_cast<uint8_t>((bgp&0xC0) >> 6)
-	};
+	const Pallete pallete{gpu.bgp};
 
 	for (uint8_t y = 0; y < 144; ++y) {
 		uint32_t* const line = &pixels[y][0];
@@ -202,13 +211,13 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 			const uint8_t xpos = r * 8;
 			const uint16_t row = bg_scanlines[y][r];
 			for (uint8_t pix = 0; pix < 8; ++pix) {
-				uint8_t col = 0;
+				uint8_t colnum = 0;
 				if (row & (0x80 >> pix))
-					++col;
+					++colnum;
 				if (row & (0x8000 >> pix))
-					col += 2;
+					colnum += 2;
 
-				line[xpos + pix] = colors[pallete[col]];
+				line[xpos + pix] = pallete[colnum];
 			}
 		}
 	}
@@ -219,22 +228,8 @@ void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 {
 	// TODO: check sprite flags for pallete/priority/flips
 
-	const auto obp0 = gpu.obp0;
-	//const auto obp1 = gpu.obp1;
-	const uint8_t pallete0[4] = {
-		static_cast<uint8_t>(obp0&0x03),
-		static_cast<uint8_t>((obp0&0x0C) >> 2),
-		static_cast<uint8_t>((obp0&0x30) >> 4),
-		static_cast<uint8_t>((obp0&0xC0) >> 6)
-	};
-	/*
-	const uint8_t pallete1[4] = {
-		static_cast<uint8_t>(obp1&0x03),
-		static_cast<uint8_t>((obp1&0x0C) >> 2),
-		static_cast<uint8_t>((obp1&0x30) >> 4),
-		static_cast<uint8_t>((obp1&0xC0) >> 6)
-	};
-	*/
+	const Pallete pallete0{gpu.obp0};
+	//const Pallete pallete1{gpu.obp1};
 
 	const auto limit = [](const uint8_t len) { return len > 8 ? 8 : len; };
 	const auto& oam = memory.oam;
@@ -255,12 +250,12 @@ void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 			const uint16_t row = (tile[r*2 + 1] << 8) | tile[r*2];
 			uint32_t* const line = &pixels[ypos+r][0];
 			for (uint8_t p = 0; p < plimit; ++p) {
-				uint8_t col = 0;
+				uint8_t colnum = 0;
 				if (row & (0x80 >> p))
-					++col;
+					++colnum;
 				if (row & (0x8000 >> p))
-					col += 2;
-				line[xpos + p] = colors[pallete0[col]];
+					colnum += 2;
+				line[xpos + p] = pallete0[colnum];
 			}
 		}
 	}
