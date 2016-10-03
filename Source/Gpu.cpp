@@ -25,49 +25,49 @@ constexpr const Color colors[4] = { White, LightGrey, DarkGrey, Black };
 static uint16_t bg_scanlines[144][20];
 
 
-extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, GPU* gpu);
-inline void mode_hblank(const Memory& memory, GPU* gpu, HWState* hwstate);
-inline void mode_vblank(GPU* gpu, HWState* hwstate);
-inline void mode_oam(GPU* gpu);
-inline void mode_transfer(GPU* gpu, HWState* hwstate);
-inline void check_gpu_lyc(GPU* gpu, HWState* hwstate);
-inline void set_gpu_mode(GPU::Mode mode, GPU* gpu, HWState* hwstate);
-static void fill_bg_scanline(const GPU& gpu, const Memory& mem);
-static void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160]);
-static void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
+extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+inline void mode_hblank(const Memory& memory, Gpu* gpu, HWState* hwstate);
+inline void mode_vblank(Gpu* gpu, HWState* hwstate);
+inline void mode_oam(Gpu* gpu);
+inline void mode_transfer(Gpu* gpu, HWState* hwstate);
+inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
+inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
+static void fill_bg_scanline(const Gpu& gpu, const Memory& mem);
+static void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
+static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 static void draw_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
 
 
-void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, GPU* const gpu)
+void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
 {
 	if (!gpu->lcdc.lcd_on) {
 		gpu->clock = 0;
 		gpu->ly = 0;
-		gpu->stat.mode = GPU::Mode::HBlank;
+		gpu->stat.mode = Gpu::Mode::HBlank;
 		return;
 	}
 
 	gpu->clock += cycles;
 	
 	switch (gpu->stat.mode) {
-	case GPU::Mode::HBlank: mode_hblank(mem, gpu, hwstate); break;
-	case GPU::Mode::VBlank: mode_vblank(gpu, hwstate); break;
-	case GPU::Mode::OAM: mode_oam(gpu); break;
-	case GPU::Mode::Transfer: mode_transfer(gpu, hwstate); break;
+	case Gpu::Mode::HBlank: mode_hblank(mem, gpu, hwstate); break;
+	case Gpu::Mode::VBlank: mode_vblank(gpu, hwstate); break;
+	case Gpu::Mode::OAM: mode_oam(gpu); break;
+	case Gpu::Mode::Transfer: mode_transfer(gpu, hwstate); break;
 	default: break;
 	}
 }
 
 
-void mode_hblank(const Memory& mem, GPU* const gpu, HWState* const hwstate)
+void mode_hblank(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 204) {
 		fill_bg_scanline(*gpu, mem);
 		if (++gpu->ly != 144) {
-			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
+			set_gpu_mode(Gpu::Mode::OAM, gpu, hwstate);
 		} else {
 			hwstate->RequestInt(Interrupts::vblank);
-			set_gpu_mode(GPU::Mode::VBlank, gpu, hwstate);
+			set_gpu_mode(Gpu::Mode::VBlank, gpu, hwstate);
 		}
 		
 		check_gpu_lyc(gpu, hwstate);
@@ -76,12 +76,12 @@ void mode_hblank(const Memory& mem, GPU* const gpu, HWState* const hwstate)
 }
 
 
-void mode_vblank(GPU* const gpu, HWState* const hwstate)
+void mode_vblank(Gpu* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 456) {
 		if (++gpu->ly > 153) {
 			gpu->ly = 0;
-			set_gpu_mode(GPU::Mode::OAM, gpu, hwstate);
+			set_gpu_mode(Gpu::Mode::OAM, gpu, hwstate);
 		}
 
 		gpu->clock -= 456;
@@ -90,33 +90,33 @@ void mode_vblank(GPU* const gpu, HWState* const hwstate)
 }
 
 
-void mode_oam(GPU* const gpu)
+void mode_oam(Gpu* const gpu)
 {
 	if (gpu->clock >= 80) {
-		gpu->stat.mode = GPU::Mode::Transfer;
+		gpu->stat.mode = Gpu::Mode::Transfer;
 		gpu->clock -= 80;
 	}
 }
 
 
-void mode_transfer(GPU* const gpu, HWState* const hwstate)
+void mode_transfer(Gpu* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 172) {
-		set_gpu_mode(GPU::Mode::HBlank, gpu, hwstate);
+		set_gpu_mode(Gpu::Mode::HBlank, gpu, hwstate);
 		gpu->clock -= 172;
 	}
 }
 
 
-void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
+void set_gpu_mode(const Gpu::Mode mode, Gpu* const gpu, HWState* const hwstate)
 {
 	const auto stat = gpu->stat;
 	uint8_t int_on = 0;
 
 	switch (mode) {
-	case GPU::Mode::HBlank: int_on = stat.int_on_hblank; break;
-	case GPU::Mode::VBlank: int_on = stat.int_on_vblank; break;
-	case GPU::Mode::OAM: int_on = stat.int_on_oam; break;
+	case Gpu::Mode::HBlank: int_on = stat.int_on_hblank; break;
+	case Gpu::Mode::VBlank: int_on = stat.int_on_vblank; break;
+	case Gpu::Mode::OAM: int_on = stat.int_on_oam; break;
 	default: break;
 	}
 
@@ -127,7 +127,7 @@ void set_gpu_mode(const GPU::Mode mode, GPU* const gpu, HWState* const hwstate)
 };
 
 
-void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
+void check_gpu_lyc(Gpu* const gpu, HWState* const hwstate)
 {
 	if (gpu->ly != gpu->lyc) {
 		if (gpu->stat.coincidence_flag)
@@ -140,7 +140,7 @@ void check_gpu_lyc(GPU* const gpu, HWState* const hwstate)
 }
 
 
-void fill_bg_scanline(const GPU& gpu, const Memory& mem)
+void fill_bg_scanline(const Gpu& gpu, const Memory& mem)
 {
 	const auto ly = gpu.ly;
 	const auto lcdc = gpu.lcdc;
@@ -191,14 +191,14 @@ void fill_bg_scanline(const GPU& gpu, const Memory& mem)
 }
 
 
-void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
+void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	draw_bg_scanlines(gpu, pixels);
 	draw_sprites(gpu, memory, pixels);
 }
 
 
-void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
+void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160])
 {
 	const Pallete pallete{gpu.bgp};
 	for (uint8_t y = 0; y < 144; ++y) {
@@ -208,7 +208,7 @@ void draw_bg_scanlines(const GPU& gpu, uint32_t(&pixels)[144][160])
 }
 
 
-void draw_sprites(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
+void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	// TODO: check sprite flags for pallete/priority/flips
 	

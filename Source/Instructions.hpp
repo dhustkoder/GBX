@@ -6,7 +6,7 @@
 
 namespace gbx {
 
-struct CPU;
+struct Cpu;
 struct Gameboy;
 
 using instruction_table_t = void(*)(Gameboy*);

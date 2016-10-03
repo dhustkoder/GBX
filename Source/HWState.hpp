@@ -10,13 +10,14 @@ struct Interrupt {
 };
 
 namespace Interrupts {
-	constexpr const Interrupt vblank { 0x01, 0x40 };
-	constexpr const Interrupt lcd    { 0x02, 0x48 };
-	constexpr const Interrupt timer  { 0x04, 0x50 };
-	constexpr const Interrupt serial { 0x08, 0x58 };
-	constexpr const Interrupt joypad { 0x10, 0x60 };
-	constexpr const Interrupt array[] = { vblank, lcd, timer, serial, joypad };
+	constexpr const Interrupt vblank  { 0x01, 0x40 };
+	constexpr const Interrupt lcd     { 0x02, 0x48 };
+	constexpr const Interrupt timer   { 0x04, 0x50 };
+	constexpr const Interrupt serial  { 0x08, 0x58 };
+	constexpr const Interrupt joypad  { 0x10, 0x60 };
+	constexpr const Interrupt array[] { vblank, lcd, timer, serial, joypad };
 }
+
 
 struct HWState 
 {

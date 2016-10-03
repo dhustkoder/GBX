@@ -22,7 +22,7 @@ static void write_vram(uint16_t address, uint8_t value, Memory* mem);
 static void write_cart_ram(uint16_t address, uint8_t value, Cartridge* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
-static void write_stat(uint8_t value, GPU* gpu);
+static void write_stat(uint8_t value, Gpu* gpu);
 static void write_keys(uint8_t value, Keys* keys);
 static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
@@ -253,7 +253,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 }
 
 
-void write_stat(const uint8_t value, GPU* const gpu)
+void write_stat(const uint8_t value, Gpu* const gpu)
 {
 	gpu->stat.value = (value & 0xf8) | (gpu->stat.value & 0x07);
 }

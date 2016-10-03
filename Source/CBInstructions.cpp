@@ -3,13 +3,13 @@
 
 namespace gbx {
 
-static uint8_t rlc(const uint8_t value, CPU* const cpu)
+static uint8_t rlc(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value << 1;
 	if (value & 0x80) {
 		result |= 0x01;
-		cpu->f = CPU::Flag_C;
+		cpu->f = Cpu::Flag_C;
 	} else {
 		cpu->f = fcheck_z(result);
 	}
@@ -18,13 +18,13 @@ static uint8_t rlc(const uint8_t value, CPU* const cpu)
 }
 
 
-static uint8_t rrc(const uint8_t value, CPU* const cpu)
+static uint8_t rrc(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value >> 1;
 	if (value & 0x01) {
 		result |= 0x80;
-		cpu->f = CPU::Flag_C;
+		cpu->f = Cpu::Flag_C;
 	} else {
 		cpu->f = fcheck_z(result);
 	}
@@ -33,11 +33,11 @@ static uint8_t rrc(const uint8_t value, CPU* const cpu)
 }
 
 
-static uint8_t rl(const uint8_t value, CPU* const cpu)
+static uint8_t rl(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value << 1;
-	if (cpu->GetFlags(CPU::Flag_C)) {
+	if (cpu->GetFlags(Cpu::Flag_C)) {
 		result |= 0x01;
 		cpu->f = 0;
 	} else {
@@ -45,17 +45,17 @@ static uint8_t rl(const uint8_t value, CPU* const cpu)
 	}
 
 	if (value & 0x80)
-		cpu->f |= CPU::Flag_C;
+		cpu->f |= Cpu::Flag_C;
 
 	return result;
 }
 
 
-static uint8_t rr(const uint8_t value, CPU* const cpu)
+static uint8_t rr(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value >> 1;
-	if (cpu->GetFlags(CPU::Flag_C)) {
+	if (cpu->GetFlags(Cpu::Flag_C)) {
 		result |= 0x80;
 		cpu->f = 0;
 	} else {
@@ -63,37 +63,37 @@ static uint8_t rr(const uint8_t value, CPU* const cpu)
 	}
 
 	if (value & 0x01)
-		cpu->f |= CPU::Flag_C;
+		cpu->f |= Cpu::Flag_C;
 
 	return result;
 }
 
 
-static uint8_t sla(const uint8_t value, CPU* const cpu)
+static uint8_t sla(const uint8_t value, Cpu* const cpu)
 {
 	// flags  effect: Z 0 0 C
 	const uint8_t result = value << 1;
 	cpu->f = fcheck_z(result);
 	if (value & 0x80)
-		cpu->f |= CPU::Flag_C;
+		cpu->f |= Cpu::Flag_C;
 
 	return result;
 }
 
 
-static uint8_t sra(const uint8_t value, CPU* const cpu)
+static uint8_t sra(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	const uint8_t result = (value & 0x80) | (value >> 1);
 	cpu->f = fcheck_z(result);
 	if (value & 0x01)
-		cpu->f |= CPU::Flag_C;
+		cpu->f |= Cpu::Flag_C;
 
 	return result;
 }
 
 
-static uint8_t swap(const uint8_t value, CPU* const cpu)
+static uint8_t swap(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 0
 	const uint8_t result = ((value & 0x0f) << 4) | ((value & 0xf0) >> 4);
@@ -102,68 +102,68 @@ static uint8_t swap(const uint8_t value, CPU* const cpu)
 }
 
 
-static uint8_t srl(const uint8_t value, CPU* const cpu)
+static uint8_t srl(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	const uint8_t result = value >> 1;
 	cpu->f = fcheck_z(result);
 	if (value & 0x01)
-		cpu->f |= CPU::Flag_C;
+		cpu->f |= Cpu::Flag_C;
 
 	return result;
 }
 
 
-static void bit_n(const uint8_t bit, const uint8_t value, CPU* const cpu)
+static void bit_n(const uint8_t bit, const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 1 -
 	cpu->f = fcheck_z(value & (0x01 << bit))
-	         | CPU::Flag_H | cpu->GetFlags(CPU::Flag_C);
+	         | Cpu::Flag_H | cpu->GetFlags(Cpu::Flag_C);
 }
 
 
-inline void rlc_r(uint8_t* const reg, CPU* const cpu)
+inline void rlc_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = rlc(*reg, cpu);
 }
 
-inline void rrc_r(uint8_t* const reg, CPU* const cpu)
+inline void rrc_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = rrc(*reg, cpu);
 }
 
-inline void rl_r(uint8_t* const reg, CPU* const cpu)
+inline void rl_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = rl(*reg, cpu);
 }
 
-inline void rr_r(uint8_t* const reg, CPU* const cpu)
+inline void rr_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = rr(*reg, cpu);
 }
 
-inline void sla_r(uint8_t* const reg, CPU* const cpu)
+inline void sla_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = sla(*reg, cpu);
 }
 
-inline void sra_r(uint8_t* const reg, CPU* const cpu)
+inline void sra_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = sra(*reg, cpu);
 }
 
-inline void swap_r(uint8_t* const reg, CPU* const cpu)
+inline void swap_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = swap(*reg, cpu);
 }
 
-inline void srl_r(uint8_t* const reg, CPU* const cpu)
+inline void srl_r(uint8_t* const reg, Cpu* const cpu)
 {
 	*reg = srl(*reg, cpu);
 }
 
 
-inline void op_hlp(uint8_t(&op)(uint8_t,CPU*), Gameboy* const gb)
+inline void op_hlp(uint8_t(&op)(uint8_t,Cpu*), Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.hl;
 	const uint8_t result = op(gb->Read8(hl), &gb->cpu);
@@ -200,7 +200,7 @@ inline void res_hlp(const uint8_t bit, Gameboy* const gb)
 }
 
 
-inline void bit_r(const uint8_t bit, const uint8_t reg, CPU* const cpu)
+inline void bit_r(const uint8_t bit, const uint8_t reg, Cpu* const cpu)
 {
 	bit_n(bit, reg, cpu);
 }

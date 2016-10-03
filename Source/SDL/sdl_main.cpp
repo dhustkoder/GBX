@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
 		gameboy->Run(69905);
 		
-		if (gameboy->gpu.stat.mode != gbx::GPU::Mode::VBlank)
+		if (gameboy->gpu.stat.mode != gbx::Gpu::Mode::VBlank)
 			render_graphics(gameboy);
 		
 		//SDL_Delay(15);

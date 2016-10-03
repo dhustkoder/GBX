@@ -1,7 +1,7 @@
 #ifndef GBX_GAMEBOY_HPP_
 #define GBX_GAMEBOY_HPP_
-#include "CPU.hpp"
-#include "GPU.hpp"
+#include "Cpu.hpp"
+#include "Gpu.hpp"
 #include "Keys.hpp"
 #include "HWState.hpp"
 #include "Memory.hpp"
@@ -31,8 +31,8 @@ struct Gameboy
 	uint8_t PopStack8();
 	uint16_t PopStack16();
 
-	CPU cpu;
-	GPU gpu;
+	Cpu cpu;
+	Gpu gpu;
 	Keys keys;
 	HWState hwstate;
 	Cartridge cart;

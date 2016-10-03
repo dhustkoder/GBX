@@ -8,7 +8,7 @@
 
 namespace gbx {
 
-extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, GPU* gpu);
+extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 static void update_timers(uint8_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 static uint8_t step_machine(Gameboy* gb);

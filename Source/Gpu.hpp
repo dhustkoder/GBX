@@ -8,7 +8,7 @@ namespace gbx {
 struct HWState;
 struct Memory;
 
-struct GPU 
+struct Gpu 
 {
 	enum Mode : uint8_t {
 		HBlank = 0x0, VBlank = 0x1,
@@ -56,7 +56,7 @@ struct GPU
 };
 
 
-extern void draw_graphics(const GPU& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
+extern void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 
 
 } // namespace gbx
