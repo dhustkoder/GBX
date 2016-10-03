@@ -9,7 +9,7 @@ struct Interrupt {
 	const uint16_t addr;
 };
 
-namespace Interrupts {
+namespace interrupts {
 	constexpr const Interrupt vblank  { 0x01, 0x40 };
 	constexpr const Interrupt lcd     { 0x02, 0x48 };
 	constexpr const Interrupt timer   { 0x04, 0x50 };

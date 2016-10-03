@@ -156,7 +156,7 @@ void update_timers(const uint8_t cycles, HWState* const hwstate)
 				++hwstate->tima;
 			} else {
 				hwstate->tima = hwstate->tma;
-				hwstate->RequestInt(Interrupts::timer);
+				hwstate->RequestInt(interrupts::timer);
 			}
 
 			hwstate->tima_clock -= hwstate->tima_clock_limit;
@@ -185,7 +185,7 @@ void update_interrupts(Gameboy* const gb)
 
 	hwstate.DisableIntMaster();
 	
-	for (const auto inter : Interrupts::array) {
+	for (const auto inter : interrupts::array) {
 		if (pendents & inter.mask) {
 			hwstate.ClearInt(inter);
 			gb->PushStack16(gb->cpu.pc);

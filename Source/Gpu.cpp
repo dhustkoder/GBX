@@ -66,7 +66,7 @@ void mode_hblank(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
 		if (++gpu->ly != 144) {
 			set_gpu_mode(Gpu::Mode::OAM, gpu, hwstate);
 		} else {
-			hwstate->RequestInt(Interrupts::vblank);
+			hwstate->RequestInt(interrupts::vblank);
 			set_gpu_mode(Gpu::Mode::VBlank, gpu, hwstate);
 		}
 		
@@ -121,7 +121,7 @@ void set_gpu_mode(const Gpu::Mode mode, Gpu* const gpu, HWState* const hwstate)
 	}
 
 	if (int_on)
-		hwstate->RequestInt(Interrupts::lcd);
+		hwstate->RequestInt(interrupts::lcd);
 
 	gpu->stat.mode = static_cast<uint8_t>(mode);
 };
@@ -135,7 +135,7 @@ void check_gpu_lyc(Gpu* const gpu, HWState* const hwstate)
 	} else {
 		gpu->stat.coincidence_flag = 1;
 		if (gpu->stat.int_on_coincidence)
-			hwstate->RequestInt(Interrupts::lcd);
+			hwstate->RequestInt(interrupts::lcd);
 	}
 }
 

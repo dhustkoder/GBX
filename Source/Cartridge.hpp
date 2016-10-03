@@ -4,10 +4,10 @@
 
 namespace gbx {
 
-constexpr const size_t CartridgeMaxSize = 32_Kib;
-constexpr const size_t CartridgeMinSize = 32_Kib;
+constexpr const size_t kCartridgeMaxSize = 32_Kib;
+constexpr const size_t kCartridgeMinSize = 32_Kib;
 
-struct Cartridge 
+struct Cartridge
 {
 	enum class Type : uint8_t {
 		RomOnly = 0x0,
