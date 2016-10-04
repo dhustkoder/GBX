@@ -215,6 +215,7 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 	const Pallete pallete0{gpu.obp0};
 	const auto limit = [](const uint8_t len)->uint8_t { return len > 8 ? 8 : len; };
 	const auto& oam = memory.oam;
+	static_assert((sizeof(oam) % 4) == 0, "");
 
 	for (uint8_t i = 0; i < sizeof(oam); i += 4) {
 		const uint8_t ypos = oam[i] - 16;
