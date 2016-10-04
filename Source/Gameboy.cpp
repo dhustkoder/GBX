@@ -12,50 +12,14 @@ extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu*
 static void update_timers(uint8_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 static uint8_t step_machine(Gameboy* gb);
+Cartridge::Info Cartridge::info;
 
-
-owner<Gameboy*> create_gameboy()
+void Gameboy::Reset()
 {
-	const auto gb = malloc(sizeof(Gameboy));
-	if (gb != nullptr) {
-		memset(gb, 0, sizeof(Gameboy));
-		return static_cast<Gameboy*>(gb);
-	} else {
-		perror("Couldn't allocate memory");
-		return nullptr;
-	}
-}
+	memset(this, 0, sizeof(Gameboy));
 
-
-void destroy_gameboy(const owner<Gameboy*> gb)
-{
-	assert(gb != nullptr);
-	free(gb);
-}
-
-
-bool Gameboy::Reset()
-{
-	assert(Cartridge::info.loaded);
-	const auto& cart_info = Cartridge::info;
-
-	printf("Cartridge information\n"
-	       "internal name: %s\n"
-	       "internal size: %zu\n"
-	       "type code: %u\n"
-	       "system code: %u\n",
-	       cart_info.internal_name, cart_info.size, 
-	       static_cast<unsigned>(cart_info.type), 
-	       static_cast<unsigned>(cart_info.system));
-	/*
-	if (cart_info.system != Cartridge::System::Gameboy 
-	     || cart_info.type != Cartridge::Type::RomOnly) {
-		fprintf(stderr, "cartridge system not supported!\n");
-		return false;
-	}
-	*/
-
-	// init the system, Gameboy mode
+	// init the system
+	// up to now only Gameboy mode is supported
 	cpu.pc = 0x0100;
 	cpu.sp = 0xFFFE;
 	cpu.af = 0x01B0;
@@ -73,7 +37,7 @@ bool Gameboy::Reset()
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
 
-	// inital values for hardware registers
+	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
 	// Write8(0xFF06, 0x00); TMA, in HWState
 	// Write8(0xFF07, 0x00); TAC, in HWState
@@ -104,15 +68,11 @@ bool Gameboy::Reset()
 	// Write8(0xFF49, 0xFF); OBP1, in GPU
 	// Write8(0xFF4A, 0x00); WY, in GPU
 	// Write8(0xFF4B, 0x00); WX, in GPU
-
-	return true;
 }
 
 
 void Gameboy::Run(const uint32_t cycles)
 {
-	assert(Cartridge::info.loaded);
-
 	do {
 		const uint8_t step_cycles = step_machine(this);
 		cpu.clock += step_cycles;
@@ -196,6 +156,125 @@ void update_interrupts(Gameboy* const gb)
 }
 
 
+
+static owner<Gameboy*> allocate_gb(const char* rom_path);
+static void fill_cartridge_info(const Cartridge& cart);
+
+owner<Gameboy*> create_gameboy(const char* const rom_path)
+{
+	if (const owner<Gameboy*> gb = allocate_gb(rom_path)) {
+		fill_cartridge_info(gb->cart);
+		gb->Reset();
+		return gb;
+	}
+
+	return nullptr;
+}
+
+void destroy_gameboy(const owner<Gameboy*> gb)
+{
+	assert(gb != nullptr);
+	free(gb);
+}
+
+// allocate gameboy class on the heap with size (sizeof(Gameboy) + size of rom)
+owner<Gameboy*> allocate_gb(const char* const rom_path)
+{
+	const owner<FILE*> file = fopen(rom_path, "r");
+	if (file == nullptr) {
+		perror("Couldn't open file");
+		return nullptr;
+	}
+
+	const auto file_guard = finally([=] {
+		fclose(file);
+	});
+
+	fseek(file, 0, SEEK_END);
+	const auto file_size = static_cast<size_t>(ftell(file));
+
+	if (file_size > kCartridgeMaxSize 
+		|| file_size < kCartridgeMinSize) {
+		fprintf(stderr,
+			"size of \'%s\': %zu bytes is incompatible!\n",
+			rom_path, file_size);
+		return nullptr;
+	}
+
+	const auto alloc_gb = [](const size_t size) {
+		return reinterpret_cast<Gameboy*>(malloc(size));
+	};
+
+	const owner<Gameboy*> gb = alloc_gb(sizeof(Gameboy) + 
+	                                    sizeof(uint8_t) * file_size);
+
+	if (gb == nullptr) {
+		perror("failed to allocate memory: ");
+		return nullptr;
+	}
+
+	bool success = false;
+	const auto gb_guard = finally([&success, gb] {
+		if (!success)
+			destroy_gameboy(gb);
+	});
+
+	fseek(file, 0, SEEK_SET);
+	fread(gb->cart.rom_banks, sizeof(uint8_t), file_size, file);
+
+	if (ferror(file)) {
+		perror("error while reading from file");
+		return nullptr;
+	}
+
+	success = true;
+	return gb;
+}
+
+
+// parse ROM header for information
+void fill_cartridge_info(const Cartridge& cart)
+{
+	auto& cinfo = cart.info;
+
+	// 0134 - 0142 game's title
+	memcpy(cinfo.internal_name, &cart.rom_banks[0x134], 0x10);
+	cinfo.internal_name[0x10] = '\0';
+
+	const auto super_gb_check = cart.rom_banks[0x146];
+	if (super_gb_check == 0x03) {
+		cinfo.system = Cartridge::System::SuperGameboy;
+	} else {
+		const auto color_check = cart.rom_banks[0x143];
+		if (color_check == 0x80)
+			cinfo.system = Cartridge::System::GameboyColor;
+		else
+			cinfo.system = Cartridge::System::Gameboy;
+	}
+
+	cinfo.type = static_cast<Cartridge::Type>(cart.rom_banks[0x147]);
+	const uint8_t size_code = cart.rom_banks[0x148];
+
+	switch (size_code) {
+	case 0x00: cinfo.size = 32_Kib; break;    // 2 banks
+	case 0x01: cinfo.size = 64_Kib; break;    // 4 banks
+	//case 0x02: cinfo.size = 128_Kib; break; // 8 banks
+	//case 0x03: cinfo.size = 256_Kib; break; // 16 banks
+	//case 0x04: cinfo.size = 512_Kib; break; // 32 banks
+	//case 0x05: cinfo.size = 1_Mib; break;   // 64 banks
+	//case 0x06: cinfo.size = 2_Mib; break;   // 128 banks
+	default: cinfo.size = 0; break;
+	}
+
+	printf("Cartridge information\n"
+	       "internal name: %s\n"
+	       "internal size: %zu\n"
+	       "type code: %u\n"
+	       "system code: %u\n",
+	       cinfo.internal_name, cinfo.size, 
+	       static_cast<unsigned>(cinfo.type), 
+	       static_cast<unsigned>(cinfo.system));
+}
 
 
 

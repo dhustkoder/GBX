@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	const gbx::owner<gbx::Gameboy*> gameboy = gbx::create_gameboy();
+	const gbx::owner<gbx::Gameboy*> gameboy = gbx::create_gameboy(argv[1]);
 	
 	if (gameboy == nullptr)
 		return EXIT_FAILURE;
@@ -29,9 +29,6 @@ int main(int argc, char** argv)
 	const auto gameboy_guard = gbx::finally([=]{
 		gbx::destroy_gameboy(gameboy); 
 	});
-
-	if (!gameboy->LoadRom(argv[1]))
-		return EXIT_FAILURE;
 
 	if (!init_sdl())
 		return EXIT_FAILURE;

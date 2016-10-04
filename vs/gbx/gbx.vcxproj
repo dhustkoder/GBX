@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Source\Cartridge.cpp" />
     <ClCompile Include="..\..\Source\CBInstructions.cpp" />
     <ClCompile Include="..\..\Source\Gameboy.cpp" />
     <ClCompile Include="..\..\Source\GPU.cpp" />
@@ -156,7 +155,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalOptions>/wd4201 /wd4577 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/wd4201 /wd4577  /wd4200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -188,7 +187,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalOptions>/wd4201 /wd4577 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/wd4201 /wd4577  /wd4200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

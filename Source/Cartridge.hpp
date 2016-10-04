@@ -19,15 +19,14 @@ struct Cartridge
 		SuperGameboy
 	};
 
-	uint8_t rom_banks[32_Kib];
-
 	static struct Info {
 		char internal_name[0x11];
 		size_t size;
 		Cartridge::Type type;
 		Cartridge::System system;
-		bool loaded = false;
 	} info;
+
+	uint8_t rom_banks[];
 };
 
 

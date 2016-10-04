@@ -17,8 +17,7 @@ struct Gameboy
 	Gameboy&operator=(Gameboy&)=delete;
 	Gameboy&operator=(Gameboy&&)=delete;
 
-	bool LoadRom(const char* file_name);
-	bool Reset();
+	void Reset();
 	void Run(uint32_t cycles);
 
 	uint8_t Read8(uint16_t address) const;
@@ -35,12 +34,12 @@ struct Gameboy
 	Gpu gpu;
 	Keys keys;
 	HWState hwstate;
-	Cartridge cart;
 	Memory memory;
+	Cartridge cart;
 };
 
 
-extern owner<Gameboy*> create_gameboy();
+extern owner<Gameboy*> create_gameboy(const char* rom_path);
 extern void destroy_gameboy(owner<Gameboy*> gb);
 
 
