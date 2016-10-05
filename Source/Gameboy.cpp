@@ -36,6 +36,7 @@ void Gameboy::Reset()
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
+	cart.current_bank = 0x01;
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
@@ -158,12 +159,11 @@ void update_interrupts(Gameboy* const gb)
 
 
 static owner<Gameboy*> allocate_gb(const char* rom_path);
-static void fill_cartridge_info(const Cartridge& cart);
+static bool parse_cartridge_header(const Cartridge& cart);
 
 owner<Gameboy*> create_gameboy(const char* const rom_path)
 {
 	if (const owner<Gameboy*> gb = allocate_gb(rom_path)) {
-		fill_cartridge_info(gb->cart);
 		gb->Reset();
 		return gb;
 	}
@@ -209,7 +209,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 	                                    sizeof(uint8_t) * file_size);
 
 	if (gb == nullptr) {
-		perror("failed to allocate memory: ");
+		perror("failed to allocate memory");
 		return nullptr;
 	}
 
@@ -225,6 +225,8 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 	if (ferror(file)) {
 		perror("error while reading from file");
 		return nullptr;
+	} else if (!parse_cartridge_header(gb->cart)) {
+		return nullptr;
 	}
 
 	success = true;
@@ -233,7 +235,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 
 
 // parse ROM header for information
-void fill_cartridge_info(const Cartridge& cart)
+bool parse_cartridge_header(const Cartridge& cart)
 {
 	auto& cinfo = cart.info;
 
@@ -252,7 +254,20 @@ void fill_cartridge_info(const Cartridge& cart)
 			cinfo.system = Cartridge::System::Gameboy;
 	}
 
+	const auto is_supported = [](Cartridge::Type cart_type) {
+		for (const auto type : kSupportedCartridgeTypes)
+			if (type == cart_type)
+				return true;
+		return false;
+	};
+
 	cinfo.type = static_cast<Cartridge::Type>(cart.rom_banks[0x147]);
+
+	if (is_supported(cinfo.type) == false) {
+		fprintf(stderr, "Cartridge type not supported.\n");
+		return false;
+	}
+
 	const uint8_t size_code = cart.rom_banks[0x148];
 
 	switch (size_code) {
@@ -266,6 +281,11 @@ void fill_cartridge_info(const Cartridge& cart)
 	default: cinfo.size = 0; break;
 	}
 
+	if (!cinfo.size) {
+		fprintf(stderr, "couldn't verify cartridge size header information\n");
+		return false;
+	}
+
 	printf("Cartridge information\n"
 	       "internal name: %s\n"
 	       "internal size: %zu\n"
@@ -274,6 +294,8 @@ void fill_cartridge_info(const Cartridge& cart)
 	       cinfo.internal_name, cinfo.size, 
 	       static_cast<unsigned>(cinfo.type), 
 	       static_cast<unsigned>(cinfo.system));
+
+	return true;
 }
 
 

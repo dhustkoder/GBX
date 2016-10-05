@@ -4,9 +4,6 @@
 
 namespace gbx {
 
-constexpr const size_t kCartridgeMaxSize = 32_Kib;
-constexpr const size_t kCartridgeMinSize = 32_Kib;
-
 struct Cartridge
 {
 	enum class Type : uint8_t {
@@ -26,8 +23,17 @@ struct Cartridge
 		Cartridge::System system;
 	} info;
 
+	uint8_t current_bank;
 	uint8_t rom_banks[];
 };
+
+constexpr const size_t kCartridgeMaxSize = 64_Kib;
+constexpr const size_t kCartridgeMinSize = 32_Kib;
+constexpr const Cartridge::Type kSupportedCartridgeTypes[] {
+	Cartridge::Type::RomOnly,
+	Cartridge::Type::RomMBC1
+};
+
 
 
 } // namespace gbx

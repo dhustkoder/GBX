@@ -114,6 +114,8 @@ uint16_t Gameboy::PopStack16()
 
 uint8_t read_cart(const uint16_t address, const Cartridge& cart)
 {
+	if (address >= 0x4000)
+		return cart.rom_banks[cart.current_bank * address];
 	return cart.rom_banks[address];
 }
 
@@ -154,9 +156,18 @@ uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
 
 
 
-void write_cart(const uint16_t address, const uint8_t value, Cartridge* const /*cart*/)
+void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
-	debug_printf("cartridge write value $%2x at $%4x\n", value, address);
+	if (value <= 0x61 && address >= 0x2000 && address <= 0x3FFF) {
+		debug_printf("bank switch: value %2x\n", value);
+		if ((value % 0x10) == 0x00)
+			cart->current_bank = value + 1;
+		else
+			cart->current_bank = value;
+	} else {
+		printf("cartridge not supported write attempt value %2x at %4x\n", 
+		       value, address);
+	}
 }
 
 
