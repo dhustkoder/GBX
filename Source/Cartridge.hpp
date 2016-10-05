@@ -21,9 +21,18 @@ struct Cartridge
 		size_t size;
 		Cartridge::Type type;
 		Cartridge::System system;
+		bool ram_enable = false;
 	} info;
 
-	uint8_t current_bank;
+	union {
+		struct {
+			uint8_t rom_bank_num_lower_bits : 5;
+			uint8_t ram_bank_num : 2;
+			uint8_t mode : 1;
+		};
+		uint8_t rom_bank_num : 7;
+	};
+
 	uint8_t rom_banks[];
 };
 

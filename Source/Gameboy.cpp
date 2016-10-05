@@ -36,7 +36,7 @@ void Gameboy::Reset()
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
-	cart.current_bank = 0x01;
+	cart.rom_bank_num = 0x01;
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
