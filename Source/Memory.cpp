@@ -155,7 +155,7 @@ uint8_t read_vram(const uint16_t address, const Memory& mem)
 
 uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
 {
-	debug_printf("Cartridge ram read required at %4x\n", address);
+	debug_printf("Cartridge RAM read required at $%X\n", address);
 	return 0;
 }
 
@@ -163,7 +163,7 @@ uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
 
 void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
-	debug_printf("cartridge write attempt at $%4X value $%2X\n", address, value);
+	debug_printf("Cartridge write attempt at $%X value $%X\n", address, value);
 	if (address >= 0x6000)
 		cart->mode = value ? 1 : 0;
 	else if (address >= 0x4000)
@@ -206,7 +206,7 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 
 void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const /*cart*/)
 {
-	debug_printf("Cartridge ram write value %2x required at %4x\n", value, address);
+	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
 }
 
 

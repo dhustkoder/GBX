@@ -201,13 +201,9 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 		return nullptr;
 	}
 
-	const auto alloc_gb = [](const size_t size) {
-		return reinterpret_cast<Gameboy*>(malloc(size));
-	};
-
-	const owner<Gameboy*> gb = alloc_gb(sizeof(Gameboy) + 
-	                                    sizeof(uint8_t) * file_size);
-
+	const owner<Gameboy*> gb = 
+		reinterpret_cast<Gameboy*>(malloc(sizeof(Gameboy) +
+		                           sizeof(uint8_t) * file_size));
 	if (gb == nullptr) {
 		perror("failed to allocate memory");
 		return nullptr;
@@ -237,7 +233,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 // parse ROM header for information
 bool parse_cartridge_header(const Cartridge& cart)
 {
-	auto& cinfo = cart.info;
+	auto& cinfo = Cartridge::info;
 
 	// 0134 - 0142 game's title
 	memcpy(cinfo.internal_name, &cart.rom_banks[0x134], 0x10);
@@ -254,14 +250,14 @@ bool parse_cartridge_header(const Cartridge& cart)
 			cinfo.system = Cartridge::System::Gameboy;
 	}
 
-	const auto is_supported = [](Cartridge::Type cart_type) {
-		for (const auto type : kSupportedCartridgeTypes)
-			if (type == cart_type)
+	cinfo.type = static_cast<Cartridge::Type>(cart.rom_banks[0x147]);
+	
+	const auto is_supported = [](const Cartridge::Type type) {
+		for (const auto supported_type : kSupportedCartridgeTypes)
+			if (supported_type == type)
 				return true;
 		return false;
 	};
-
-	cinfo.type = static_cast<Cartridge::Type>(cart.rom_banks[0x147]);
 
 	if (is_supported(cinfo.type) == false) {
 		fprintf(stderr, "Cartridge type not supported.\n");
@@ -278,10 +274,7 @@ bool parse_cartridge_header(const Cartridge& cart)
 	//case 0x04: cinfo.size = 512_Kib; break; // 32 banks
 	//case 0x05: cinfo.size = 1_Mib; break;   // 64 banks
 	//case 0x06: cinfo.size = 2_Mib; break;   // 128 banks
-	default: cinfo.size = 0; break;
-	}
-
-	if (!cinfo.size) {
+	default:
 		fprintf(stderr, "couldn't verify cartridge size header information\n");
 		return false;
 	}
