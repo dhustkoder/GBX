@@ -36,7 +36,6 @@ void Gameboy::Reset()
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
-	cart.rom_bank_num = 0x01;
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
@@ -159,7 +158,7 @@ void update_interrupts(Gameboy* const gb)
 
 
 static owner<Gameboy*> allocate_gb(const char* rom_path);
-static bool parse_cartridge_header(const Cartridge& cart);
+static bool parse_cartridge_header(FILE* const cart);
 
 owner<Gameboy*> create_gameboy(const char* const rom_path)
 {
@@ -180,7 +179,7 @@ void destroy_gameboy(const owner<Gameboy*> gb)
 // allocate gameboy class on the heap with size (sizeof(Gameboy) + size of rom)
 owner<Gameboy*> allocate_gb(const char* const rom_path)
 {
-	const owner<FILE*> file = fopen(rom_path, "r");
+	const owner<FILE*> file = fopen(rom_path, "rb");
 	if (file == nullptr) {
 		perror("Couldn't open file");
 		return nullptr;
@@ -190,20 +189,13 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 		fclose(file);
 	});
 
-	fseek(file, 0, SEEK_END);
-	const auto file_size = static_cast<size_t>(ftell(file));
-
-	if (file_size > kCartridgeMaxSize 
-		|| file_size < kCartridgeMinSize) {
-		fprintf(stderr,
-			"size of \'%s\': %zu bytes is incompatible!\n",
-			rom_path, file_size);
+	if (!parse_cartridge_header(file))
 		return nullptr;
-	}
 
 	const owner<Gameboy*> gb = 
 		reinterpret_cast<Gameboy*>(malloc(sizeof(Gameboy) +
-		                           sizeof(uint8_t) * file_size));
+		                           Cartridge::info.rom_size + 
+		                           Cartridge::info.ram_size));
 	if (gb == nullptr) {
 		perror("failed to allocate memory");
 		return nullptr;
@@ -216,12 +208,10 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 	});
 
 	fseek(file, 0, SEEK_SET);
-	fread(gb->cart.rom_banks, sizeof(uint8_t), file_size, file);
+	fread(gb->cart.rom_banks, 1, Cartridge::info.rom_size, file);
 
 	if (ferror(file)) {
 		perror("error while reading from file");
-		return nullptr;
-	} else if (!parse_cartridge_header(gb->cart)) {
 		return nullptr;
 	}
 
@@ -231,60 +221,90 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 
 
 // parse ROM header for information
-bool parse_cartridge_header(const Cartridge& cart)
+static bool parse_cartridge_header(FILE* const file)
 {
 	auto& cinfo = Cartridge::info;
+	
+	const auto read_buff = [=](long int offset, size_t size, void* buffer) {
+		fseek(file, offset, SEEK_SET);
+		fread(buffer, 1, size, file);
+	};
+	const auto read_byte = [=](long int offset) {
+		fseek(file, offset, SEEK_SET);
+		return static_cast<uint8_t>(fgetc(file));
+	};
+
 
 	// 0134 - 0142 game's title
-	memcpy(cinfo.internal_name, &cart.rom_banks[0x134], 0x10);
+	read_buff(0x134, 0x10, cinfo.internal_name);
 	cinfo.internal_name[0x10] = '\0';
 
-	const auto super_gb_check = cart.rom_banks[0x146];
+	const auto super_gb_check = read_byte(0x146);
 	if (super_gb_check == 0x03) {
 		cinfo.system = Cartridge::System::SuperGameboy;
 	} else {
-		const auto color_check = cart.rom_banks[0x143];
+		const auto color_check = read_byte(0x143);
 		if (color_check == 0x80)
 			cinfo.system = Cartridge::System::GameboyColor;
 		else
 			cinfo.system = Cartridge::System::Gameboy;
 	}
 
-	cinfo.type = static_cast<Cartridge::Type>(cart.rom_banks[0x147]);
+	cinfo.type = static_cast<Cartridge::Type>(read_byte(0x147));
 	
-	const auto is_supported = [](const Cartridge::Type type) {
+	const auto is_supported_type = [](const Cartridge::Type type) {
 		for (const auto supported_type : kSupportedCartridgeTypes)
 			if (supported_type == type)
 				return true;
 		return false;
 	};
+	const auto is_supported_system = [](const Cartridge::System system) {
+		for (const auto supported_system : kSupportedCartridgeSystems)
+			if (supported_system == system)
+				return true;
+		return false;
+	};
 
-	if (is_supported(cinfo.type) == false) {
-		fprintf(stderr, "Cartridge type not supported.\n");
+	if (!is_supported_type(cinfo.type) || !is_supported_system(cinfo.system)) {
+		fprintf(stderr, "Cartridge not supported.\n");
 		return false;
 	}
 
-	const uint8_t size_code = cart.rom_banks[0x148];
+	const auto rom_size_code = read_byte(0x148);
+	const auto ram_size_code = read_byte(0x149);
 
-	switch (size_code) {
-	case 0x00: cinfo.size = 32_Kib; break;    // 2 banks
-	case 0x01: cinfo.size = 64_Kib; break;    // 4 banks
-	//case 0x02: cinfo.size = 128_Kib; break; // 8 banks
-	//case 0x03: cinfo.size = 256_Kib; break; // 16 banks
-	//case 0x04: cinfo.size = 512_Kib; break; // 32 banks
-	//case 0x05: cinfo.size = 1_Mib; break;   // 64 banks
-	//case 0x06: cinfo.size = 2_Mib; break;   // 128 banks
+	switch (rom_size_code) {
+	case 0x00: cinfo.rom_size = 32_Kib; break;    // 2 banks
+	case 0x01: cinfo.rom_size = 64_Kib; break;    // 4 banks
+	//case 0x02: cinfo.rom_size = 128_Kib; break; // 8 banks
+	//case 0x03: cinfo.rom_size = 256_Kib; break; // 16 banks
+	//case 0x04: cinfo.rom_size = 512_Kib; break; // 32 banks
+	//case 0x05: cinfo.rom_size = 1_Mib; break;   // 64 banks
+	//case 0x06: cinfo.rom_size = 2_Mib; break;   // 128 banks
 	default:
-		fprintf(stderr, "couldn't verify cartridge size header information\n");
+		fprintf(stderr, "couldn't verify cartridge rom size header information\n");
 		return false;
 	}
+
+	switch (ram_size_code) {
+	case 0x00: cinfo.ram_size = 0x00; break;   // NO RAM
+	case 0x01: cinfo.ram_size = 2_Kib; break;  // 1/4 bank
+	case 0x02: cinfo.ram_size = 8_Kib; break;  // 1 bank
+	case 0x03: cinfo.ram_size = 32_Kib; break; // 4 banks
+	default:
+		fprintf(stderr, "couldn't verify cartridge ram size header information\n");
+		return false;
+	}
+
 
 	printf("Cartridge information\n"
 	       "internal name: %s\n"
-	       "internal size: %zu\n"
+	       "internal rom size: %zu\n"
+	       "internal ram size: %zu\n"
 	       "type code: %u\n"
 	       "system code: %u\n",
-	       cinfo.internal_name, cinfo.size, 
+	       cinfo.internal_name, cinfo.rom_size,
+	       cinfo.ram_size,
 	       static_cast<unsigned>(cinfo.type), 
 	       static_cast<unsigned>(cinfo.system));
 

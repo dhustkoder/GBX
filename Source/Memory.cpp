@@ -159,36 +159,48 @@ uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
 
 void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
-	debug_printf("Cartridge write attempt at $%X value $%X\n", address, value);
-	const auto eval_rom_bank_offset = [=] {
-		const auto bank_number = cart->mode ? 
-			cart->rom_bank_num : cart->rom_bank_num_lower_bits;
-		// on read_cart rom_bank_offset will be added with 
-		// the read address which is in range 0x4000-0x7FFF
-		switch (bank_number) {
+	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
+
+	const auto eval_banks_offset = [=] {
+		uint8_t rom_bank_num;
+
+		if (cart->mode) {
+			rom_bank_num = cart->banks_num_lower_bits;
+		} else {
+			rom_bank_num = cart->banks_num;
+		}
+
+		switch (rom_bank_num) {
 		case 0x00: // [[fallthrough]]
 		case 0x01: cart->rom_bank_offset = 0x00; break;
 		case 0x20: cart->rom_bank_offset = (0x4000 * 0x21); break;
 		case 0x40: cart->rom_bank_offset = (0x4000 * 0x41); break;
 		case 0x60: cart->rom_bank_offset = (0x4000 * 0x61); break;
 		default: 
-			cart->rom_bank_offset = (0x4000 * (bank_number - 1)); 
+			cart->rom_bank_offset = (0x4000 * (rom_bank_num - 1)); 
 			break;
 		}
 	};
+	
+	// can't take address/reference of bitfields :(
+	#define SET_IF_NOT_EQ(value_expr, dest_expr) {{ \
+		if ((value_expr) != (dest_expr)) {      \
+			(dest_expr) = (value_expr);     \
+			eval_banks_offset();            \
+		}                                       \
+	}}
 
 	if (address >= 0x6000) {
-		cart->mode = value ? 1 : 0;
-		eval_rom_bank_offset();
+		SET_IF_NOT_EQ(value ? 1 : 0, cart->mode);
 	} else if (address >= 0x4000) {
-		cart->ram_bank_num = value & 0x03;
-		eval_rom_bank_offset();
+		SET_IF_NOT_EQ(value & 0x03, cart->banks_num_upper_bits);
 	} else if (address >= 0x2000) {
-		cart->rom_bank_num_lower_bits = value & 0x1F;
-		eval_rom_bank_offset();
+		SET_IF_NOT_EQ(value & 0x1F, cart->banks_num_lower_bits);
 	} else {
 		cart->info.ram_enable = ((value & 0x0F) == 0x0A) ? true : false;
 	}
+
+	#undef SET_IF_NOT_EQ
 }
 
 
@@ -311,8 +323,8 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	case 0x03: hwstate->tima_clock_limit = 0x100; break;
 	}
 
-	const bool timer_stop = test_bit(2, value);
-	if (timer_stop) { 
+	const bool timer_stop_bit = test_bit(2, value);
+	if (timer_stop_bit) { 
 		if (hwstate->GetFlags(HWState::TimerStop)) {
 			hwstate->ClearFlags(HWState::TimerStop);
 			hwstate->tima = hwstate->tma;
@@ -343,3 +355,4 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 
 
 } // namespace gbx
+

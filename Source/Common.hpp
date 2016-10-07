@@ -7,17 +7,16 @@ namespace gbx {
 
 template<class T>
 using owner = T;
-	
+
 constexpr size_t operator""_Kib(unsigned long long kibs)
 {
-	return static_cast<size_t>(kibs * 1024);
+	return kibs * 1024;
 }
 
-constexpr size_t operator""_Mib(unsigned long long mibs) 
+constexpr size_t operator""_Mib(unsigned long long mibs)
 {
-	return static_cast<size_t>(mibs * 1024 * 1024);
+	return mibs * 1024 * 1024;
 }
-
 
 template<class F>
 struct Finally {

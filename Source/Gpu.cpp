@@ -12,10 +12,10 @@ enum Color : uint32_t {
 
 struct Pallete {
 	constexpr explicit Pallete(const uint8_t pal)
-		: colnums{static_cast<uint8_t>((pal&0x03)),
-		          static_cast<uint8_t>((pal&0x0C)>>2),
-		          static_cast<uint8_t>((pal&0x30)>>4),
-		          static_cast<uint8_t>((pal&0xC0)>>6)} 
+		: colnums{uint8_t(pal&0x03),
+			uint8_t((pal&0x0C)>>2),
+			uint8_t((pal&0x30)>>4),
+			uint8_t((pal&0xC0)>>6)}
 	{
 	}
 	const uint8_t colnums[4];
@@ -35,7 +35,7 @@ inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void fill_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
-static void draw_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
+inline void draw_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
 
 
 void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
