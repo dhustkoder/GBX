@@ -32,7 +32,8 @@ struct Cartridge
 		};
 		uint8_t rom_bank_num : 7;
 	};
-
+	
+	int32_t rom_bank_offset;
 	uint8_t rom_banks[];
 };
 

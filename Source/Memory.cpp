@@ -114,12 +114,8 @@ uint16_t Gameboy::PopStack16()
 
 uint8_t read_cart(const uint16_t address, const Cartridge& cart)
 {
-	if (address >= 0x4000) {
-		const uint16_t bank_number = cart.mode 
-		? cart.rom_bank_num : cart.rom_bank_num_lower_bits;
-		const uint16_t offset = (0x4000 * bank_number) + (address - 0x4000);
-		return cart.rom_banks[offset];
-	}
+	if (address >= 0x4000)
+		return cart.rom_banks[cart.rom_bank_offset + address];
 
 	return cart.rom_banks[address];
 }
@@ -164,14 +160,35 @@ uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
 void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
 	debug_printf("Cartridge write attempt at $%X value $%X\n", address, value);
-	if (address >= 0x6000)
+	const auto eval_rom_bank_offset = [=] {
+		const auto bank_number = cart->mode ? 
+			cart->rom_bank_num : cart->rom_bank_num_lower_bits;
+		// on read_cart rom_bank_offset will be added with 
+		// the read address which is in range 0x4000-0x7FFF
+		switch (bank_number) {
+		case 0x00: // [[fallthrough]]
+		case 0x01: cart->rom_bank_offset = 0x00; break;
+		case 0x20: cart->rom_bank_offset = (0x4000 * 0x21); break;
+		case 0x40: cart->rom_bank_offset = (0x4000 * 0x41); break;
+		case 0x60: cart->rom_bank_offset = (0x4000 * 0x61); break;
+		default: 
+			cart->rom_bank_offset = (0x4000 * (bank_number - 1)); 
+			break;
+		}
+	};
+
+	if (address >= 0x6000) {
 		cart->mode = value ? 1 : 0;
-	else if (address >= 0x4000)
+		eval_rom_bank_offset();
+	} else if (address >= 0x4000) {
 		cart->ram_bank_num = value & 0x03;
-	else if (address >= 0x2000)
+		eval_rom_bank_offset();
+	} else if (address >= 0x2000) {
 		cart->rom_bank_num_lower_bits = value & 0x1F;
-	else
+		eval_rom_bank_offset();
+	} else {
 		cart->info.ram_enable = ((value & 0x0F) == 0x0A) ? true : false;
+	}
 }
 
 
