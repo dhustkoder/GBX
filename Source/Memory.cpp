@@ -173,9 +173,9 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 		switch (rom_bank_num) {
 		case 0x00: // [[fallthrough]]
 		case 0x01: cart->rom_bank_offset = 0x00; break;
-		case 0x20: cart->rom_bank_offset = (0x4000 * 0x21); break;
-		case 0x40: cart->rom_bank_offset = (0x4000 * 0x41); break;
-		case 0x60: cart->rom_bank_offset = (0x4000 * 0x61); break;
+		case 0x20: cart->rom_bank_offset = (0x4000 * 0x20); break;
+		case 0x40: cart->rom_bank_offset = (0x4000 * 0x40); break;
+		case 0x60: cart->rom_bank_offset = (0x4000 * 0x60); break;
 		default: 
 			cart->rom_bank_offset = (0x4000 * (rom_bank_num - 1)); 
 			break;
