@@ -151,56 +151,51 @@ uint8_t read_vram(const uint16_t address, const Memory& mem)
 
 uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
 {
+	// TODO: implement
 	debug_printf("Cartridge RAM read required at $%X\n", address);
 	return 0;
 }
 
 
-
 void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
+	//TODO: add ram bank offset evaluation
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
 
 	const auto eval_banks_offset = [=] {
-		uint8_t rom_bank_num;
+		const auto mode = cart->mode;
+		const auto rom_bank_num = mode ? cart->banks_num_lower_bits : cart->banks_num;
 
-		if (cart->mode) {
-			rom_bank_num = cart->banks_num_lower_bits;
-		} else {
-			rom_bank_num = cart->banks_num;
-		}
-
-		switch (rom_bank_num) {
-		case 0x00: // [[fallthrough]]
-		case 0x01: cart->rom_bank_offset = 0x00; break;
-		case 0x20: cart->rom_bank_offset = (0x4000 * 0x20); break;
-		case 0x40: cart->rom_bank_offset = (0x4000 * 0x40); break;
-		case 0x60: cart->rom_bank_offset = (0x4000 * 0x60); break;
-		default: 
-			cart->rom_bank_offset = (0x4000 * (rom_bank_num - 1)); 
-			break;
-		}
+		if ((rom_bank_num >> 0x01) == 0x00)
+			cart->rom_bank_offset = 0x00;
+		else if (mode || (rom_bank_num != 0x20 && rom_bank_num != 0x40
+		         && rom_bank_num != 0x60))
+			cart->rom_bank_offset = 0x4000 * (rom_bank_num - 1);
+		else
+			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 	};
-	
-	// can't take address/reference of bitfields :(
-	#define SET_IF_NOT_EQ(value_expr, dest_expr) {{ \
-		if ((value_expr) != (dest_expr)) {      \
-			(dest_expr) = (value_expr);     \
-			eval_banks_offset();            \
-		}                                       \
-	}}
 
 	if (address >= 0x6000) {
-		SET_IF_NOT_EQ(value ? 1 : 0, cart->mode);
+		const uint8_t new_mode = value ? 1 : 0;
+		if (cart->mode != new_mode) {
+			cart->mode = new_mode;
+			eval_banks_offset();
+		}
 	} else if (address >= 0x4000) {
-		SET_IF_NOT_EQ(value & 0x03, cart->banks_num_upper_bits);
+		const uint8_t new_val = value & 0x03;
+		if (cart->banks_num_upper_bits != new_val) {
+			cart->banks_num_upper_bits = new_val;
+			eval_banks_offset();
+		}
 	} else if (address >= 0x2000) {
-		SET_IF_NOT_EQ(value & 0x1F, cart->banks_num_lower_bits);
+		const uint8_t new_val = value & 0x1F;
+		if (cart->banks_num_lower_bits != new_val) {
+			cart->banks_num_lower_bits = new_val;
+			eval_banks_offset();
+		}
 	} else {
 		cart->info.ram_enable = ((value & 0x0F) == 0x0A) ? true : false;
 	}
-
-	#undef SET_IF_NOT_EQ
 }
 
 
@@ -235,6 +230,7 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 
 void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const /*cart*/)
 {
+	//TODO: implement
 	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
 }
 
