@@ -282,7 +282,7 @@ static bool parse_cartridge_header(FILE* const file)
 	//case 0x05: cinfo.rom_size = 1_Mib; break;   // 64 banks
 	//case 0x06: cinfo.rom_size = 2_Mib; break;   // 128 banks
 	default:
-		fprintf(stderr, "couldn't verify cartridge rom size header information\n");
+		fprintf(stderr,"couldn't eval ROM information\n");
 		return false;
 	}
 
@@ -292,7 +292,7 @@ static bool parse_cartridge_header(FILE* const file)
 	case 0x02: cinfo.ram_size = 8_Kib; break;  // 1 bank
 	case 0x03: cinfo.ram_size = 32_Kib; break; // 4 banks
 	default:
-		fprintf(stderr, "couldn't verify cartridge ram size header information\n");
+		fprintf(stderr, "couldn't eval RAM information\n");
 		return false;
 	}
 
