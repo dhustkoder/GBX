@@ -35,7 +35,9 @@ inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void fill_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
-inline void draw_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
+inline void draw_bg_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
+inline void draw_sprite_row(uint16_t row, uint8_t length, bool xflip, const Pallete& spritepal,
+                            const Pallete& bgpal, uint32_t* line);
 
 
 void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
@@ -202,22 +204,26 @@ void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160])
 {
 	const Pallete pallete{gpu.bgp};
 	for (uint8_t y = 0; y < 144; ++y) {
-		for (uint8_t x = 0; x < 20; ++x)
-			draw_row(bg_scanlines[y][x], 8, pallete, &pixels[y][x*8]);
+		for (uint8_t x = 0; x < 20; ++x) {
+			draw_bg_row(bg_scanlines[y][x], 8, 
+			            pallete, &pixels[y][x*8]);
+		}
 	}
 }
 
 
 void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
-	// TODO: check sprite flags for pallete/priority/flips
+	// TODO: add priority flag, add 8x16 drawing
 	
-	const Pallete pallete0{gpu.obp0};
-	const auto limit = [](const uint8_t len)->uint8_t { return len > 8 ? 8 : len; };
+	const Pallete pal0{gpu.obp0};
+	const Pallete pal1{gpu.obp1};
+	const Pallete bgpal{gpu.bgp};
+	const auto limit = [](const int len) { return len > 8 ? 8 : len; };
 	const auto& oam = memory.oam;
 	static_assert((sizeof(oam) % 4) == 0, "");
 
-	for (uint8_t i = 0; i < sizeof(oam); i += 4) {
+	for (size_t i = 0; i < sizeof(oam); i += 4) {
 		const uint8_t ypos = oam[i] - 16;
 		const uint8_t xpos = oam[i + 1] - 8;
 
@@ -225,18 +231,31 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 			continue;
 
 		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
-		const uint8_t ylimit = limit(144 - ypos);
-		const uint8_t xlimit = limit(160 - xpos);
-
-		for (uint8_t y = 0; y < ylimit; ++y) {
-			const uint16_t row = (tile[y*2 + 1] << 8) | tile[y*2];
-			draw_row(row, xlimit, pallete0, &pixels[ypos+y][xpos]);
+		const uint8_t flags = oam[i + 3];
+		const bool yflip = (flags & 0x40) != 0;
+		const bool xflip = (flags & 0x20) != 0;
+		const Pallete* const pal = (flags & 0x01) ? &pal1 : &pal0;
+		const int ylimit = limit(144 - ypos);
+		const int xlimit = limit(160 - xpos);
+		
+		if (!yflip) {
+			for (int y = 0; y < ylimit; ++y) {
+				const uint16_t row = (tile[y*2 + 1] << 8) | tile[y*2];
+				draw_sprite_row(row, xlimit, xflip, *pal, 
+						bgpal, &pixels[ypos+y][xpos]);
+			}
+		} else {
+			for (int y = ylimit-1; y >= 0; --y) {
+				const uint16_t row = (tile[y*2 + 1] << 8) | tile[y*2];
+				draw_sprite_row(row, xlimit, xflip, *pal,
+						bgpal, &pixels[ypos+y][xpos]);
+			}
 		}
 	}
 }
 
 
-void draw_row(const uint16_t row, const uint8_t length, const Pallete& pal, uint32_t* const line)
+void draw_bg_row(const uint16_t row, const uint8_t length, const Pallete& pal, uint32_t* const line)
 {
 	for (uint8_t p = 0; p < length; ++p) {
 		uint8_t n = 0;
@@ -245,6 +264,33 @@ void draw_row(const uint16_t row, const uint8_t length, const Pallete& pal, uint
 		if (row & (0x8000 >> p))
 			n += 2;
 		line[p] = colors[pal.colnums[n]];
+	}
+}
+
+
+void draw_sprite_row(const uint16_t row, const uint8_t length, const bool xflip,
+		const Pallete& pal, const Pallete& /*bgpal*/, uint32_t* line)
+{
+	if (!xflip) {
+		for (uint8_t p = 0; p < length; ++p) {
+			uint8_t n = 0;
+			if (row & (0x80 >> p))
+				++n;
+			if (row & (0x8000 >> p))
+				n += 2;
+			if (n != 0)
+				line[p] = colors[pal.colnums[n]];
+		}
+	} else {
+		for (uint8_t p = 0; p < length; ++p) {
+			uint8_t n = 0;
+			if (row & (0x01 << p))
+				++n;
+			if (row & (0x0100 << p))
+				n += 2;
+			if (n != 0)
+				line[p] = colors[pal.colnums[n]];
+		}
 	}
 }
 
