@@ -37,7 +37,7 @@ static void fill_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 inline void draw_bg_row(uint16_t row, int length, const Pallete& pal, uint32_t* line);
-inline void draw_sprite_row(uint16_t row, int length, bool xflip, const Pallete& spritepal,
+inline void draw_sprite_row(uint16_t row, int xpos, int xlimit, bool xflip, const Pallete& spritepal,
                             const Pallete& bgpal, uint32_t* line);
 
 
@@ -226,10 +226,10 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 	static_assert((sizeof(oam) % 4) == 0, "");
 
 	for (size_t i = 0; i < sizeof(oam); i += 4) {
-		const uint8_t ypos = oam[i] - 16;
-		const uint8_t xpos = oam[i + 1] - 8;
+		const int ypos = oam[i] - 16;
+		const int xpos = oam[i + 1] - 8;
 
-		if (ypos >= 144 || xpos >= 160)
+		if (ypos <= -yres || xpos <= -8)
 			continue;
 		
 		const uint8_t pattern = oam[i + 2];
@@ -250,15 +250,21 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 
 		if (!yflip) {
 			for (int y = 0; y < ylimit; ++y) {
+				const int yoffset = ypos + y;
+				if (yoffset < 0)
+					continue;
 				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];
-				draw_sprite_row(row, xlimit, xflip, *pal, 
-						bgpal, &pixels[ypos+y][xpos]);
+				draw_sprite_row(row, xpos, xlimit, xflip, *pal, 
+						bgpal, &pixels[yoffset][0]);
 			}
 		} else {
 			for (int y = ylimit-1; y >= 0; --y) {
+				const int yoffset = ypos + y;
+				if (yoffset < 0)
+					break;
 				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];
-				draw_sprite_row(row, xlimit, xflip, *pal, 
-						bgpal, &pixels[ypos+y][xpos]);
+				draw_sprite_row(row, xpos, xlimit, xflip, *pal, 
+						bgpal, &pixels[yoffset][0]);
 			}
 		}
 	}
@@ -278,28 +284,34 @@ void draw_bg_row(const uint16_t row, const int length, const Pallete& pal, uint3
 }
 
 
-void draw_sprite_row(const uint16_t row, const int length, const bool xflip,
+void draw_sprite_row(const uint16_t row, const int xpos, const int xlimit, const bool xflip,
 		const Pallete& pal, const Pallete& /*bgpal*/, uint32_t* line)
 {
 	if (!xflip) {
-		for (int p = 0; p < length; ++p) {
+		for (int p = 0; p < xlimit; ++p) {
+			const int xoffset = p + xpos;
+			if (xoffset < 0)
+				continue;
 			uint8_t n = 0;
 			if (row & (0x80 >> p))
 				++n;
 			if (row & (0x8000 >> p))
 				n += 2;
 			if (n != 0)
-				line[p] = colors[pal.colnums[n]];
+				line[xoffset] = colors[pal.colnums[n]];
 		}
 	} else {
-		for (int p = 0; p < length; ++p) {
+		for (int p = 0; p < xlimit; ++p) {
+			const int xoffset = p + xpos;
+			if (xoffset < 0)
+				continue;
 			uint8_t n = 0;
 			if (row & (0x01 << p))
 				++n;
 			if (row & (0x0100 << p))
 				n += 2;
 			if (n != 0)
-				line[p] = colors[pal.colnums[n]];
+				line[xoffset] = colors[pal.colnums[n]];
 		}
 	}
 }

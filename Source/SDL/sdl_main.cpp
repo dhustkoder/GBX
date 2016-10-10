@@ -140,7 +140,7 @@ void update_key(gbx::Keys::State state, SDL_Scancode keycode, gbx::Keys* keys)
 
 bool init_sdl()
 {
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		fprintf(stderr, "failed to init SDL2: %s\n", SDL_GetError());
 		return false;
 	}
