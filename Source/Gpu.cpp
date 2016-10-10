@@ -36,8 +36,8 @@ inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void fill_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
-inline void draw_bg_row(uint16_t row, uint8_t length, const Pallete& pal, uint32_t* line);
-inline void draw_sprite_row(uint16_t row, uint8_t length, bool xflip, const Pallete& spritepal,
+inline void draw_bg_row(uint16_t row, int length, const Pallete& pal, uint32_t* line);
+inline void draw_sprite_row(uint16_t row, int length, bool xflip, const Pallete& spritepal,
                             const Pallete& bgpal, uint32_t* line);
 
 
@@ -204,8 +204,8 @@ void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][
 void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160])
 {
 	const Pallete pallete{gpu.bgp};
-	for (uint8_t y = 0; y < 144; ++y) {
-		for (uint8_t x = 0; x < 20; ++x) {
+	for (int y = 0; y < 144; ++y) {
+		for (int x = 0; x < 20; ++x) {
 			draw_bg_row(bg_scanlines[y][x], 8, 
 			            pallete, &pixels[y][x*8]);
 		}
@@ -265,9 +265,9 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 }
 
 
-void draw_bg_row(const uint16_t row, const uint8_t length, const Pallete& pal, uint32_t* const line)
+void draw_bg_row(const uint16_t row, const int length, const Pallete& pal, uint32_t* const line)
 {
-	for (uint8_t p = 0; p < length; ++p) {
+	for (int p = 0; p < length; ++p) {
 		uint8_t n = 0;
 		if (row & (0x80 >> p))
 			++n;
@@ -278,11 +278,11 @@ void draw_bg_row(const uint16_t row, const uint8_t length, const Pallete& pal, u
 }
 
 
-void draw_sprite_row(const uint16_t row, const uint8_t length, const bool xflip,
+void draw_sprite_row(const uint16_t row, const int length, const bool xflip,
 		const Pallete& pal, const Pallete& /*bgpal*/, uint32_t* line)
 {
 	if (!xflip) {
-		for (uint8_t p = 0; p < length; ++p) {
+		for (int p = 0; p < length; ++p) {
 			uint8_t n = 0;
 			if (row & (0x80 >> p))
 				++n;
@@ -292,7 +292,7 @@ void draw_sprite_row(const uint16_t row, const uint8_t length, const bool xflip,
 				line[p] = colors[pal.colnums[n]];
 		}
 	} else {
-		for (uint8_t p = 0; p < length; ++p) {
+		for (int p = 0; p < length; ++p) {
 			uint8_t n = 0;
 			if (row & (0x01 << p))
 				++n;
