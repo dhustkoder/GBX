@@ -1,3 +1,4 @@
+#include <string.h>
 #include "Gameboy.hpp"
 
 
@@ -214,12 +215,13 @@ void draw_bg_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160])
 
 void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
-	// TODO: add priority flag, add 8x16 drawing
+	// TODO: add priority flag, check bgpal
 	
 	const Pallete pal0{gpu.obp0};
 	const Pallete pal1{gpu.obp1};
 	const Pallete bgpal{gpu.bgp};
-	const auto limit = [](const int len) { return len > 8 ? 8 : len; };
+	const int yres = !gpu.lcdc.obj_size ? 8 : 16;
+	const auto min = [](const int x, const int y) { return x < y ? x : y; };
 	const auto& oam = memory.oam;
 	static_assert((sizeof(oam) % 4) == 0, "");
 
@@ -229,25 +231,33 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 
 		if (ypos >= 144 || xpos >= 160)
 			continue;
+		
+		const uint8_t pattern = oam[i + 2];
+		uint8_t sprite[32];
+		if (yres == 8) {
+			memcpy(&sprite[0], &memory.vram[pattern * 16], 16);
+		} else {
+			memcpy(&sprite[0], &memory.vram[(pattern & 0xFE) * 16], 16);
+			memcpy(&sprite[16], &memory.vram[(pattern | 0x01) * 16], 16);
+		}
 
-		const uint8_t* const tile = &memory.vram[oam[i + 2] * 16];
 		const uint8_t flags = oam[i + 3];
 		const bool yflip = (flags & 0x40) != 0;
 		const bool xflip = (flags & 0x20) != 0;
 		const Pallete* const pal = (flags & 0x01) ? &pal1 : &pal0;
-		const int ylimit = limit(144 - ypos);
-		const int xlimit = limit(160 - xpos);
-		
+		const int ylimit = min(144 - ypos, yres);
+		const int xlimit = min(160 - xpos, 8);
+
 		if (!yflip) {
 			for (int y = 0; y < ylimit; ++y) {
-				const uint16_t row = (tile[y*2 + 1] << 8) | tile[y*2];
+				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];
 				draw_sprite_row(row, xlimit, xflip, *pal, 
 						bgpal, &pixels[ypos+y][xpos]);
 			}
 		} else {
 			for (int y = ylimit-1; y >= 0; --y) {
-				const uint16_t row = (tile[y*2 + 1] << 8) | tile[y*2];
-				draw_sprite_row(row, xlimit, xflip, *pal,
+				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];
+				draw_sprite_row(row, xlimit, xflip, *pal, 
 						bgpal, &pixels[ypos+y][xpos]);
 			}
 		}

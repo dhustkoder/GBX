@@ -22,7 +22,6 @@ struct Cartridge
 		size_t ram_size;
 		Cartridge::Type type;
 		Cartridge::System system;
-		bool ram_enable = false;
 	} info;
 
 	union {

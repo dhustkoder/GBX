@@ -162,7 +162,7 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 	//TODO: add ram bank offset evaluation
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
 
-	const auto eval_banks_offset = [=] {
+	const auto eval_banks_offset = [cart] {
 		const auto mode = cart->mode;
 		const auto rom_bank_num = mode ? cart->banks_num_lower_bits : cart->banks_num;
 
@@ -193,8 +193,6 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 			cart->banks_num_lower_bits = new_val;
 			eval_banks_offset();
 		}
-	} else {
-		cart->info.ram_enable = ((value & 0x0F) == 0x0A) ? true : false;
 	}
 }
 
