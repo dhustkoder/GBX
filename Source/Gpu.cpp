@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include "Gameboy.hpp"
 
 
@@ -11,19 +12,27 @@ enum Color : uint32_t {
 	DarkGrey = 0x55555500
 };
 
+constexpr const Color kColors[4] = { White, LightGrey, DarkGrey, Black };
+static uint16_t bg_scanlines[144][20];
+
 struct Pallete {
 	constexpr explicit Pallete(const uint8_t pal)
-		: colnums{uint8_t(pal&0x03),
-			uint8_t((pal&0x0C)>>2),
-			uint8_t((pal&0x30)>>4),
-			uint8_t((pal&0xC0)>>6)}
+		: colors{kColors[pal&0x03],
+			kColors[(pal&0x0C)>>2],
+			kColors[(pal&0x30)>>4],
+			kColors[(pal&0xC0)>>6]}
 	{
 	}
-	const uint8_t colnums[4];
+
+	Color operator[](const int offset) const
+	{
+		assert(offset >= 0 && offset <= 3);
+		return colors[offset];
+	}
+
+	const Color colors[4];
 };
 
-constexpr const Color colors[4] = { White, LightGrey, DarkGrey, Black };
-static uint16_t bg_scanlines[144][20];
 
 
 extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
@@ -274,12 +283,12 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 void draw_bg_row(const uint16_t row, const int length, const Pallete& pal, uint32_t* const line)
 {
 	for (int p = 0; p < length; ++p) {
-		uint8_t n = 0;
+		uint8_t color_num = 0;
 		if (row & (0x80 >> p))
-			++n;
+			++color_num;
 		if (row & (0x8000 >> p))
-			n += 2;
-		line[p] = colors[pal.colnums[n]];
+			color_num += 2;
+		line[p] = pal[color_num];
 	}
 }
 
@@ -292,26 +301,26 @@ void draw_sprite_row(const uint16_t row, const int xpos, const int xlimit, const
 			const int xoffset = p + xpos;
 			if (xoffset < 0)
 				continue;
-			uint8_t n = 0;
+			uint8_t color_num = 0;
 			if (row & (0x80 >> p))
-				++n;
+				++color_num;
 			if (row & (0x8000 >> p))
-				n += 2;
-			if (n != 0)
-				line[xoffset] = colors[pal.colnums[n]];
+				color_num += 2;
+			if (color_num != 0)
+				line[xoffset] = pal[color_num];
 		}
 	} else {
 		for (int p = 0; p < xlimit; ++p) {
 			const int xoffset = p + xpos;
 			if (xoffset < 0)
 				continue;
-			uint8_t n = 0;
+			uint8_t color_num = 0;
 			if (row & (0x01 << p))
-				++n;
+				++color_num;
 			if (row & (0x0100 << p))
-				n += 2;
-			if (n != 0)
-				line[xoffset] = colors[pal.colnums[n]];
+				color_num += 2;
+			if (color_num != 0)
+				line[xoffset] = pal[color_num];
 		}
 	}
 }
