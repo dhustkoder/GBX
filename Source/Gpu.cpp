@@ -159,8 +159,9 @@ void fill_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const bool unsig_data = lcdc.tile_data != 0;
 	const auto tile_data = unsig_data ? &mem.vram[0] : &mem.vram[0x1000];
 
-	const auto fill_row =
-	[ly, unsig_data](const uint8_t* data, const uint8_t* map, uint8_t mapx) {
+	const auto fill_row = 
+	[ly, unsig_data](const uint8_t* const data, const uint8_t* const map,
+			const uint8_t mapx) {
 		if (unsig_data) {
 			for (uint8_t x = 0; x < 20; ++x) {
 				const uint16_t addr = map[(x + mapx) & 31] * 16;
