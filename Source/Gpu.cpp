@@ -223,9 +223,7 @@ void update_scanline(const Gpu& gpu, const Memory& mem)
 			auto map = lcdc.win_map 
 				? &mem.vram[0x1C00] 
 				: &mem.vram[0x1800];
-			const int wxdiv = wx / 8;
-			const int wxmod = wx % 8;
-			fill_line(tile_data, map, wxdiv, wxmod);
+			fill_line(tile_data, map, 0, 0);
 		}
 	}
 }
