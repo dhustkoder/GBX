@@ -79,8 +79,7 @@ void Gameboy::Run(const uint32_t cycles)
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
-	} while (cpu.clock < cycles);
-
+	} while (cpu.clock < cycles || gpu.ly != 0);
 	cpu.clock = 0;
 }
 

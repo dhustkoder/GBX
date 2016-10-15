@@ -65,11 +65,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-		gameboy->Run(69905);
-		
-		if (gameboy->gpu.stat.mode != gbx::Gpu::Mode::VBlank)
-			render_graphics(gameboy);
-		
+		gameboy->Run(70224);
+		render_graphics(gameboy);
 		SDL_Delay(15);
 
 		const auto ticks = SDL_GetTicks();
@@ -101,11 +98,9 @@ static gbx::owner<SDL_Renderer*> renderer = nullptr;
 
 void render_graphics(gbx::Gameboy* const gb)
 {
-	const auto lcdc = gb->gpu.lcdc;
-
 	SDL_RenderClear(renderer);
-	
-	if (lcdc.lcd_on) {
+
+	if (gb->gpu.lcdc.lcd_on) {
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
