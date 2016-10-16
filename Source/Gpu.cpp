@@ -45,7 +45,6 @@ inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void update_scanline(const Gpu& gpu, const Memory& mem);
 static void draw_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
-inline void draw_bg_row(uint16_t row, int length, const Pallete& pal, uint32_t* line);
 inline void draw_sprite_row(uint16_t row, int xpos, int xlimit, bool xflip, bool priority,
                              const Pallete& pal, const Pallete& bgpal, uint32_t* line);
 
@@ -163,22 +162,16 @@ void update_scanline(const Gpu& gpu, const Memory& mem)
 		uint8_t* line = &bg_color_numbers[ly][0];
 
 		for (int x = 0; x < xend; ++x) {
-			uint16_t row;
+			const uint8_t id = map[(x + xdiv)&31];
+			const int addr = unsig_data 
+				? id * 16 
+				: static_cast<int8_t>(id) * 16;
+			const uint8_t* tile = &data[addr];
+			const uint8_t lsb = tile[0];
+			const uint8_t msb = tile[1];
+			const uint16_t row = (msb << 8) | lsb;
 			int pbeg, pend;
 
-			if (unsig_data) {
-				const uint16_t addr = map[(x + xdiv) & 31] * 16;
-				const uint8_t lsb = data[addr];
-				const uint8_t msb = data[addr + 1];
-				row = (msb << 8) | lsb;
-			} else {
-				const int8_t id = map[(x + xdiv) & 31];
-				const int16_t addr = id * 16;
-				const uint8_t lsb = *(data + addr);
-				const uint8_t msb = *(data + addr + 1);
-				row = (msb << 8) | lsb;
-			}
-			
 			if (!xmod || (x > 0 && x < 20)) {
 				pbeg = 0;
 				pend = 8;
@@ -219,12 +212,13 @@ void update_scanline(const Gpu& gpu, const Memory& mem)
 		const uint8_t wy = gpu.wy;
 		const uint8_t wx = gpu.wx - 7;
 		if (wy < 144 && wx < 160) {
-			auto map = lcdc.win_map 
+			auto map = lcdc.win_map
 				? &mem.vram[0x1C00] 
 				: &mem.vram[0x1800];
 			fill_line(tile_data, map, 0, 0);
 		}
 	}
+
 }
 
 
@@ -248,8 +242,6 @@ void draw_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160])
 
 void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
-	// TODO: add priority flag, check bgpal
-	
 	const Pallete pal0{gpu.obp0};
 	const Pallete pal1{gpu.obp1};
 	const Pallete bgpal{gpu.bgp};
@@ -270,8 +262,10 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 		if (yres == 8) {
 			memcpy(&sprite[0], &memory.vram[pattern * 16], 16);
 		} else {
-			memcpy(&sprite[0], &memory.vram[(pattern & 0xFE) * 16], 16);
-			memcpy(&sprite[16], &memory.vram[(pattern | 0x01) * 16], 16);
+			const int first = (pattern & 0xFE) * 16;
+			const int second = (pattern | 0x01) * 16;
+			memcpy(&sprite[0], &memory.vram[first], 16);
+			memcpy(&sprite[16], &memory.vram[second], 16);
 		}
 
 		const uint8_t flags = oam[i + 3];
@@ -294,7 +288,7 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 			}
 		} else {
 			for (int y = ylimit-1; y >= 0; --y) {
-				const int yoffset = ypos + y;
+				const int yoffset = ypos + (ylimit - (y+1));
 				if (yoffset < 0)
 					break;
 				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];

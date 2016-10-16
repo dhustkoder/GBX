@@ -115,9 +115,9 @@ uint16_t Gameboy::PopStack16()
 uint8_t read_cart(const uint16_t address, const Cartridge& cart)
 {
 	if (address >= 0x4000)
-		return cart.rom_banks[cart.rom_bank_offset + address];
+		return cart.banks[cart.rom_bank_offset + address];
 
-	return cart.rom_banks[address];
+	return cart.banks[address];
 }
 
 
@@ -149,10 +149,13 @@ uint8_t read_vram(const uint16_t address, const Memory& mem)
 }
 
 
-uint8_t read_cart_ram(const uint16_t address, const Cartridge& /*cart*/)
+uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart)
 {
-	// TODO: implement
+	// TODO: implementi
 	debug_printf("Cartridge RAM read required at $%X\n", address);
+	const auto offset = cart.ram_bank_offset + (address - 0xA000);
+	if (offset < (Cartridge::info.ram_size + Cartridge::info.rom_size))
+		return cart.banks[offset];
 	return 0;
 }
 
@@ -163,22 +166,31 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
 
 	const auto eval_banks_offset = [cart] {
-		const auto mode = cart->mode;
-		const auto rom_bank_num = mode ? cart->banks_num_lower_bits : cart->banks_num;
+		const auto banking_mode = cart->banking_mode;
+		const auto rom_bank_num = banking_mode
+			? cart->banks_num_lower_bits 
+			: cart->banks_num;
 
-		if ((rom_bank_num >> 0x01) == 0x00)
+		if (rom_bank_num == 0x00 || rom_bank_num == 0x01)
 			cart->rom_bank_offset = 0x00;
-		else if (mode || (rom_bank_num != 0x20 && rom_bank_num != 0x40
-		         && rom_bank_num != 0x60))
+		else if (banking_mode || (rom_bank_num != 0x20 && 
+			 rom_bank_num != 0x40 && rom_bank_num != 0x60))
 			cart->rom_bank_offset = 0x4000 * (rom_bank_num - 1);
 		else
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
+
+		if (banking_mode) {
+			cart->ram_bank_offset += 
+				0x2000 * cart->banks_num_upper_bits;
+		} else {
+			cart->ram_bank_offset = Cartridge::info.rom_size;
+		}
 	};
 
 	if (address >= 0x6000) {
 		const uint8_t new_mode = value ? 1 : 0;
-		if (cart->mode != new_mode) {
-			cart->mode = new_mode;
+		if (cart->banking_mode != new_mode) {
+			cart->banking_mode = new_mode;
 			eval_banks_offset();
 		}
 	} else if (address >= 0x4000) {
@@ -226,10 +238,13 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 }
 
 
-void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const /*cart*/)
+void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
 	//TODO: implement
 	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
+	const auto offset = cart->ram_bank_offset + (address - 0xA000);
+	if (offset < (Cartridge::info.ram_size + Cartridge::info.rom_size))
+		cart->banks[offset] = value;
 }
 
 

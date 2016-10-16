@@ -36,6 +36,7 @@ void Gameboy::Reset()
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
+	cart.ram_bank_offset = cart.info.rom_size;
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
@@ -207,7 +208,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 	});
 
 	fseek(file, 0, SEEK_SET);
-	fread(gb->cart.rom_banks, 1, Cartridge::info.rom_size, file);
+	fread(gb->cart.banks, 1, Cartridge::info.rom_size, file);
 
 	if (ferror(file)) {
 		perror("error while reading from file");
@@ -275,9 +276,9 @@ static bool parse_cartridge_header(FILE* const file)
 	switch (rom_size_code) {
 	case 0x00: cinfo.rom_size = 32_Kib; break;    // 2 banks
 	case 0x01: cinfo.rom_size = 64_Kib; break;    // 4 banks
-	//case 0x02: cinfo.rom_size = 128_Kib; break; // 8 banks
-	//case 0x03: cinfo.rom_size = 256_Kib; break; // 16 banks
-	//case 0x04: cinfo.rom_size = 512_Kib; break; // 32 banks
+	case 0x02: cinfo.rom_size = 128_Kib; break;   // 8 banks
+	case 0x03: cinfo.rom_size = 256_Kib; break;   // 16 banks
+	case 0x04: cinfo.rom_size = 512_Kib; break;   // 32 banks
 	//case 0x05: cinfo.rom_size = 1_Mib; break;   // 64 banks
 	//case 0x06: cinfo.rom_size = 2_Mib; break;   // 128 banks
 	default:
