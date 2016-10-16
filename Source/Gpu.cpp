@@ -263,8 +263,10 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 		if (yres == 8) {
 			memcpy(&sprite[0], &memory.vram[pattern * 16], 16);
 		} else {
-			memcpy(&sprite[0], &memory.vram[(pattern & 0xFE) * 16], 16);
-			memcpy(&sprite[16], &memory.vram[(pattern | 0x01) * 16], 16);
+			const int first = (pattern & 0xFE) * 16;
+			const int second = (pattern | 0x01) * 16;
+			memcpy(&sprite[0], &memory.vram[first], 16);
+			memcpy(&sprite[16], &memory.vram[second], 16);
 		}
 
 		const uint8_t flags = oam[i + 3];
