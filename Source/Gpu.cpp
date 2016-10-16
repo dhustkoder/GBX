@@ -163,22 +163,15 @@ void update_scanline(const Gpu& gpu, const Memory& mem)
 		uint8_t* line = &bg_color_numbers[ly][0];
 
 		for (int x = 0; x < xend; ++x) {
-			uint16_t row;
+			const uint8_t id = map[(x + xdiv)&31];
+			const int addr = unsig_data 
+				? id * 16 
+				: static_cast<int8_t>(id) * 16;
+			const uint8_t lsb = data[addr];
+			const uint8_t msb = data[addr + 1];
+			const uint16_t row = (msb << 8) | lsb;
 			int pbeg, pend;
 
-			if (unsig_data) {
-				const uint16_t addr = map[(x + xdiv) & 31] * 16;
-				const uint8_t lsb = data[addr];
-				const uint8_t msb = data[addr + 1];
-				row = (msb << 8) | lsb;
-			} else {
-				const int8_t id = map[(x + xdiv) & 31];
-				const int16_t addr = id * 16;
-				const uint8_t lsb = *(data + addr);
-				const uint8_t msb = *(data + addr + 1);
-				row = (msb << 8) | lsb;
-			}
-			
 			if (!xmod || (x > 0 && x < 20)) {
 				pbeg = 0;
 				pend = 8;
