@@ -219,7 +219,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	const auto ly = gpu.ly;
 	const auto lcdc = gpu.lcdc;
 	const uint8_t wy = gpu.wy;
-	const uint8_t wx = gpu.wx - 7;
+	const uint8_t wx = gpu.wx - 6;
 	if (!lcdc.win_on || ly < wy || wy >= 144 || wx >= 160)
 		return;
 

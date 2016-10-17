@@ -291,7 +291,7 @@ bool setup_joystick()
 	};
 
 	SDL_Event ev;
-	Uint32 keycode = -1;
+	Uint32 keycode = 255;
 
 	for (int i = 0; i < 4; ++i) {
 		printf("press key for %s: ", keywords[i]);

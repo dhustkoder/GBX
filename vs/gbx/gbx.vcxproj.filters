@@ -30,10 +30,10 @@
     <ClCompile Include="..\..\Source\Memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\GPU.cpp">
+    <ClCompile Include="..\..\Source\SDL\sdl_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\SDL\sdl_main.cpp">
+    <ClCompile Include="..\..\Source\Gpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -42,9 +42,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Common.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\CPU.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Gameboy.hpp">
@@ -56,9 +53,6 @@
     <ClInclude Include="..\..\Source\Memory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\GPU.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\HWState.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,6 +60,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Debug.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Cpu.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Gpu.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

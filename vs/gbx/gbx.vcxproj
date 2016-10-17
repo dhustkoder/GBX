@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\Source\CBInstructions.cpp" />
     <ClCompile Include="..\..\Source\Gameboy.cpp" />
-    <ClCompile Include="..\..\Source\GPU.cpp" />
+    <ClCompile Include="..\..\Source\Gpu.cpp" />
     <ClCompile Include="..\..\Source\Instructions.cpp" />
     <ClCompile Include="..\..\Source\Memory.cpp" />
     <ClCompile Include="..\..\Source\SDL\sdl_main.cpp" />
@@ -29,10 +29,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\Source\Cartridge.hpp" />
     <ClInclude Include="..\..\Source\Common.hpp" />
-    <ClInclude Include="..\..\Source\CPU.hpp" />
+    <ClInclude Include="..\..\Source\Cpu.hpp" />
     <ClInclude Include="..\..\Source\Debug.hpp" />
     <ClInclude Include="..\..\Source\Gameboy.hpp" />
-    <ClInclude Include="..\..\Source\GPU.hpp" />
+    <ClInclude Include="..\..\Source\Gpu.hpp" />
     <ClInclude Include="..\..\Source\HWState.hpp" />
     <ClInclude Include="..\..\Source\Instructions.hpp" />
     <ClInclude Include="..\..\Source\Keys.hpp" />
