@@ -52,7 +52,6 @@ constexpr const Cartridge::Type kSupportedCartridgeTypes[] {
 
 constexpr const Cartridge::System kSupportedCartridgeSystems[] {
 	Cartridge::System::Gameboy,
-	Cartridge::System::GameboyColor,
 };
 
 

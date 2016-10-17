@@ -267,10 +267,14 @@ static bool parse_cartridge_header(FILE* const file)
 		return false;
 	};
 
-	if (!is_supported_type(cinfo.type) || !is_supported_system(cinfo.system)) {
-		fprintf(stderr, "Cartridge not supported.\n");
+	if (!is_supported_type(cinfo.type)) {
+		fprintf(stderr, "Cartridge type %u not supported.\n",
+		        static_cast<unsigned>(cinfo.type));
 		return false;
-	}
+	} else if (!is_supported_system(cinfo.system)) {
+		fprintf(stderr, "Cartridge system %u not supported.",
+		        static_cast<unsigned>(cinfo.system));
+	}	
 
 	const auto rom_size_code = read_byte(0x148);
 	const auto ram_size_code = read_byte(0x149);
