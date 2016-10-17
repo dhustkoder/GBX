@@ -216,14 +216,16 @@ bool init_sdl(const bool enable_joystick)
 		WinWidth * 2, WinHeight * 2, SDL_WINDOW_RESIZABLE);
 
 	if (window == nullptr) {
-		fprintf(stderr, "failed to create SDL_Window: %s\n", SDL_GetError());
+		fprintf(stderr, "failed to create SDL_Window: %s\n",
+			SDL_GetError());
 		goto free_sdl;
 	}
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 	if (renderer == nullptr) {
-		fprintf(stderr, "failed to create SDL_Renderer: %s\n", SDL_GetError());
+		fprintf(stderr, "failed to create SDL_Renderer: %s\n",
+		        SDL_GetError());
 		goto free_window;
 	}
 
