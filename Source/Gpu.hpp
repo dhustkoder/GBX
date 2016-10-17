@@ -58,7 +58,6 @@ struct Gpu
 
 extern void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 
-
 } // namespace gbx
 #endif
 

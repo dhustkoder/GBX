@@ -44,7 +44,6 @@ inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
 inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void update_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void update_win_scanline(const Gpu& gpu, const Memory& mem);
-static void draw_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160]);
 static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
 inline void draw_sprite_row(uint16_t row, int xpos, int xlimit, bool xflip, bool priority,
                              const Pallete& pal, const Pallete& bgpal, uint32_t* line);
@@ -154,10 +153,10 @@ void check_gpu_lyc(Gpu* const gpu, HWState* const hwstate)
 void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 {
 	const auto lcdc = gpu.lcdc;
-	if (!lcdc.bg_on)
+	const auto ly = gpu.ly;
+	if (!lcdc.bg_on || (lcdc.win_on && ly >= gpu.wy && gpu.wx == 0))
 		return;
 
-	const auto ly = gpu.ly;
 	const auto scx = gpu.scx;
 	const auto scy = gpu.scy;
 	const bool unsig_data = lcdc.tile_data != 0;
@@ -172,7 +171,8 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const int ly_scy_mods = lymod + scymod;
 	const int ly_scy_divs = lydiv + scydiv;
 	const int data_add = (ly_scy_mods&7) * 2;
-	const int map_add = ((ly_scy_divs + ((ly_scy_mods > 7) ? 1 : 0))&31) * 32;
+	const int map_add = 
+		((ly_scy_divs + ((ly_scy_mods > 7) ? 1 : 0))&31) * 32;
 
 	const auto tile_data = (unsig_data
 		? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
@@ -263,14 +263,8 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 
 void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
-	draw_scanlines(gpu, pixels);
-	draw_sprites(gpu, memory, pixels);
-}
-
-
-void draw_scanlines(const Gpu& /*gpu*/, uint32_t(&pixels)[144][160])
-{
 	memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
+	draw_sprites(gpu, memory, pixels);
 }
 
 
@@ -374,7 +368,12 @@ void draw_sprite_row(const uint16_t row, const int xpos, const int xlimit,
 	}
 }
 
-
+void clear_bg_pixels()
+{
+	for (int y = 0; y < 144; ++y)
+		for (int x = 0; x < 160; ++x)
+			bg_pixels[y][x] = White;
+}
 
 } // namespace gbx
 

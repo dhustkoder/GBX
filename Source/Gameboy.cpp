@@ -8,6 +8,7 @@
 
 namespace gbx {
 
+extern void clear_bg_pixels();
 extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 static void update_timers(uint8_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
@@ -17,6 +18,7 @@ Cartridge::Info Cartridge::info;
 void Gameboy::Reset()
 {
 	memset(this, 0, sizeof(Gameboy));
+	clear_bg_pixels();
 
 	// init the system
 	// up to now only Gameboy mode is supported
