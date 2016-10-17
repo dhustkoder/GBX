@@ -158,23 +158,25 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 		return;
 
 	const auto ly = gpu.ly;
+	const auto scx = gpu.scx;
+	const auto scy = gpu.scy;
 	const bool unsig_data = lcdc.tile_data != 0;
 
 	const int lydiv = ly / 8;
-	const int lymod = ly % 8;
-	const int scxdiv = gpu.scx / 8;
-	const int scxmod = gpu.scx % 8; 
-	const int scydiv = gpu.scy / 8;
+	const int lymod = ly & 7;
+	const int scxdiv = scx / 8;
+	const int scxmod = scx & 7;
+	const int scydiv = scy / 8;
+	const int scymod = scy & 7;
+	const int ly_scy_mods = lymod + scymod;
+	const int ly_scy_divs = lydiv + scydiv;
+	const int data_add = (ly_scy_mods&7) * 2;
+	const int map_add = ((ly_scy_divs + ((ly_scy_mods > 7) ? 1 : 0))&31) * 32;
 
 	const auto tile_data = (unsig_data
-		? &mem.vram[0]
-		: &mem.vram[0x1000]) 
-		+ lymod * 2;
-
-	const auto map = (lcdc.bg_map 
-		? &mem.vram[0x1C00]
-		: &mem.vram[0x1800])
-		+ ((scydiv + lydiv)&31) * 32;
+		? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
+	const auto map = (lcdc.bg_map
+		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
 	uint8_t* line = &bg_color_numbers[ly][0];
 	auto fill_line = 
