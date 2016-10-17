@@ -13,7 +13,7 @@ enum Color : uint32_t {
 };
 
 constexpr const Color kColors[4] { White, LightGrey, DarkGrey, Black };
-static uint8_t bg_color_numbers[144][160];
+static Color bg_pixels[144][160];
 
 struct Pallete {
 	constexpr explicit Pallete(const uint8_t pal)
@@ -161,12 +161,13 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const auto scx = gpu.scx;
 	const auto scy = gpu.scy;
 	const bool unsig_data = lcdc.tile_data != 0;
-
-	const int lydiv = ly / 8;
+	// >> 3 == / 8
+	// & 7 == % 8
+	const int lydiv = ly >> 3;
 	const int lymod = ly & 7;
-	const int scxdiv = scx / 8;
+	const int scxdiv = scx >> 3;
 	const int scxmod = scx & 7;
-	const int scydiv = scy / 8;
+	const int scydiv = scy >> 3;
 	const int scymod = scy & 7;
 	const int ly_scy_mods = lymod + scymod;
 	const int ly_scy_divs = lydiv + scydiv;
@@ -178,16 +179,17 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const auto map = (lcdc.bg_map
 		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
-	uint8_t* line = &bg_color_numbers[ly][0];
-	auto fill_line = 
-	[line] (const int pbeg, const int pend, const uint16_t row) mutable {
+	const Pallete pal {gpu.bgp};
+	Color* line = &bg_pixels[ly][0];
+	auto fill_line = [line, &pal]
+	(const int pbeg, const int pend, const uint16_t row) mutable {
 		for (int p = pbeg; p < pend; ++p) {
 			uint8_t colnum = 0;
 			if (row & (0x80 >> p))
 				++colnum;
 			if (row & (0x8000 >> p))
 				colnum += 2;
-			*line++ = colnum;
+			*line++ = pal[colnum];
 		}
 	};
 
@@ -212,8 +214,50 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 
 }
 
-void update_win_scanline(const Gpu& /*gpu*/, const Memory& /*mem*/)
+void update_win_scanline(const Gpu& gpu, const Memory& mem)
 {
+	const auto ly = gpu.ly;
+	const auto lcdc = gpu.lcdc;
+	const uint8_t wy = gpu.wy;
+	const uint8_t wx = gpu.wx - 7;
+	if (!lcdc.win_on || ly < wy || wy >= 144 || wx >= 160)
+		return;
+
+	const bool unsig_data = lcdc.tile_data != 0;
+	const int data_add = ((ly - wy) & 7) * 2;
+	const int map_add = (((ly - wy) >> 3)&31) * 32;
+	const auto tile_data = (unsig_data
+		? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
+	const auto map = (lcdc.win_map
+		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
+
+	const Pallete pal {gpu.bgp};
+	Color* line = &bg_pixels[ly][wx];
+	auto fill_line = [line, &pal]
+	(const int pbeg, const int pend, const uint16_t row) mutable {
+		for (int p = pbeg; p < pend; ++p) {
+			uint8_t colnum = 0;
+			if (row & (0x80 >> p))
+				++colnum;
+			if (row & (0x8000 >> p))
+				colnum += 2;
+			*line++ = pal[colnum];
+		}
+	};
+
+	const auto get_row = 
+	[map, unsig_data, tile_data] (const int mapx) -> uint16_t {
+		const uint8_t id = map[mapx&31];
+		const int addr = (unsig_data ? id : static_cast<int8_t>(id)) * 16;
+		return (tile_data[addr + 1] << 8) | tile_data[addr];
+	};
+
+	const auto min = [](int x, int y) { return x > y ? y : x; };
+	for (int r = 0, to_draw = (160 - wx); to_draw > 0; ++r) {
+		const int pend = min(8, to_draw);
+		to_draw -= pend;
+		fill_line(0, pend, get_row(r));
+	}
 
 }
 
@@ -224,14 +268,9 @@ void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][
 }
 
 
-void draw_scanlines(const Gpu& gpu, uint32_t(&pixels)[144][160])
+void draw_scanlines(const Gpu& /*gpu*/, uint32_t(&pixels)[144][160])
 {
-	const Pallete pal {gpu.bgp};
-	for (int y = 0; y < 144; ++y) {
-		for (int x = 0; x < 160; ++x) {
-			pixels[y][x] = pal[bg_color_numbers[y][x]];
-		}
-	}
+	memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
 }
 
 
