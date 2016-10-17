@@ -34,8 +34,8 @@ struct Pallete {
 };
 
 
-
 extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+extern void clear_bg_pixels();
 inline void mode_hblank(Gpu* gpu, HWState* hwstate);
 inline void mode_vblank(Gpu* gpu, HWState* hwstate);
 inline void mode_oam(Gpu* gpu);
@@ -154,8 +154,12 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 {
 	const auto lcdc = gpu.lcdc;
 	const auto ly = gpu.ly;
-	if (!lcdc.bg_on || (lcdc.win_on && ly >= gpu.wy && gpu.wx == 0))
+	if (!lcdc.bg_on) {
+		memset(&bg_pixels[ly][0], 0xFF, sizeof(uint32_t) * 160);
 		return;
+	} else if (lcdc.win_on && ly >= gpu.wy && gpu.wx <= 7) {
+		return;
+	}
 
 	const auto scx = gpu.scx;
 	const auto scy = gpu.scy;
@@ -261,10 +265,16 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 
 }
 
+
 void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
-	memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
-	draw_sprites(gpu, memory, pixels);
+	const auto lcdc = gpu.lcdc;
+	if (lcdc.bg_on || lcdc.win_on)
+		memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
+	else
+		memset(pixels, 0xFF, sizeof(uint32_t) * 144 * 160);
+	if (lcdc.obj_on)
+		draw_sprites(gpu, memory, pixels);
 }
 
 
@@ -309,7 +319,8 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 				const int yoffset = ypos + y;
 				if (yoffset < 0)
 					continue;
-				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];
+				const uint16_t row = 
+					(sprite[y*2 + 1] << 8) | sprite[y*2];
 				draw_sprite_row(row, xpos, xlimit, xflip,
 						priority, pal, bgpal,
 						&pixels[yoffset][0]);
@@ -319,7 +330,8 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 				const int yoffset = ypos + (ylimit - (y+1));
 				if (yoffset < 0)
 					break;
-				const uint16_t row = (sprite[y*2 + 1] << 8) | sprite[y*2];
+				const uint16_t row = 
+					(sprite[y*2 + 1] << 8) | sprite[y*2];
 				draw_sprite_row(row, xpos, xlimit, xflip,
 						priority,pal, bgpal, 
 						&pixels[yoffset][0]);
@@ -374,6 +386,7 @@ void clear_bg_pixels()
 		for (int x = 0; x < 160; ++x)
 			bg_pixels[y][x] = White;
 }
+
 
 } // namespace gbx
 
