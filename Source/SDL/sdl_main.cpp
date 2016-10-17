@@ -105,7 +105,8 @@ void render_graphics(gbx::Gameboy* const gb)
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
 			using ArrPtr = uint32_t(*)[WinHeight][WinWidth];
-			draw_graphics(gb->gpu, gb->memory, *static_cast<ArrPtr>(pixels));
+			draw_graphics(gb->gpu, gb->memory,
+			              *static_cast<ArrPtr>(pixels));
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {
