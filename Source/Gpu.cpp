@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "Gameboy.hpp"
 
@@ -222,11 +223,12 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 {
 	const auto ly = gpu.ly;
 	const auto lcdc = gpu.lcdc;
-	const uint8_t wy = gpu.wy;
-	const uint8_t wx = gpu.wx - 6;
+	const int wy = gpu.wy;
+	const int wx = gpu.wx - 7;
 	if (!lcdc.win_on || ly < wy || wy >= 144 || wx >= 160)
 		return;
 
+	const int wx_max = max(0, wx);
 	const bool unsig_data = lcdc.tile_data != 0;
 	const int data_add = ((ly - wy) & 7) * 2;
 	const int map_add = (((ly - wy) >> 3)&31) * 32;
@@ -236,7 +238,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
 	const Pallete pal {gpu.bgp};
-	Color* line = &bg_pixels[ly][wx];
+	Color* line = &bg_pixels[ly][wx_max];
 	auto fill_line = [line, &pal]
 	(const int pbeg, const int pend, const uint16_t row) mutable {
 		for (int p = pbeg; p < pend; ++p) {
@@ -256,11 +258,19 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
 
-	const auto min = [](int x, int y) { return x > y ? y : x; };
-	for (int r = 0, to_draw = (160 - wx); to_draw > 0; ++r) {
+	int xbeg = 0;
+	int to_draw = (160 - wx_max);
+	if (wx < 0) {
+		const int abswx = -wx;
+		fill_line(abswx, 8, get_row(0));
+		++xbeg;
+		to_draw -= (8 - abswx);
+	}
+
+	for (int x = xbeg; to_draw > 0; ++x) {
 		const int pend = min(8, to_draw);
 		to_draw -= pend;
-		fill_line(0, pend, get_row(r));
+		fill_line(0, pend, get_row(x));
 	}
 
 }
@@ -269,10 +279,12 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	const auto lcdc = gpu.lcdc;
+	
 	if (lcdc.bg_on || lcdc.win_on)
 		memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
 	else
-		memset(pixels, 0xFF, sizeof(uint32_t) * 144 * 160);
+		clear_bg_pixels();
+
 	if (lcdc.obj_on)
 		draw_sprites(gpu, memory, pixels);
 }
@@ -284,7 +296,6 @@ void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][1
 	const Pallete pal1{gpu.obp1};
 	const Pallete bgpal{gpu.bgp};
 	const int yres = !gpu.lcdc.obj_size ? 8 : 16;
-	const auto min = [](const int x, const int y) { return x < y ? x : y; };
 	const auto& oam = memory.oam;
 	static_assert((sizeof(oam) % 4) == 0, "");
 
@@ -382,9 +393,7 @@ void draw_sprite_row(const uint16_t row, const int xpos, const int xlimit,
 
 void clear_bg_pixels()
 {
-	for (int y = 0; y < 144; ++y)
-		for (int x = 0; x < 160; ++x)
-			bg_pixels[y][x] = White;
+	memset(bg_pixels, 0xFF, sizeof(uint32_t) * 144 * 160);
 }
 
 

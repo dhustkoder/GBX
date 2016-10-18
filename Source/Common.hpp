@@ -18,6 +18,18 @@ constexpr size_t operator""_Mib(unsigned long long mibs)
 	return static_cast<size_t>(mibs * 1024 * 1024);
 }
 
+template<class T>
+constexpr T max(const T x, const T y)
+{
+	return x > y ? x : y;
+}
+
+template<class T>
+constexpr T min(const T x, const T y)
+{
+	return x < y ? x : y;
+}
+
 template<class F>
 struct Finally {
 	Finally(const Finally&)=delete;
