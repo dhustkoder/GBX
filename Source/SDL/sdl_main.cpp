@@ -158,9 +158,10 @@ static bool setup_joystick();
 
 void render_graphics(gbx::Gameboy* const gb)
 {
+	const auto lcdc = gb->gpu.lcdc;
 	SDL_RenderClear(renderer);
 
-	if (gb->gpu.lcdc.lcd_on) {
+	if (lcdc.lcd_on && (lcdc.bg_on || lcdc.obj_on || lcdc.win_on)) {
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
