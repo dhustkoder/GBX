@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		gameboy->Run(70224);
+		gameboy->Run(69905);
 		render_graphics(gameboy);
 		SDL_Delay(15);
 
@@ -171,7 +171,8 @@ void render_graphics(gbx::Gameboy* const gb)
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {
-			fprintf(stderr, "failed to lock texture: %s\n", SDL_GetError());
+			fprintf(stderr, "failed to lock texture: %s\n",
+			        SDL_GetError());
 		}
 	}
 
