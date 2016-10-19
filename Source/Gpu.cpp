@@ -35,8 +35,7 @@ struct Pallete {
 };
 
 
-extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
-extern void clear_bg_pixels();
+void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 inline void mode_hblank(Gpu* gpu, HWState* hwstate);
 inline void mode_vblank(Gpu* gpu, HWState* hwstate);
 inline void mode_oam(Gpu* gpu);
@@ -391,10 +390,7 @@ void draw_sprite_row(const uint16_t row, const int xpos, const int xlimit,
 	}
 }
 
-void clear_bg_pixels()
-{
-	memset(bg_pixels, 0xFF, sizeof(uint32_t) * 144 * 160);
-}
+
 
 
 } // namespace gbx

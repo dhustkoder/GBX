@@ -8,7 +8,7 @@
 
 namespace gbx {
 
-extern void clear_bg_pixels();
+
 extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 static void update_timers(uint8_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
@@ -18,7 +18,6 @@ Cartridge::Info Cartridge::info;
 void Gameboy::Reset()
 {
 	memset(this, 0, sizeof(Gameboy));
-	clear_bg_pixels();
 
 	// init the system
 	// up to now only Gameboy mode is supported
@@ -38,7 +37,7 @@ void Gameboy::Reset()
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
-	cart.ram_bank_offset = cart.info.rom_size;
+	cart.ram_bank_offset = cart.info.rom_size - 0xA000;
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
