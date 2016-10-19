@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <assert.h>
 #include "Instructions.hpp"
 #include "Cartridge.hpp"
@@ -76,14 +77,13 @@ void Gameboy::Reset()
 
 void Gameboy::Run(const uint32_t cycles)
 {
-	// TODO: proper fix to vsync and remove the not zero ly hack
 	do {
 		const uint8_t step_cycles = step_machine(this);
 		cpu.clock += step_cycles;
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
-	} while (cpu.clock < cycles || gpu.ly);
+	} while (cpu.clock < cycles);
 	cpu.clock = 0;
 }
 
@@ -114,14 +114,10 @@ void update_timers(const uint8_t cycles, HWState* const hwstate)
 		hwstate->tima_clock += cycles;
 		
 		if (hwstate->tima_clock >= hwstate->tima_clock_limit) {
-			
-			if (hwstate->tima < 0xff) {
-				++hwstate->tima;
-			} else {
+			if (++hwstate->tima == 0x00) {
 				hwstate->tima = hwstate->tma;
 				hwstate->RequestInt(interrupts::timer);
 			}
-
 			hwstate->tima_clock -= hwstate->tima_clock_limit;
 		}
 	}
@@ -246,12 +242,16 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 		return false;
 	}
 
-	if (read_byte(0x146) == 0x03)
+	if (read_byte(0x146) == 0x03) {
 		cinfo->system = Cartridge::System::SuperGameboy;
-	else if (read_byte(0x143) == 0x80)
-		cinfo->system = Cartridge::System::GameboyColor;
-	else
+	} else if (const auto gbc_check = read_byte(0x143)) {
+		if (gbc_check == 0x80)
+			cinfo->system = Cartridge::System::GameboyColorCompat;
+		else if (gbc_check == 0xC0)
+			cinfo->system = Cartridge::System::GameboyColorOnly;
+	} else {
 		cinfo->system = Cartridge::System::Gameboy;
+	}
 
 	cinfo->type = static_cast<Cartridge::Type>(read_byte(0x147));
 	

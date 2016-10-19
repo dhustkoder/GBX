@@ -14,7 +14,8 @@ struct Cartridge
 	};
 	enum class System : uint8_t {
 		Gameboy, 
-		GameboyColor, 
+		GameboyColorCompat,
+		GameboyColorOnly,	
 		SuperGameboy
 	};
 
@@ -51,7 +52,8 @@ constexpr const Cartridge::Type kSupportedCartridgeTypes[] {
 };
 
 constexpr const Cartridge::System kSupportedCartridgeSystems[] {
-	Cartridge::System::Gameboy
+	Cartridge::System::Gameboy,
+	Cartridge::System::GameboyColorCompat
 };
 
 
