@@ -232,7 +232,6 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 		return static_cast<uint8_t>(fgetc(file));
 	};
 
-
 	// 0134 - 0142 game's title
 	read_buff(0x134, 0x10, cinfo->internal_name);
 	cinfo->internal_name[0x10] = '\0';
@@ -241,16 +240,16 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 		fprintf(stderr, "couldn't read cartridge's name.\n");
 		return false;
 	}
-
+	
 	if (read_byte(0x146) == 0x03) {
 		cinfo->system = Cartridge::System::SuperGameboy;
-	} else if (const auto gbc_check = read_byte(0x143)) {
-		if (gbc_check == 0x80)
-			cinfo->system = Cartridge::System::GameboyColorCompat;
-		else if (gbc_check == 0xC0)
-			cinfo->system = Cartridge::System::GameboyColorOnly;
 	} else {
-		cinfo->system = Cartridge::System::Gameboy;
+		using System = Cartridge::System;
+		switch (read_byte(0x143)) {
+		case 0x80: cinfo->system = System::GameboyColorCompat; break;
+		case 0xC0: cinfo->system = System::GameboyColorOnly; break;
+		default: cinfo->system = System::Gameboy; break;
+		}
 	}
 
 	cinfo->type = static_cast<Cartridge::Type>(read_byte(0x147));
