@@ -336,7 +336,7 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	
 	if (!test_bit(2, value)) {
 		hwstate->SetFlags(HWState::TimerStop);
-	} else if(hwstate->GetFlags(HWState::TimerStop)) {
+	} else {
 		hwstate->ClearFlags(HWState::TimerStop);
 		hwstate->tima = hwstate->tma;
 	}
