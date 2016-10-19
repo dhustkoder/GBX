@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(gbx)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow -Wstrict-aliasing -Werror -fno-exceptions -fno-rtti")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow \
+	-Wstrict-aliasing -Werror -fno-exceptions -fno-rtti")
 
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fstrict-aliasing -march=native \
-	-fomit-frame-pointer -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
+	-fomit-frame-pointer -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O0 -g3")
 
@@ -16,9 +18,17 @@ option(ENABLE_LTO OFF)
 option(ASM_OUTPUT OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
-	message(STATUS "No build type selected! default to Debug")
-	set(CMAKE_BUILD_TYPE "Debug")
+	message(STATUS "No build type selected, defaulted to Release")
+	set(CMAKE_BUILD_TYPE "Release")
 endif()
+
+
+if (ASM_OUTPUT)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S")
+	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAG "-save-temps")
+endif()
+
+
 
 # "Release" full optimization , no debug info.
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
@@ -61,10 +71,4 @@ add_executable(${PROJECT_NAME} ${GBX_SRC})
 
 # link libraries
 target_link_libraries(${PROJECT_NAME} -lc -lSDL2)
-
-if (ASM_OUTPUT)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S")
-	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAG "-save-temps")
-endif()
-
 
