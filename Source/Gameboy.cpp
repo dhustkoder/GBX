@@ -37,7 +37,8 @@ void Gameboy::Reset()
 	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
-	cart.ram_bank_offset = cart.info.rom_size - 0xA000;
+	if (cart.info.type >= Cartridge::Type::RomMBC1Ram)
+		cart.ram_bank_offset = cart.info.rom_size - 0xA000;
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
@@ -75,13 +76,14 @@ void Gameboy::Reset()
 
 void Gameboy::Run(const uint32_t cycles)
 {
+	// TODO: proper fix to vsync and remove the not zero ly hack
 	do {
 		const uint8_t step_cycles = step_machine(this);
 		cpu.clock += step_cycles;
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
-	} while (cpu.clock < cycles || gpu.ly != 0);
+	} while (cpu.clock < cycles || gpu.ly);
 	cpu.clock = 0;
 }
 
@@ -238,6 +240,11 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 	// 0134 - 0142 game's title
 	read_buff(0x134, 0x10, cinfo->internal_name);
 	cinfo->internal_name[0x10] = '\0';
+	
+	if (!strlen(cinfo->internal_name)) {
+		fprintf(stderr, "couldn't read cartridge's name.\n");
+		return false;
+	}
 
 	if (read_byte(0x146) == 0x03)
 		cinfo->system = Cartridge::System::SuperGameboy;
@@ -266,7 +273,7 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 		        static_cast<unsigned>(cinfo->type));
 		return false;
 	} else if (!is_supported_system(cinfo->system)) {
-		fprintf(stderr, "Cartridge system %u not supported.",
+		fprintf(stderr, "Cartridge system %u not supported.\n",
 		        static_cast<unsigned>(cinfo->system));
 		return false;
 	}

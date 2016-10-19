@@ -35,8 +35,8 @@ struct Cartridge
 		uint8_t banks_num : 7;
 	};
 	
-	uint32_t rom_bank_offset;
-	uint32_t ram_bank_offset;
+	int32_t rom_bank_offset;
+	int32_t ram_bank_offset;
 	uint8_t banks[];
 };
 
@@ -51,7 +51,7 @@ constexpr const Cartridge::Type kSupportedCartridgeTypes[] {
 };
 
 constexpr const Cartridge::System kSupportedCartridgeSystems[] {
-	Cartridge::System::Gameboy,
+	Cartridge::System::Gameboy
 };
 
 

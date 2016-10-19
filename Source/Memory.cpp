@@ -159,8 +159,9 @@ uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart)
 
 void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
-	//TODO: add ram bank offset evaluation
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
+	if (cart->info.type == Cartridge::Type::RomOnly)
+		return;
 
 	const auto eval_banks_offset = [cart] {
 		const auto banking_mode = cart->banking_mode;
@@ -171,19 +172,20 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 		if (rom_bank_num == 0x00 || rom_bank_num == 0x01)
 			cart->rom_bank_offset = 0x00;
 		else if (banking_mode || (rom_bank_num != 0x20 && 
-			 rom_bank_num != 0x40 && rom_bank_num != 0x60))
+		         rom_bank_num != 0x40 && rom_bank_num != 0x60))
 			cart->rom_bank_offset = 0x4000 * (rom_bank_num - 1);
 		else
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 
-		if (banking_mode && cart->banks_num_upper_bits) {
-			cart->ram_bank_offset =
-				(Cartridge::info.rom_size +
-				0x2000 * cart->banks_num_upper_bits)
-				- 0xA000;
-		} else {
-			cart->ram_bank_offset = 
-				Cartridge::info.rom_size - 0xA000;
+		if (cart->info.type >= Cartridge::Type::RomMBC1Ram) {
+			if (banking_mode && cart->banks_num_upper_bits) {
+				cart->ram_bank_offset = 
+					(cart->info.rom_size - 0xA000) + 
+					0x2000 * cart->banks_num_upper_bits;
+			} else {
+				cart->ram_bank_offset =
+					cart->info.rom_size - 0xA000;
+			}
 		}
 	};
 
@@ -241,8 +243,10 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const cart)
 {
 	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
-	const auto offset = cart->ram_bank_offset + address;
-	cart->banks[offset] = value;
+	if (cart->ram_bank_offset != 0) {
+		const auto offset = cart->ram_bank_offset + address;
+		cart->banks[offset] = value;
+	}
 }
 
 
