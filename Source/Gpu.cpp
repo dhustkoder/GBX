@@ -34,6 +34,28 @@ struct Pallete {
 	const Color colors[4];
 };
 
+struct ScanlineFiller {
+	constexpr ScanlineFiller(Color* scanline, Pallete pallete)
+		: scanline(scanline), 
+		pallete(pallete)
+	{
+	}
+
+	void operator()(const int pbeg, const int pend, const uint16_t row) {
+		for (int p = pbeg; p < pend; ++p) {
+			uint8_t colnum = 0;
+			if (row & (0x80 >> p))
+				++colnum;
+			if (row & (0x8000 >> p))
+				colnum += 2;
+			*scanline++ = pallete[colnum];
+		}
+	}
+
+	Color* scanline;
+	const Pallete pallete;
+};
+
 
 void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 inline void mode_hblank(Gpu* gpu, HWState* hwstate);
@@ -183,27 +205,16 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const auto map = (lcdc.bg_map
 		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
-	const Pallete pal {gpu.bgp};
-	Color* line = &bg_pixels[ly][0];
-	auto fill_line = [line, &pal]
-	(const int pbeg, const int pend, const uint16_t row) mutable {
-		for (int p = pbeg; p < pend; ++p) {
-			uint8_t colnum = 0;
-			if (row & (0x80 >> p))
-				++colnum;
-			if (row & (0x8000 >> p))
-				colnum += 2;
-			*line++ = pal[colnum];
-		}
-	};
-
 	const auto get_row = 
 	[map, scxdiv, unsig_data, tile_data] (const int mapx) -> uint16_t {
 		const uint8_t id = map[(mapx + scxdiv)&31];
-		const int addr = (unsig_data ? id : static_cast<int8_t>(id)) * 16;
+		const int addr = (unsig_data 
+			? id : static_cast<int8_t>(id)) * 16;
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
 	
+	ScanlineFiller fill_line{&bg_pixels[ly][0], Pallete{gpu.bgp}};
+
 	int xbeg = 0;
 	if (scxmod) {
 		fill_line(scxmod, 8, get_row(0));
@@ -236,26 +247,14 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	const auto map = (lcdc.win_map
 		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
-	const Pallete pal {gpu.bgp};
-	Color* line = &bg_pixels[ly][wx_max];
-	auto fill_line = [line, &pal]
-	(const int pbeg, const int pend, const uint16_t row) mutable {
-		for (int p = pbeg; p < pend; ++p) {
-			uint8_t colnum = 0;
-			if (row & (0x80 >> p))
-				++colnum;
-			if (row & (0x8000 >> p))
-				colnum += 2;
-			*line++ = pal[colnum];
-		}
-	};
-
 	const auto get_row = 
 	[map, unsig_data, tile_data] (const int mapx) -> uint16_t {
 		const uint8_t id = map[mapx&31];
 		const int addr = (unsig_data ? id : static_cast<int8_t>(id)) * 16;
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
+
+	ScanlineFiller fill_line{&bg_pixels[ly][wx_max], Pallete{gpu.bgp}};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
@@ -278,7 +277,6 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
 	const auto lcdc = gpu.lcdc;
-	
 	if (lcdc.bg_on || lcdc.win_on)
 		memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
 	else
