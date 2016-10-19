@@ -169,10 +169,10 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 			? cart->banks_num_lower_bits 
 			: cart->banks_num;
 
-		if (rom_bank_num == 0x00 || rom_bank_num == 0x01)
+		if (rom_bank_num < 0x02)
 			cart->rom_bank_offset = 0x00;
 		else if (banking_mode || (rom_bank_num != 0x20 && 
-		         rom_bank_num != 0x40 && rom_bank_num != 0x60))
+		          rom_bank_num != 0x40 && rom_bank_num != 0x60))
 			cart->rom_bank_offset = 0x4000 * (rom_bank_num - 1);
 		else
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
@@ -272,7 +272,7 @@ uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	case 0xFF4A: return gb.gpu.wy;
 	case 0xFF4B: return gb.gpu.wx;
 	default:
-		//debug_printf("required read hardware io address: %4x\n", address);
+		debug_printf("required read hardware io address: %4x\n", address);
 		break;
 	}
 
@@ -302,7 +302,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF4A: gb->gpu.wy = value; break;
 	case 0xFF4B: gb->gpu.wx = value; break;
 	default:
-		//debug_printf("required write hardware io address: %4x\n", address);
+		debug_printf("required write hardware io address: %4x\n", address);
 		break;
 	}
 }
@@ -333,15 +333,12 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	case 0x02: hwstate->tima_clock_limit = 0x40; break;
 	case 0x03: hwstate->tima_clock_limit = 0x100; break;
 	}
-
-	const bool timer_stop_bit = test_bit(2, value);
-	if (timer_stop_bit) { 
-		if (hwstate->GetFlags(HWState::TimerStop)) {
-			hwstate->ClearFlags(HWState::TimerStop);
-			hwstate->tima = hwstate->tma;
-		}
-	} else {
+	
+	if (!test_bit(2, value)) {
 		hwstate->SetFlags(HWState::TimerStop);
+	} else if(hwstate->GetFlags(HWState::TimerStop)) {
+		hwstate->ClearFlags(HWState::TimerStop);
+		hwstate->tima = hwstate->tma;
 	}
 }
 

@@ -35,9 +35,9 @@ struct Pallete {
 };
 
 struct ScanlineFiller {
-	constexpr ScanlineFiller(Color* scanline, Pallete pallete)
-		: scanline(scanline), 
-		pallete(pallete)
+	constexpr ScanlineFiller(Color* line, Pallete pal)
+		: scanline(line), 
+		pallete(pal)
 	{
 	}
 
