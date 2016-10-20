@@ -335,10 +335,7 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	case 0x03: hwstate->tima_clock_limit = 0x100; break;
 	}
 	
-	if (!test_bit(2, value)) {
-		hwstate->SetFlags(HWState::TimerStop);
-	} else {
-		hwstate->ClearFlags(HWState::TimerStop);
+	if (test_bit(2, value)) {
 		hwstate->tima = hwstate->tma;
 		hwstate->tima_clock = 0x00;
 	}

@@ -44,9 +44,9 @@ struct HWState
 	void RequestInt(Interrupt inter);
 	void ClearInt(Interrupt inter);
 
-	uint16_t tima_clock;
-	uint16_t tima_clock_limit;
-	uint16_t div_clock;
+	int16_t tima_clock;
+	int16_t tima_clock_limit;
+	int16_t div_clock;
 	uint8_t flags;
 	uint8_t div;
 	uint8_t tima;
