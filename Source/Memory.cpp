@@ -327,18 +327,9 @@ void write_keys(const uint8_t value, Keys* const keys)
 
 void write_tac(const uint8_t value, HWState* const hwstate)
 {
-	hwstate->tac = value;
-	switch (value & 0x03) {
-	case 0x00: hwstate->tima_clock_limit = 0x400; break;
-	case 0x01: hwstate->tima_clock_limit = 0x10; break;
-	case 0x02: hwstate->tima_clock_limit = 0x40; break;
-	case 0x03: hwstate->tima_clock_limit = 0x100; break;
-	}
-	
-	if (test_bit(2, value)) {
-		hwstate->tima = hwstate->tma;
-		hwstate->tima_clock = 0x00;
-	}
+	constexpr const int16_t limits[] { 0x400, 0x10, 0x40, 0x100 };
+	hwstate->tac = 0xF8 | (value&0x07);
+	hwstate->tima_clock_limit = limits[value&0x03];
 }
 
 void write_div(const uint8_t /*value*/, HWState* const hwstate)

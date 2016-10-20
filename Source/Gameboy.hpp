@@ -18,7 +18,7 @@ struct Gameboy
 	Gameboy&operator=(Gameboy&&)=delete;
 
 	void Reset();
-	void Run(uint32_t cycles);
+	void Run(int32_t cycles);
 
 	uint8_t Read8(uint16_t address) const;
 	uint16_t Read16(uint16_t address) const;

@@ -10,10 +10,10 @@
 namespace gbx {
 
 
-extern void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
-static void update_timers(uint8_t cycles, HWState* hwstate);
+extern void update_gpu(int32_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+static void update_timers(int32_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
-static uint8_t step_machine(Gameboy* gb);
+static int32_t step_machine(Gameboy* gb);
 Cartridge::Info Cartridge::info;
 
 void Gameboy::Reset()
@@ -35,11 +35,16 @@ void Gameboy::Reset()
 	gpu.obp0 = 0xFF;
 	gpu.obp1 = 0xFF;
 
+	hwstate.tac = 0xF8;
+
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
 
-	if (cart.info.type >= Cartridge::Type::RomMBC1Ram)
-		cart.ram_bank_offset = cart.info.rom_size - 0xA000;
+	if (cart.info.type >= Cartridge::Type::RomMBC1) {
+		cart.rom_bank_offset = 0x00;
+		if (cart.info.type >= Cartridge::Type::RomMBC1Ram)
+			cart.ram_bank_offset = cart.info.rom_size - 0xA000;
+	}
 
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
@@ -75,36 +80,37 @@ void Gameboy::Reset()
 }
 
 
-void Gameboy::Run(const uint32_t cycles)
+void Gameboy::Run(const int32_t cycles)
 {
-	// TODO: proper clock/gpu time, get rid of hack
 	do {
-		const uint8_t step_cycles = step_machine(this);
-		cpu.clock += step_cycles;
+		const auto step_cycles = step_machine(this);
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
-	} while (cpu.clock < cycles || gpu.ly);
+	} while (cpu.clock < cycles);
 	cpu.clock = 0;
 }
 
 
-uint8_t step_machine(Gameboy* const gb)
+int32_t step_machine(Gameboy* const gb)
 {
 	if (!gb->hwstate.GetFlags(HWState::CpuHalt)) {
+		const volatile auto old_cycles = gb->cpu.clock;
 		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
 		main_instructions[opcode](gb);
-		return clock_table[opcode];
+		const auto instr_cycles = clock_table[opcode];
+		const volatile auto curr_cycles = gb->cpu.clock;
+		gb->cpu.clock += instr_cycles;
+		return instr_cycles + (curr_cycles - old_cycles);
 	}
-	
+	gb->cpu.clock += 4;
 	return 4;
 }
 
 
-void update_timers(const uint8_t cycles, HWState* const hwstate)
+void update_timers(const int32_t cycles, HWState* const hwstate)
 {
 	hwstate->div_clock += cycles;
-
 	if (hwstate->div_clock >= 0x100) {
 		++hwstate->div;
 		hwstate->div_clock -= 0x100;
@@ -149,6 +155,8 @@ void update_interrupts(Gameboy* const gb)
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
 			gb->cpu.clock += 16;
+			update_gpu(16, gb->memory, &gb->hwstate, &gb->gpu);
+			update_timers(16, &gb->hwstate);
 		}
 	}
 }
