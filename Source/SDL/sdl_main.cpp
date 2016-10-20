@@ -154,7 +154,6 @@ static gbx::owner<SDL_Joystick*> joystick = nullptr;
 static gbx::owner<SDL_Window*> window = nullptr;
 static gbx::owner<SDL_Texture*> texture = nullptr;
 static gbx::owner<SDL_Renderer*> renderer = nullptr;
-static bool setup_joystick();
 
 void render_graphics(gbx::Gameboy* const gb)
 {
@@ -203,6 +202,50 @@ void update_key(const gbx::Keys::State state, const Uint32 keycode,
 	}
 }
 
+bool setup_joystick()
+{
+	const int num_devices = SDL_NumJoysticks();
+	if (num_devices < 0) {
+		fprintf(stderr, "error: %s\n", SDL_GetError());
+		return false;
+	} else if (num_devices == 0) {
+		fprintf(stderr, "error: no joystick found.\n");
+		return false;
+	}
+
+	joystick = SDL_JoystickOpen(0);
+
+	if (joystick == nullptr) {
+		fprintf(stderr, "error: %s\n", SDL_GetError());
+		return false;
+	}
+
+	const char* const keywords[]{
+		"A", "B", "SELECT", "START"
+	};
+
+	SDL_Event ev;
+	Uint32 keycode = 255;
+
+	for (int i = 0; i < 4; ++i) {
+		printf("press key for %s: ", keywords[i]);
+		fflush(stdout);
+
+		while (true) {
+			SDL_PollEvent(&ev);
+			if (ev.type == SDL_JOYBUTTONDOWN
+				&& ev.jbutton.button != keycode) {
+				keycode = ev.jbutton.button;
+				break;
+			}
+		}
+
+		input_keys[i] = keycode;
+		printf("%d\n", keycode);
+	}
+
+	return true;
+}
 
 bool init_sdl(const bool enable_joystick)
 {
@@ -242,9 +285,8 @@ bool init_sdl(const bool enable_joystick)
 		goto free_renderer;
 	}
 
-	if (enable_joystick && !setup_joystick()) {
+	if (enable_joystick && !setup_joystick())
 		goto free_texture;
-	}
 
 	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
 	return true;
@@ -272,50 +314,7 @@ void quit_sdl()
 }
 
 
-bool setup_joystick()
-{
-	const int num_devices = SDL_NumJoysticks();
-	if (num_devices < 0) {
-		fprintf(stderr, "error: %s\n", SDL_GetError());
-		return false;
-	} else if (num_devices == 0) {
-		fprintf(stderr, "error: no joystick found.\n");
-		return false;
-	}
-		
-	joystick = SDL_JoystickOpen(0);
 
-	if (joystick == nullptr) {
-		fprintf(stderr, "error: %s\n", SDL_GetError());
-		return false;
-	}
-
-	const char* const keywords[] {
-		"A", "B", "SELECT", "START"
-	};
-
-	SDL_Event ev;
-	Uint32 keycode = 255;
-
-	for (int i = 0; i < 4; ++i) {
-		printf("press key for %s: ", keywords[i]);
-		fflush(stdout);
-		
-		while (true) {
-			SDL_PollEvent(&ev);
-			if (ev.type == SDL_JOYBUTTONDOWN
-			    && ev.jbutton.button != keycode) {
-				keycode = ev.jbutton.button;
-				break;
-			}
-		}
-
-		input_keys[i] = keycode;
-		printf("%d\n", keycode);
-	}
-
-	return true;
-}
 
 
 
