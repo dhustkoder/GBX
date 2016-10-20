@@ -106,7 +106,7 @@ void update_timers(const uint8_t cycles, HWState* const hwstate)
 
 	if (hwstate->div_clock >= 0x100) {
 		++hwstate->div;
-		hwstate->div_clock = 0;
+		hwstate->div_clock -= 0x100;
 	}
 
 	if (!hwstate->GetFlags(HWState::TimerStop)) {
@@ -149,7 +149,7 @@ void update_interrupts(Gameboy* const gb)
 			hwstate.ClearInt(inter);
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
-			gb->cpu.clock += 12;
+			gb->cpu.clock += 16;
 		}
 	}
 }
@@ -235,11 +235,6 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 	// 0134 - 0142 game's title
 	read_buff(0x134, 0x10, cinfo->internal_name);
 	cinfo->internal_name[0x10] = '\0';
-	
-	if (!strlen(cinfo->internal_name)) {
-		fprintf(stderr, "couldn't read cartridge's name.\n");
-		return false;
-	}
 	
 	if (read_byte(0x146) == 0x03) {
 		cinfo->system = Cartridge::System::SuperGameboy;
