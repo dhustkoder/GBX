@@ -57,7 +57,7 @@ struct ScanlineFiller {
 };
 
 
-void update_gpu(uint8_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+void update_gpu(int32_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 inline void mode_hblank(Gpu* gpu, HWState* hwstate);
 inline void mode_vblank(Gpu* gpu, HWState* hwstate);
 inline void mode_oam(Gpu* gpu);
@@ -71,7 +71,7 @@ inline void draw_sprite_row(uint16_t row, int xpos, int xlimit, bool xflip, bool
                              const Pallete& pal, const Pallete& bgpal, uint32_t* line);
 
 
-void update_gpu(const uint8_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
+void update_gpu(const int32_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
 {
 	if (!gpu->lcdc.lcd_on) {
 		gpu->clock = 0;

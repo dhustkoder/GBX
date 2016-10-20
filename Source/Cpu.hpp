@@ -15,7 +15,7 @@ struct Cpu
 	void SetFlags(Flags flags);
 	void ClearFlags(Flags flags);
 
-	uint32_t clock;
+	int32_t clock;
 	uint16_t pc;
 	uint16_t sp;
 
