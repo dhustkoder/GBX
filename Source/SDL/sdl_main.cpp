@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		gameboy->Run(70224);
+		gameboy->Run(69905);
 		render_graphics(gameboy);
 		SDL_Delay(15);
 
@@ -158,9 +158,7 @@ static gbx::owner<SDL_Renderer*> renderer = nullptr;
 void render_graphics(gbx::Gameboy* const gb)
 {
 	const auto lcdc = gb->gpu.lcdc;
-	SDL_RenderClear(renderer);
-
-	if (lcdc.lcd_on && (lcdc.bg_on || lcdc.obj_on || lcdc.win_on)) {
+	if (lcdc.lcd_on) {
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
@@ -173,8 +171,10 @@ void render_graphics(gbx::Gameboy* const gb)
 			fprintf(stderr, "failed to lock texture: %s\n",
 			        SDL_GetError());
 		}
+	} else if (!lcdc.lcd_on) {
+		SDL_RenderClear(renderer);
 	}
-
+	
 	SDL_RenderPresent(renderer);
 }
 
@@ -289,6 +289,7 @@ bool init_sdl(const bool enable_joystick)
 		goto free_texture;
 
 	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(renderer);
 	return true;
 
 free_texture:

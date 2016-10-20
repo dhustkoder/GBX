@@ -35,9 +35,9 @@ void Gameboy::Reset()
 	gpu.obp0 = 0xFF;
 	gpu.obp1 = 0xFF;
 
-	hwstate.tima_clock_limit = 0x400;
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
+
 	if (cart.info.type >= Cartridge::Type::RomMBC1Ram)
 		cart.ram_bank_offset = cart.info.rom_size - 0xA000;
 
@@ -77,13 +77,14 @@ void Gameboy::Reset()
 
 void Gameboy::Run(const uint32_t cycles)
 {
+	// TODO: proper clock/gpu time, get rid of hack
 	do {
 		const uint8_t step_cycles = step_machine(this);
 		cpu.clock += step_cycles;
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
-	} while (cpu.clock < cycles);
+	} while (cpu.clock < cycles || gpu.ly);
 	cpu.clock = 0;
 }
 
@@ -106,13 +107,11 @@ void update_timers(const uint8_t cycles, HWState* const hwstate)
 
 	if (hwstate->div_clock >= 0x100) {
 		++hwstate->div;
-		hwstate->div_clock = 0;
+		hwstate->div_clock -= 0x100;
 	}
 
-	if (!hwstate->GetFlags(HWState::TimerStop)) {
-		
+	if (test_bit(2, hwstate->tac)) {
 		hwstate->tima_clock += cycles;
-		
 		if (hwstate->tima_clock >= hwstate->tima_clock_limit) {
 			if (++hwstate->tima == 0x00) {
 				hwstate->tima = hwstate->tma;
@@ -149,7 +148,7 @@ void update_interrupts(Gameboy* const gb)
 			hwstate.ClearInt(inter);
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
-			gb->cpu.clock += 12;
+			gb->cpu.clock += 16;
 		}
 	}
 }
@@ -235,11 +234,6 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 	// 0134 - 0142 game's title
 	read_buff(0x134, 0x10, cinfo->internal_name);
 	cinfo->internal_name[0x10] = '\0';
-	
-	if (!strlen(cinfo->internal_name)) {
-		fprintf(stderr, "couldn't read cartridge's name.\n");
-		return false;
-	}
 	
 	if (read_byte(0x146) == 0x03) {
 		cinfo->system = Cartridge::System::SuperGameboy;

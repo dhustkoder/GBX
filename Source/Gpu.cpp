@@ -276,13 +276,8 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 
 void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
 {
-	const auto lcdc = gpu.lcdc;
-	if (lcdc.bg_on || lcdc.win_on)
-		memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
-	else
-		memset(pixels, 0xFF, sizeof(uint32_t) * 144 * 160);
-
-	if (lcdc.obj_on)
+	memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
+	if (gpu.lcdc.obj_on)
 		draw_sprites(gpu, memory, pixels);
 }
 

@@ -24,6 +24,7 @@ static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
 static void write_stat(uint8_t value, Gpu* gpu);
 static void write_keys(uint8_t value, Keys* keys);
+static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
 
@@ -284,7 +285,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	switch (address) {
 	case 0xFF00: write_keys(value, &gb->keys); break;
-	case 0xFF04: gb->hwstate.div = 0x00; break;
+	case 0xFF04: write_div(value, &gb->hwstate); break;
 	case 0xFF05: gb->hwstate.tima = value; break;
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
@@ -293,7 +294,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF41: write_stat(value, &gb->gpu); break;
 	case 0xFF42: gb->gpu.scy = value; break;
 	case 0xFF43: gb->gpu.scx = value; break;
-	case 0xFF44: gb->gpu.ly = 0; break;
+	case 0xFF44: gb->gpu.ly = 0x00; break;
 	case 0xFF45: gb->gpu.lyc = value; break;
 	case 0xFF46: dma_transfer(value, gb); break;
 	case 0xFF47: gb->gpu.bgp = value; break;
@@ -334,12 +335,16 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	case 0x03: hwstate->tima_clock_limit = 0x100; break;
 	}
 	
-	if (!test_bit(2, value)) {
-		hwstate->SetFlags(HWState::TimerStop);
-	} else {
-		hwstate->ClearFlags(HWState::TimerStop);
+	if (test_bit(2, value)) {
 		hwstate->tima = hwstate->tma;
+		hwstate->tima_clock = 0x00;
 	}
+}
+
+void write_div(const uint8_t /*value*/, HWState* const hwstate)
+{
+	hwstate->div = 0x00;
+	hwstate->div_clock = 0x00;
 }
 
 
@@ -355,6 +360,7 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 		for (auto& byte : gb->memory.oam)
 			byte = gb->Read8(source_addr++);
 	}
+	gb->cpu.clock += 0x288;
 }
 
 
