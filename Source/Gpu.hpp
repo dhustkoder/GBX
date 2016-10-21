@@ -16,7 +16,7 @@ struct Gpu
 		OAM = 0x2, Transfer = 0x3
 	};
 
-	int32_t clock;
+	int16_t clock;
 
 	union {
 		uint8_t value;

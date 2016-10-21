@@ -10,10 +10,10 @@
 namespace gbx {
 
 
-extern void update_gpu(int32_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
-static void update_timers(int32_t cycles, HWState* hwstate);
+extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
-static int32_t step_machine(Gameboy* gb);
+static int16_t step_machine(Gameboy* gb);
 Cartridge::Info Cartridge::info;
 
 void Gameboy::Reset()
@@ -92,23 +92,24 @@ void Gameboy::Run(const int32_t cycles)
 }
 
 
-int32_t step_machine(Gameboy* const gb)
+int16_t step_machine(Gameboy* const gb)
 {
 	if (!gb->hwstate.GetFlags(HWState::CpuHalt)) {
-		const volatile auto old_cycles = gb->cpu.clock;
+		const volatile auto before = gb->cpu.clock;
 		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
 		main_instructions[opcode](gb);
-		const auto instr_cycles = clock_table[opcode];
-		const volatile auto curr_cycles = gb->cpu.clock;
-		gb->cpu.clock += instr_cycles;
-		return instr_cycles + (curr_cycles - old_cycles);
+		const auto step_cycles = clock_table[opcode];
+		const volatile auto after = gb->cpu.clock;
+		const auto add_cycles = static_cast<int16_t>(after - before);
+		gb->cpu.clock += step_cycles;
+		return step_cycles + add_cycles;
 	}
 	gb->cpu.clock += 4;
 	return 4;
 }
 
 
-void update_timers(const int32_t cycles, HWState* const hwstate)
+void update_timers(const int16_t cycles, HWState* const hwstate)
 {
 	hwstate->div_clock += cycles;
 	if (hwstate->div_clock >= 0x100) {
