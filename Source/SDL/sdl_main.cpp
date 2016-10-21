@@ -17,6 +17,8 @@ static void render_graphics(gbx::Gameboy* gb);
 
 int main(int argc, char** argv)
 {
+	static_assert(sizeof(Uint32) == sizeof(uint32_t), "");
+
 	if (argc < 2) {
 		fprintf(stderr, "usage: %s <rom>\n", argv[0]);
 		return EXIT_FAILURE;
@@ -117,6 +119,7 @@ int main(int argc, char** argv)
 			}
 		}
 
+
 		gameboy->Run(70256);
 		render_graphics(gameboy);
 		SDL_Delay(15);
@@ -162,9 +165,8 @@ void render_graphics(gbx::Gameboy* const gb)
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			using ArrPtr = uint32_t(*)[WinHeight][WinWidth];
-			draw_graphics(gb->gpu, gb->memory,
-			              *static_cast<ArrPtr>(pixels));
+			memcpy(pixels, gbx::Gpu::screen,
+			        sizeof(uint32_t) * 144 * 160);
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {

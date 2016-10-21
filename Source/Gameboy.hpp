@@ -38,7 +38,6 @@ struct Gameboy
 	Cartridge cart;
 };
 
-
 extern owner<Gameboy*> create_gameboy(const char* rom_path);
 extern void destroy_gameboy(owner<Gameboy*> gb);
 

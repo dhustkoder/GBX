@@ -14,7 +14,7 @@ enum Color : uint32_t {
 };
 
 constexpr const Color kColors[4] { White, LightGrey, DarkGrey, Black };
-static Color bg_pixels[144][160];
+uint32_t Gpu::screen[144][160];
 
 struct Pallete {
 	constexpr explicit Pallete(const uint8_t pal)
@@ -35,7 +35,7 @@ struct Pallete {
 };
 
 struct ScanlineFiller {
-	constexpr ScanlineFiller(Color* line, Pallete pal)
+	constexpr ScanlineFiller(uint32_t* line, Pallete pal)
 		: scanline(line), 
 		pallete(pal)
 	{
@@ -52,7 +52,7 @@ struct ScanlineFiller {
 		}
 	}
 
-	Color* scanline;
+	uint32_t* scanline;
 	const Pallete pallete;
 };
 
@@ -66,7 +66,7 @@ inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
 inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void update_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void update_win_scanline(const Gpu& gpu, const Memory& mem);
-static void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160]);
+static void update_sprite_scanline(const Gpu& gpu, const Memory& mem);
 inline void draw_sprite_row(uint16_t row, int xpos, int xlimit, bool xflip, bool priority,
                              const Pallete& pal, const Pallete& bgpal, uint32_t* line);
 
@@ -134,6 +134,7 @@ void mode_transfer(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
 	if (gpu->clock >= 172) {
 		update_bg_scanline(*gpu, mem);
 		update_win_scanline(*gpu, mem);
+		update_sprite_scanline(*gpu, mem);
 		set_gpu_mode(Gpu::Mode::HBlank, gpu, hwstate);
 		gpu->clock -= 172;
 	}
@@ -176,8 +177,10 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 {
 	const auto lcdc = gpu.lcdc;
 	const auto ly = gpu.ly;
+	auto& screen = Gpu::screen;
+
 	if (!lcdc.bg_on) {
-		memset(&bg_pixels[ly][0], 0xFF, sizeof(uint32_t) * 160);
+		memset(&screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
 		return;
 	} else if (lcdc.win_on && ly >= gpu.wy && gpu.wx <= 7) {
 		return;
@@ -213,7 +216,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
 	
-	ScanlineFiller fill_line{&bg_pixels[ly][0], Pallete{gpu.bgp}};
+	ScanlineFiller fill_line{&screen[ly][0], Pallete{gpu.bgp}};
 
 	int xbeg = 0;
 	if (scxmod) {
@@ -235,6 +238,8 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	const auto lcdc = gpu.lcdc;
 	const int wy = gpu.wy;
 	const int wx = gpu.wx - 7;
+	auto& screen = Gpu::screen;
+
 	if (!lcdc.win_on || ly < wy || wy >= 144 || wx >= 160)
 		return;
 
@@ -254,7 +259,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
 
-	ScanlineFiller fill_line{&bg_pixels[ly][wx_max], Pallete{gpu.bgp}};
+	ScanlineFiller fill_line{&screen[ly][wx_max], Pallete{gpu.bgp}};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
@@ -274,115 +279,28 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 }
 
 
-void draw_graphics(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
+void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 {
-	memcpy(pixels, bg_pixels, sizeof(uint32_t) * 144 * 160);
-	if (gpu.lcdc.obj_on)
-		draw_sprites(gpu, memory, pixels);
-}
+	static_assert((sizeof(mem.oam) % 4) == 0, "");
+	const auto lcdc = gpu.lcdc;
+	auto& screen = Gpu::screen;
 
+	if (!lcdc.bg_on)
+		return;
 
-void draw_sprites(const Gpu& gpu, const Memory& memory, uint32_t(&pixels)[144][160])
-{
-	const Pallete pal0{gpu.obp0};
-	const Pallete pal1{gpu.obp1};
-	const Pallete bgpal{gpu.bgp};
+	const Pallete obp0 {gpu.obp0};
+	const Pallete obp1 {gpu.obp1};
+	const Pallete bgp {gpu.bgp};
 	const int yres = !gpu.lcdc.obj_size ? 8 : 16;
-	const auto& oam = memory.oam;
-	static_assert((sizeof(oam) % 4) == 0, "");
-
+	const auto& oam = mem.oam;
+	const auto ly = gpu.ly;
 	for (size_t i = 0; i < sizeof(oam); i += 4) {
 		const int ypos = oam[i] - 16;
 		const int xpos = oam[i + 1] - 8;
-
-		if (ypos <= -yres || xpos <= -8)
+		if (ly >= (ypos+yres) || ly < ypos || xpos <= -8)
 			continue;
-		
-		const uint8_t pattern = oam[i + 2];
-		uint8_t sprite[32];
-		if (yres == 8) {
-			memcpy(&sprite[0], &memory.vram[pattern * 16], 16);
-		} else {
-			const int first = (pattern & 0xFE) * 16;
-			const int second = (pattern | 0x01) * 16;
-			memcpy(&sprite[0], &memory.vram[first], 16);
-			memcpy(&sprite[16], &memory.vram[second], 16);
-		}
-
-		const uint8_t flags = oam[i + 3];
-		const bool priority = (flags & 0x80) != 0;
-		const bool yflip = (flags & 0x40) != 0;
-		const bool xflip = (flags & 0x20) != 0;
-		const Pallete& pal = (flags & 0x10) ? pal1 : pal0;
-		const int ylimit = min(144 - ypos, yres);
-		const int xlimit = min(160 - xpos, 8);
-
-		if (!yflip) {
-			for (int y = 0; y < ylimit; ++y) {
-				const int yoffset = ypos + y;
-				if (yoffset < 0)
-					continue;
-				const uint16_t row = 
-					(sprite[y*2 + 1] << 8) | sprite[y*2];
-				draw_sprite_row(row, xpos, xlimit, xflip,
-						priority, pal, bgpal,
-						&pixels[yoffset][0]);
-			}
-		} else {
-			for (int y = ylimit-1; y >= 0; --y) {
-				const int yoffset = ypos + (ylimit - (y+1));
-				if (yoffset < 0)
-					break;
-				const uint16_t row = 
-					(sprite[y*2 + 1] << 8) | sprite[y*2];
-				draw_sprite_row(row, xpos, xlimit, xflip,
-						priority,pal, bgpal, 
-						&pixels[yoffset][0]);
-			}
-		}
 	}
 }
-
-
-
-
-void draw_sprite_row(const uint16_t row, const int xpos, const int xlimit, 
-		const bool xflip, const bool priority, const Pallete& pal,
-		const Pallete& bgpal, uint32_t* const line)
-{
-	const auto has_priority = [&bgpal, priority, line](const int xoffset) {
-		return !priority || (bgpal[0] == line[xoffset]); 
-	};
-
-	if (!xflip) {
-		for (int p = 0; p < xlimit; ++p) {
-			const int xoffset = p + xpos;
-			if (xoffset < 0)
-				continue;
-			uint8_t colornum = 0;
-			if (row & (0x80 >> p))
-				++colornum;
-			if (row & (0x8000 >> p))
-				colornum += 2;
-			if (colornum != 0 && has_priority(xoffset))
-				line[xoffset] = pal[colornum];
-		}
-	} else {
-		for (int p = 0; p < xlimit; ++p) {
-			const int xoffset = p + xpos;
-			if (xoffset < 0)
-				continue;
-			uint8_t colornum = 0;
-			if (row & (0x01 << p))
-				++colornum;
-			if (row & (0x0100 << p))
-				colornum += 2;
-			if (colornum != 0 && has_priority(xoffset))
-				line[xoffset] = pal[colornum];
-		}
-	}
-}
-
 
 
 
