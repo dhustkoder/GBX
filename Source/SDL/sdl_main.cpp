@@ -173,7 +173,7 @@ void render_graphics(gbx::Gameboy* const gb)
 			fprintf(stderr, "failed to lock texture: %s\n",
 			        SDL_GetError());
 		}
-	} else if (!lcdc.lcd_on) {
+	} else {
 		SDL_RenderClear(renderer);
 	}
 	

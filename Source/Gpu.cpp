@@ -278,27 +278,88 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 
 }
 
-
 void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 {
 	static_assert((sizeof(mem.oam) % 4) == 0, "");
 	const auto lcdc = gpu.lcdc;
-	auto& screen = Gpu::screen;
 
-	if (!lcdc.bg_on)
+	if (!lcdc.obj_on)
 		return;
 
+	auto& screen = Gpu::screen;
 	const Pallete obp0 {gpu.obp0};
 	const Pallete obp1 {gpu.obp1};
 	const Pallete bgp {gpu.bgp};
-	const int yres = !gpu.lcdc.obj_size ? 8 : 16;
-	const auto& oam = mem.oam;
+	const int yres = gpu.lcdc.obj_size ? 16 : 8;
 	const auto ly = gpu.ly;
-	for (size_t i = 0; i < sizeof(oam); i += 4) {
-		const int ypos = oam[i] - 16;
-		const int xpos = oam[i + 1] - 8;
-		if (ly >= (ypos+yres) || ly < ypos || xpos <= -8)
+
+	for (size_t i = 0; i < sizeof(mem.oam); i += 4) {
+		const int ypos = mem.oam[i] - 16;
+		const int xpos = mem.oam[i + 1] - 8;
+		if (ly < ypos || ly >= (ypos+yres) || xpos <= -8)
 			continue;
+
+		const auto ly_ypos_diff = ly - ypos;
+		const auto flags = mem.oam[i + 3];
+		const bool yflip = (flags&0x40) != 0;
+		const bool xflip = (flags&0x20) != 0;
+		const auto& pal = (flags&0x10) ? obp1 : obp0;
+
+		const auto get_tile_y = [yflip](const int diff) {
+			return (yflip ? (7 - diff) : diff) * 2;
+		};
+
+		uint16_t row;
+		if (yres == 8) {
+			const auto tile = &mem.vram[mem.oam[i + 2] * 16];
+			const auto tile_y = get_tile_y(ly_ypos_diff);
+			row = (tile[tile_y + 1] << 8) | tile[tile_y];
+		} else {
+			const int pattern = mem.oam[i + 2];
+			const uint8_t* tile;
+			int tile_y;
+			if (ly_ypos_diff < 8) {
+				tile = yflip
+					? &mem.vram[(pattern|0x01) * 16]
+					: &mem.vram[(pattern&0xFE) * 16];
+				tile_y = get_tile_y(ly_ypos_diff);
+			} else {
+				tile = yflip 
+					? &mem.vram[(pattern&0xFE) * 16]
+					: &mem.vram[(pattern|0x01) * 16]; 
+				tile_y = get_tile_y(ly_ypos_diff - 8);
+			}
+			row = (tile[tile_y + 1] << 8) | tile[tile_y];
+		}
+
+		uint32_t* line;
+		int pbeg, pend;
+		if (xpos < 0) {
+			line = &screen[ly][0];
+			pbeg = -xpos;
+			pend = 8;
+		} else {
+			line = &screen[ly][xpos];
+			pbeg = 0;
+			pend = min(160 - xpos, 8);
+		}
+
+		for (int p = pbeg; p < pend; ++p, ++line) {
+			int color_num = 0;	
+			if (!xflip) {
+				if (row & (0x80 >> p))
+					++color_num;
+				if (row & (0x8000 >> p))
+					color_num += 2;
+			} else {
+				if (row & (0x01 << p))
+					++color_num;
+				if (row & (0x0100 << p))
+					color_num += 2;
+			}
+			if (color_num != 0)
+				*line = pal[color_num];
+		}
 	}
 }
 
