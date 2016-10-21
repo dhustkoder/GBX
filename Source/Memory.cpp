@@ -153,8 +153,11 @@ uint8_t read_vram(const uint16_t address, const Memory& mem)
 uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart)
 {
 	debug_printf("Cartridge RAM read required at $%X\n", address);
-	const auto offset = cart.ram_bank_offset + address;
-	return cart.banks[offset];
+	if (cart.ram_bank_offset != 0x00) {
+		const auto offset = cart.ram_bank_offset + address;
+		return cart.banks[offset];
+	}
+	return 0x00;
 }
 
 
