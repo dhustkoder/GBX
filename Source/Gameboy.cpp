@@ -98,10 +98,10 @@ int16_t step_machine(Gameboy* const gb)
 		const volatile auto before = gb->cpu.clock;
 		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
 		main_instructions[opcode](gb);
-		const auto step_cycles = clock_table[opcode];
 		const volatile auto after = gb->cpu.clock;
-		const auto add_cycles = static_cast<int16_t>(after - before);
+		const auto step_cycles = clock_table[opcode];
 		gb->cpu.clock += step_cycles;
+		const auto add_cycles = static_cast<int16_t>(after - before);
 		return step_cycles + add_cycles;
 	}
 	gb->cpu.clock += 4;

@@ -9,8 +9,9 @@ namespace {
 
 static bool init_sdl(bool enable_joystick);
 static void quit_sdl();
-static void update_key(gbx::Keys::State state, Uint32 keycode, gbx::Keys* keys);
+static bool update_events(SDL_Event* events, gbx::Gameboy* gb);
 static void render_graphics(gbx::Gameboy* gb);
+static void update_key(gbx::Keys::State state, Uint32 keycode, gbx::Keys* keys);
 
 }
 
@@ -40,85 +41,13 @@ int main(int argc, char** argv)
 		quit_sdl();
 	});
 
-	SDL_Event event;
+	SDL_Event events;
 	Uint32 last_ticks = 0;
 	size_t itr = 0;
 	
 	while (true) {
-		while (SDL_PollEvent(&event)) {
-			switch (event.type) {
-
-			case SDL_KEYDOWN:
-				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-					goto break_loop;
-				} else {
-					update_key(gbx::Keys::State::Down,
-					           event.key.keysym.scancode,
-					           &gameboy->keys);
-				}
-				break;
-
-			case SDL_KEYUP:
-				update_key(gbx::Keys::State::Up,
-				           event.key.keysym.scancode,
-				           &gameboy->keys);
-				break;
-
-			case SDL_JOYBUTTONDOWN:
-				update_key(gbx::Keys::State::Down,
-				           event.jbutton.button,
-					   &gameboy->keys);
-				break;
-
-			case SDL_JOYBUTTONUP:
-				update_key(gbx::Keys::State::Up,
-				           event.jbutton.button,
-					   &gameboy->keys);
-				break;
-
-			case SDL_JOYAXISMOTION: {
-				gbx::Keys::State state;
-				Uint32 keycode;
-				Uint32 codes[2];
-				const auto value = event.jaxis.value;
-				const auto axis = event.jaxis.axis;
-
-				if (value > -30000 && value < 30000)
-					state = gbx::Keys::State::Up;
-				else
-					state = gbx::Keys::State::Down;
-
-				if (axis == 0) {
-					codes[0] = SDL_SCANCODE_LEFT;
-					codes[1] = SDL_SCANCODE_RIGHT;
-				} else if (axis == 1) {
-					codes[0] = SDL_SCANCODE_UP;
-					codes[1] = SDL_SCANCODE_DOWN;
-				} else {
-					break;
-				}
-				
-				if (state == gbx::Keys::State::Down) {
-					keycode = codes[value > 0 ? 1 : 0];
-					update_key(state, keycode,
-					            &gameboy->keys);
-				} else {
-					update_key(state, codes[0],
-					           &gameboy->keys);
-					update_key(state, codes[1],
-					           &gameboy->keys);
-				}
-
-				break;
-			}
-
-			case SDL_QUIT:
-				goto break_loop;
-			default:
-				break;
-			}
-		}
-
+		if (!update_events(&events, gameboy))
+			break;
 
 		gameboy->Run(70256);
 		render_graphics(gameboy);
@@ -133,9 +62,6 @@ int main(int argc, char** argv)
 
 		++itr;
 	}
-
-break_loop:
-
 
 	return EXIT_SUCCESS;
 }
@@ -157,6 +83,71 @@ static gbx::owner<SDL_Joystick*> joystick = nullptr;
 static gbx::owner<SDL_Window*> window = nullptr;
 static gbx::owner<SDL_Texture*> texture = nullptr;
 static gbx::owner<SDL_Renderer*> renderer = nullptr;
+
+
+bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
+{
+	using State = gbx::Keys::State;
+	const auto& scancode = events->key.keysym.scancode;
+	const auto& jbutton = events->jbutton;
+	auto& gb_keys = gb->keys;
+	while (SDL_PollEvent(events)) {
+		switch (events->type) {
+		case SDL_KEYDOWN:
+			if (scancode != SDL_SCANCODE_ESCAPE)
+				update_key(State::Down, scancode, &gb_keys);
+			else
+				return false;
+			break;
+		case SDL_KEYUP:
+			update_key(State::Up, scancode, &gb_keys);
+			break;
+		case SDL_JOYBUTTONDOWN:
+			update_key(State::Down, jbutton.button, &gb_keys);
+			break;
+		case SDL_JOYBUTTONUP:
+			update_key(State::Up, jbutton.button, &gb_keys);
+			break;
+		case SDL_JOYAXISMOTION: {
+			State state;
+			Uint32 keycode;
+			Uint32 codes[2];
+			const auto value = events->jaxis.value;
+			const auto axis = events->jaxis.axis;
+
+			if (value > -30000 && value < 30000)
+				state = State::Up;
+			else
+				state = State::Down;
+
+			if (axis == 0) {
+				codes[0] = SDL_SCANCODE_LEFT;
+				codes[1] = SDL_SCANCODE_RIGHT;
+			} else if (axis == 1) {
+				codes[0] = SDL_SCANCODE_UP;
+				codes[1] = SDL_SCANCODE_DOWN;
+			}
+
+			if (state == State::Down) {
+				keycode = codes[value > 0 ? 1 : 0];
+				update_key(state, keycode, &gb_keys);
+			} else {
+				update_key(state, codes[0], &gb_keys);
+				update_key(state, codes[1], &gb_keys);
+			}
+
+			break;
+		}
+		case SDL_QUIT:
+			return false;
+		default:
+			break;
+		}
+	}
+
+	return true;
+}
+
 
 void render_graphics(gbx::Gameboy* const gb)
 {
