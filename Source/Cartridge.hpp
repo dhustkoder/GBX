@@ -10,7 +10,9 @@ struct Cartridge
 		RomOnly = 0x00,
 		RomMBC1 = 0x01,
 		RomMBC1Ram = 0x02,
-		RomMBC1RamBattery = 0x03
+		RomMBC1RamBattery = 0x03,
+		RomMBC2 = 0x05,
+		RomMBC2Battery = 0x06
 	};
 	enum class System : uint8_t {
 		Gameboy, 
