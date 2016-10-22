@@ -55,7 +55,8 @@ int main(int argc, char** argv)
 
 		const auto ticks = SDL_GetTicks();
 		if (ticks > (last_ticks + 1000)) {
-			printf("%zu\n", itr);
+			printf("GBX FPS: %zu\r", itr);
+			fflush(stdout);
 			itr = 0;
 			last_ticks = ticks;
 		}

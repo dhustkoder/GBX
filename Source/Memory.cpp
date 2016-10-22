@@ -1,10 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "Debug.hpp"
 #include "Gameboy.hpp"
 
 namespace gbx {
+
+static int_fast32_t eval_hram_offset(uint16_t address);
+static int_fast32_t eval_oam_offset(uint16_t address);
+static int_fast32_t eval_wram_offset(uint16_t address);
+static int_fast32_t eval_vram_offset(uint16_t address);
 
 static uint8_t read_cart(uint16_t address, const Cartridge& cart);
 static uint8_t read_hram(uint16_t address, const Gameboy& gb);
@@ -27,9 +33,6 @@ static void write_keys(uint8_t value, Keys* keys);
 static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
-
-
-
 
 
 uint8_t Gameboy::Read8(const uint16_t address) const 
@@ -113,40 +116,48 @@ uint16_t Gameboy::PopStack16()
 
 
 
+
 uint8_t read_cart(const uint16_t address, const Cartridge& cart)
 {
-	if (address >= 0x4000)
-		return cart.banks[cart.rom_bank_offset + address];
-
-	return cart.banks[address];
+	const auto offset = address < 0x4000 ?
+		address : cart.rom_bank_offset + address;
+	assert(offset < Cartridge::info.rom_size);
+	return cart.banks[offset];
 }
 
 
 uint8_t read_hram(const uint16_t address, const Gameboy& gb)
 {
-	if (address != 0xFFFF)
-		return gb.memory.hram[address - 0xFF80];
-	else
+	if (address != 0xFFFF) {
+		const auto offset = eval_hram_offset(address);
+		return gb.memory.hram[offset];
+	} else {
 		return gb.hwstate.int_enable;
+	}
 }
 
 
 uint8_t read_oam(const uint16_t address, const Memory& mem)
 {
-	return address < 0xFEA0 ? mem.oam[address - 0xFE00] : 0;
+	if (address < 0xFEA0) {
+		const auto offset = eval_oam_offset(address);
+		return mem.oam[offset];
+	}
+	return 0xFF;
 }
 
 
 uint8_t read_wram(const uint16_t address, const Memory& mem)
 {
-	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
+	const auto offset = eval_wram_offset(address);
 	return mem.wram[offset];
 }
 
 
 uint8_t read_vram(const uint16_t address, const Memory& mem)
 {
-	return mem.vram[address - 0x8000];
+	const auto offset = eval_vram_offset(address);
+	return mem.vram[offset];
 }
 
 
@@ -217,30 +228,35 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 
 void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
-	if (address != 0xFFFF)
-		gb->memory.hram[address - 0xFF80] = value;
-	else
+	if (address != 0xFFFF) {
+		const auto offset = eval_hram_offset(address);
+		gb->memory.hram[offset] = value;
+	} else {
 		gb->hwstate.int_enable = value;
+	}
 }
 
 
 void write_oam(const uint16_t address, const uint8_t value, Memory* const mem)
 {
-	if (address < 0xFEA0)
-		mem->oam[address - 0xFE00] = value;
+	if (address < 0xFEA0) {
+		const auto offset = eval_oam_offset(address);
+		mem->oam[offset] = value;
+	}
 }
 
 
 void write_wram(const uint16_t address, const uint8_t value, Memory* const mem)
 {
-	const uint16_t offset = address < 0xE000 ? address - 0xC000 : address - 0xE000;
+	const auto offset = eval_wram_offset(address);
 	mem->wram[offset] = value;
 }
 
 
 void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 {
-	mem->vram[address - 0x8000] = value;
+	const auto offset = eval_vram_offset(address);
+	mem->vram[offset] = value;
 }
 
 
@@ -358,6 +374,34 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 }
 
 
+int_fast32_t eval_hram_offset(const uint16_t address)
+{
+	const auto offset = address - 0xFF80;
+	assert(offset < sizeof(Memory::hram));
+	return offset;
+}
+
+int_fast32_t eval_oam_offset(const uint16_t address)
+{
+	const auto offset = address - 0xFE00;
+	assert(offset < sizeof(Memory::oam));
+	return offset;
+}
+
+int_fast32_t eval_wram_offset(const uint16_t address)
+{
+	const auto offset = address < 0xE000
+		? address - 0xC000 : address - 0xE000;
+	assert(offset < sizeof(Memory::wram));
+	return offset;
+}
+
+int_fast32_t eval_vram_offset(const uint16_t address)
+{
+	const auto offset = address - 0x8000;
+	assert(offset < sizeof(Memory::vram));
+	return offset;
+}
 
 
 

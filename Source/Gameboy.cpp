@@ -19,6 +19,7 @@ Cartridge::Info Cartridge::info;
 void Gameboy::Reset()
 {
 	memset(this, 0, sizeof(Gameboy));
+	memset(Gpu::screen, 0xFF, sizeof(Gpu::screen));
 
 	// init the system
 	// up to now only Gameboy mode is supported
