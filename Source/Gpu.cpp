@@ -299,6 +299,7 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 
 		const auto ly_ypos_diff = ly - ypos;
 		const auto flags = mem.oam[i + 3];
+		const bool priority = (flags&0x80) != 0;
 		const bool yflip = (flags&0x40) != 0;
 		const bool xflip = (flags&0x20) != 0;
 		const auto& pal = (flags&0x10) ? obp1 : obp0;
@@ -355,7 +356,7 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 				if (row & (0x0100 << p))
 					color_num += 2;
 			}
-			if (color_num != 0)
+			if (color_num != 0 && (!priority || *line == bgp[0]))
 				*line = pal[color_num];
 		}
 	}
