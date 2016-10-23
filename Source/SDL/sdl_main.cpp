@@ -162,17 +162,9 @@ void render_graphics(gbx::Gameboy* const gb)
 {
 	const auto lcdc = gb->gpu.lcdc;
 	if (lcdc.lcd_on) {
-		int pitch;
-		void* pixels;
-		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			memcpy(pixels, gbx::Gpu::screen,
-			        sizeof(uint32_t) * 144 * 160);
-			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-			SDL_UnlockTexture(texture);
-		} else {
-			fprintf(stderr, "failed to lock texture: %s\n",
-			        SDL_GetError());
-		}
+		SDL_UpdateTexture(texture, nullptr, gbx::Gpu::screen,
+				  sizeof(Uint32) * 160);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	} else {
 		SDL_RenderClear(renderer);
 	}
