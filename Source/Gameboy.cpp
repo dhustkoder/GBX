@@ -309,8 +309,8 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 
 	printf("CARTRIDGE INFO\n"
 	       "NAME: %s\n"
-	       "ROM SIZE: %zu\n"
-	       "RAM SIZE: %zu\n"
+	       "ROM SIZE: %d\n"
+	       "RAM SIZE: %d\n"
 	       "TYPE CODE: %u\n"
 	       "SYSTEM CODE: %u\n",
 	       cinfo->internal_name, cinfo->rom_size,
