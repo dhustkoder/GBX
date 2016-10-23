@@ -8,9 +8,9 @@ namespace gbx {
 
 enum Color : uint32_t {
 	Black = 0x00000000,
-	White = 0xFFFFFF00,
-	LightGrey = 0x90909000,
-	DarkGrey = 0x55555500
+	White = 0x00FFFFFF,
+	LightGrey = 0x00909090,
+	DarkGrey = 0x00555555
 };
 
 constexpr const Color kColors[4] { White, LightGrey, DarkGrey, Black };

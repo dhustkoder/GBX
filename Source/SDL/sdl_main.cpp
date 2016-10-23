@@ -162,9 +162,17 @@ void render_graphics(gbx::Gameboy* const gb)
 {
 	const auto lcdc = gb->gpu.lcdc;
 	if (lcdc.lcd_on) {
-		SDL_UpdateTexture(texture, nullptr, gbx::Gpu::screen,
-				  sizeof(Uint32) * 160);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		int pitch;
+		void* pixels;
+		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
+			memcpy(pixels, gbx::Gpu::screen,
+			        sizeof(uint32_t) * 144 * 160);
+			SDL_UnlockTexture(texture);
+			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		} else {
+			fprintf(stderr, "failed to lock texture: %s\n",
+			        SDL_GetError());
+		}
 	} else {
 		SDL_RenderClear(renderer);
 	}
@@ -270,7 +278,7 @@ bool init_sdl(const bool enable_joystick)
 
 
 	texture = SDL_CreateTexture(renderer,
-		SDL_PIXELFORMAT_RGBA8888,
+		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
 		WinWidth, WinHeight);
 
