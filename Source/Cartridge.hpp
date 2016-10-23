@@ -21,8 +21,8 @@ struct Cartridge
 
 	static struct Info {
 		char internal_name[0x11];
-		size_t rom_size;
-		size_t ram_size;
+		int32_t rom_size;
+		int32_t ram_size;
 		Cartridge::Type type;
 		Cartridge::System system;
 	} info;
@@ -41,8 +41,8 @@ struct Cartridge
 	uint8_t banks[];
 };
 
-constexpr const size_t kCartridgeMaxSize = 64_Kib;
-constexpr const size_t kCartridgeMinSize = 32_Kib;
+constexpr const int32_t kCartridgeMaxSize = 64_Kib;
+constexpr const int32_t kCartridgeMinSize = 32_Kib;
 
 constexpr const Cartridge::Type kSupportedCartridgeTypes[] {
 	Cartridge::Type::RomOnly,
