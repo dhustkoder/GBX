@@ -167,8 +167,8 @@ void render_graphics(gbx::Gameboy* const gb)
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
 			memcpy(pixels, gbx::Gpu::screen,
 			        sizeof(uint32_t) * 144 * 160);
-			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+			SDL_UnlockTexture(texture);
 		} else {
 			fprintf(stderr, "failed to lock texture: %s\n",
 			        SDL_GetError());
