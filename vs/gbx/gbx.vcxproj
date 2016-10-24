@@ -27,7 +27,7 @@
     <ClCompile Include="..\..\Source\SDL\sdl_main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Source\Cartridge.hpp" />
+    <ClInclude Include="..\..\Source\Cart.hpp" />
     <ClInclude Include="..\..\Source\Common.hpp" />
     <ClInclude Include="..\..\Source\Cpu.hpp" />
     <ClInclude Include="..\..\Source\Debug.hpp" />

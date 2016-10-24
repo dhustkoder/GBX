@@ -310,7 +310,7 @@ bool parse_cartridge_header(FILE* const file, Cart::Info* const cinfo)
 		if (cinfo->rom_size <= 256_Kib && cinfo->ram_size == 0) {
 			cinfo->ram_size = 512;
 		} else {
-			fprintf(stderr, "MBC2 with invalid size codes!\n");
+			fprintf(stderr, "invalid size codes for MBC2!\n");
 			return false;
 		}
 	}
@@ -321,8 +321,8 @@ bool parse_cartridge_header(FILE* const file, Cart::Info* const cinfo)
 	       "RAM SIZE: %d\n"
 	       "TYPE CODE: %u\n"
 	       "SYSTEM CODE: %u\n",
-	       cinfo->internal_name, cinfo->rom_size,
-	       cinfo->ram_size,
+	       cinfo->internal_name,
+	       cinfo->rom_size, cinfo->ram_size,
 	       static_cast<unsigned>(cinfo->type),
 	       static_cast<unsigned>(cinfo->system));
 
