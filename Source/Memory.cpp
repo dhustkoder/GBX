@@ -377,14 +377,14 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 int_fast32_t eval_hram_offset(const uint16_t address)
 {
 	const auto offset = address - 0xFF80;
-	assert(offset < sizeof(Memory::hram));
+	assert(offset >= 0 && offset < sizeof(Memory::hram));
 	return offset;
 }
 
 int_fast32_t eval_oam_offset(const uint16_t address)
 {
 	const auto offset = address - 0xFE00;
-	assert(offset < sizeof(Memory::oam));
+	assert(offset >= 0 && offset < sizeof(Memory::oam));
 	return offset;
 }
 
@@ -392,14 +392,14 @@ int_fast32_t eval_wram_offset(const uint16_t address)
 {
 	const auto offset = address < 0xE000
 		? address - 0xC000 : address - 0xE000;
-	assert(offset < sizeof(Memory::wram));
+	assert(offset >= 0 && offset < sizeof(Memory::wram));
 	return offset;
 }
 
 int_fast32_t eval_vram_offset(const uint16_t address)
 {
 	const auto offset = address - 0x8000;
-	assert(offset < sizeof(Memory::vram));
+	assert(offset >= 0 && offset < sizeof(Memory::vram));
 	return offset;
 }
 
