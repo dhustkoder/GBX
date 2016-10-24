@@ -36,12 +36,18 @@ struct Cart
 	} info;
 
 	union {
-		struct {
-			uint8_t banks_num_lower_bits : 5;
-			uint8_t banks_num_upper_bits : 2;
-			uint8_t banking_mode : 1;
-		};
-		uint8_t banks_num : 7;
+		union {
+			struct {
+				uint8_t banks_num_lower_bits : 5;
+				uint8_t banks_num_upper_bits : 2;
+				uint8_t banking_mode : 1;
+			};
+			uint8_t banks_num : 7;
+		} mbc1;
+
+		union {
+			uint8_t rom_bank_num;
+		} mbc2;
 	};
 	
 	int32_t rom_bank_offset;
@@ -57,6 +63,8 @@ constexpr const Cart::Type kSupportedCartridgeTypes[] {
 	Cart::Type::RomMBC1,
 	Cart::Type::RomMBC1Ram,
 	Cart::Type::RomMBC1RamBattery,
+	Cart::Type::RomMBC2,
+	Cart::Type::RomMBC2Battery
 };
 
 constexpr const Cart::System kSupportedCartridgeSystems[] {

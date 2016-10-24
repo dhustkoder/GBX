@@ -40,10 +40,8 @@ void Gameboy::Reset()
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
 
-	if (cart.info.type >= Cart::Type::RomMBC1) {
-		cart.rom_bank_offset = 0x00;
-		if (cart.info.type >= Cart::Type::RomMBC1Ram)
-			cart.ram_bank_offset = cart.info.rom_size - 0xA000;
+	if (cart.info.type >= Cart::Type::RomMBC1Ram) {
+		cart.ram_bank_offset = cart.info.rom_size - 0xA000;
 	}
 
 	// addresses and inital values for hardware registers
