@@ -14,7 +14,7 @@ extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu*
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 static int16_t step_machine(Gameboy* gb);
-Cartridge::Info Cartridge::info;
+Cart::Info Cart::info;
 
 void Gameboy::Reset()
 {
@@ -41,9 +41,9 @@ void Gameboy::Reset()
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
 
-	if (cart.info.type >= Cartridge::Type::RomMBC1) {
+	if (cart.info.type >= Cart::Type::RomMBC1) {
 		cart.rom_bank_offset = 0x00;
-		if (cart.info.type >= Cartridge::Type::RomMBC1Ram)
+		if (cart.info.type >= Cart::Type::RomMBC1Ram)
 			cart.ram_bank_offset = cart.info.rom_size - 0xA000;
 	}
 
@@ -166,7 +166,7 @@ void update_interrupts(Gameboy* const gb)
 
 
 static owner<Gameboy*> allocate_gb(const char* rom_path);
-static bool parse_cartridge_header(FILE* const cart, Cartridge::Info* cinfo);
+static bool parse_cartridge_header(FILE* const cart, Cart::Info* cinfo);
 
 owner<Gameboy*> create_gameboy(const char* const rom_path)
 {
@@ -198,13 +198,13 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 		fclose(file);
 	});
 
-	if (!parse_cartridge_header(file, &Cartridge::info))
+	if (!parse_cartridge_header(file, &Cart::info))
 		return nullptr;
 
 	const owner<Gameboy*> gb = 
 		reinterpret_cast<Gameboy*>(malloc(sizeof(Gameboy) +
-		                           Cartridge::info.rom_size + 
-		                           Cartridge::info.ram_size));
+		                           Cart::info.rom_size + 
+		                           Cart::info.ram_size));
 	if (gb == nullptr) {
 		perror("failed to allocate memory");
 		return nullptr;
@@ -217,7 +217,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 	});
 
 	fseek(file, 0, SEEK_SET);
-	fread(gb->cart.banks, 1, Cartridge::info.rom_size, file);
+	fread(gb->cart.banks, 1, Cart::info.rom_size, file);
 
 	if (ferror(file)) {
 		perror("error while reading from file");
@@ -230,7 +230,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 
 
 // parse ROM header for information
-bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
+bool parse_cartridge_header(FILE* const file, Cart::Info* const cinfo)
 {	
 	const auto read_buff = [=](long int offset, size_t size, void* buffer) {
 		fseek(file, offset, SEEK_SET);
@@ -246,9 +246,9 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 	cinfo->internal_name[0x10] = '\0';
 	
 	if (read_byte(0x146) == 0x03) {
-		cinfo->system = Cartridge::System::SuperGameboy;
+		cinfo->system = Cart::System::SuperGameboy;
 	} else {
-		using System = Cartridge::System;
+		using System = Cart::System;
 		switch (read_byte(0x143)) {
 		case 0x80: cinfo->system = System::GameboyColorCompat; break;
 		case 0xC0: cinfo->system = System::GameboyColorOnly; break;
@@ -256,15 +256,15 @@ bool parse_cartridge_header(FILE* const file, Cartridge::Info* const cinfo)
 		}
 	}
 
-	cinfo->type = static_cast<Cartridge::Type>(read_byte(0x147));
+	cinfo->type = static_cast<Cart::Type>(read_byte(0x147));
 	
-	const auto is_supported_type = [](const Cartridge::Type type) {
+	const auto is_supported_type = [](const Cart::Type type) {
 		for (const auto supported_type : kSupportedCartridgeTypes)
 			if (supported_type == type)
 				return true;
 		return false;
 	};
-	const auto is_supported_system = [](const Cartridge::System system) {
+	const auto is_supported_system = [](const Cart::System system) {
 		for (const auto supported_system : kSupportedCartridgeSystems)
 			if (supported_system == system)
 				return true;

@@ -12,20 +12,20 @@ static int_fast32_t eval_oam_offset(uint16_t address);
 static int_fast32_t eval_wram_offset(uint16_t address);
 static int_fast32_t eval_vram_offset(uint16_t address);
 
-static uint8_t read_cart(uint16_t address, const Cartridge& cart);
+static uint8_t read_cart(uint16_t address, const Cart& cart);
 static uint8_t read_hram(uint16_t address, const Gameboy& gb);
 static uint8_t read_oam(uint16_t address, const Memory& mem);
 static uint8_t read_wram(uint16_t address, const Memory& mem);
 static uint8_t read_vram(uint16_t address, const Memory& mem);
-static uint8_t read_cart_ram(uint16_t address, const Cartridge& cart);
+static uint8_t read_cart_ram(uint16_t address, const Cart& cart);
 static uint8_t read_io(uint16_t address, const Gameboy& gb);
 
-static void write_cart(uint16_t address, uint8_t value, Cartridge* cart);
+static void write_cart(uint16_t address, uint8_t value, Cart* cart);
 static void write_hram(uint16_t address, uint8_t value, Gameboy* gb);
 static void write_oam(uint16_t address, uint8_t value, Memory* mem);
 static void write_wram(uint16_t address, uint8_t value, Memory* mem);
 static void write_vram(uint16_t address, uint8_t value, Memory* mem);
-static void write_cart_ram(uint16_t address, uint8_t value, Cartridge* cart);
+static void write_cart_ram(uint16_t address, uint8_t value, Cart* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
 static void write_stat(uint8_t value, Gpu* gpu);
@@ -117,11 +117,11 @@ uint16_t Gameboy::PopStack16()
 
 
 
-uint8_t read_cart(const uint16_t address, const Cartridge& cart)
+uint8_t read_cart(const uint16_t address, const Cart& cart)
 {
 	const auto offset = address < 0x4000 ?
 		address : cart.rom_bank_offset + address;
-	assert(offset < Cartridge::info.rom_size);
+	assert(offset < Cart::info.rom_size);
 	return cart.banks[offset];
 }
 
@@ -161,7 +161,7 @@ uint8_t read_vram(const uint16_t address, const Memory& mem)
 }
 
 
-uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart)
+uint8_t read_cart_ram(const uint16_t address, const Cart& cart)
 {
 	debug_printf("Cartridge RAM read required at $%X\n", address);
 	if (cart.ram_bank_offset != 0x00) {
@@ -172,10 +172,10 @@ uint8_t read_cart_ram(const uint16_t address, const Cartridge& cart)
 }
 
 
-void write_cart(const uint16_t address, const uint8_t value, Cartridge* const cart)
+void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
-	if (cart->info.type == Cartridge::Type::RomOnly)
+	if (cart->info.type == Cart::Type::RomOnly)
 		return;
 
 	const auto eval_banks_offset = [cart] {
@@ -192,14 +192,14 @@ void write_cart(const uint16_t address, const uint8_t value, Cartridge* const ca
 		else
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 
-		if (cart->info.type >= Cartridge::Type::RomMBC1Ram) {
+		if (Cart::info.type >= Cart::Type::RomMBC1Ram) {
 			if (banking_mode && cart->banks_num_upper_bits) {
 				cart->ram_bank_offset = 
-					(cart->info.rom_size - 0xA000) + 
+					(Cart::info.rom_size - 0xA000) + 
 					0x2000 * cart->banks_num_upper_bits;
 			} else {
 				cart->ram_bank_offset =
-					cart->info.rom_size - 0xA000;
+					Cart::info.rom_size - 0xA000;
 			}
 		}
 	};
@@ -260,7 +260,7 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 }
 
 
-void write_cart_ram(const uint16_t address, const uint8_t value, Cartridge* const cart)
+void write_cart_ram(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
 	if (cart->ram_bank_offset != 0) {
@@ -377,14 +377,16 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 int_fast32_t eval_hram_offset(const uint16_t address)
 {
 	const auto offset = address - 0xFF80;
-	assert(offset >= 0 && offset < sizeof(Memory::hram));
+	assert(offset >= 0 && 
+	       static_cast<size_t>(offset) < sizeof(Memory::hram));
 	return offset;
 }
 
 int_fast32_t eval_oam_offset(const uint16_t address)
 {
 	const auto offset = address - 0xFE00;
-	assert(offset >= 0 && offset < sizeof(Memory::oam));
+	assert(offset >= 0 &&
+	       static_cast<size_t>(offset) < sizeof(Memory::oam));
 	return offset;
 }
 
@@ -392,14 +394,16 @@ int_fast32_t eval_wram_offset(const uint16_t address)
 {
 	const auto offset = address < 0xE000
 		? address - 0xC000 : address - 0xE000;
-	assert(offset >= 0 && offset < sizeof(Memory::wram));
+	assert(offset >= 0 &&
+	       static_cast<size_t>(offset) < sizeof(Memory::wram));
 	return offset;
 }
 
 int_fast32_t eval_vram_offset(const uint16_t address)
 {
 	const auto offset = address - 0x8000;
-	assert(offset >= 0 && offset < sizeof(Memory::vram));
+	assert(offset >= 0 &&
+	       static_cast<size_t>(offset) < sizeof(Memory::vram));
 	return offset;
 }
 

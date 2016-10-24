@@ -35,7 +35,7 @@ struct Gameboy
 	Keys keys;
 	HWState hwstate;
 	Memory memory;
-	Cartridge cart;
+	Cart cart;
 };
 
 extern owner<Gameboy*> create_gameboy(const char* rom_path);

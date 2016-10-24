@@ -4,7 +4,7 @@
 
 namespace gbx {
 
-struct Cartridge
+struct Cart
 {
 	enum class Type : uint8_t {
 		RomOnly = 0x00,
@@ -25,8 +25,8 @@ struct Cartridge
 		char internal_name[0x11];
 		int32_t rom_size;
 		int32_t ram_size;
-		Cartridge::Type type;
-		Cartridge::System system;
+		Cart::Type type;
+		Cart::System system;
 	} info;
 
 	union {
@@ -46,16 +46,16 @@ struct Cartridge
 constexpr const int32_t kCartridgeMaxSize = 64_Kib;
 constexpr const int32_t kCartridgeMinSize = 32_Kib;
 
-constexpr const Cartridge::Type kSupportedCartridgeTypes[] {
-	Cartridge::Type::RomOnly,
-	Cartridge::Type::RomMBC1,
-	Cartridge::Type::RomMBC1Ram,
-	Cartridge::Type::RomMBC1RamBattery
+constexpr const Cart::Type kSupportedCartridgeTypes[] {
+	Cart::Type::RomOnly,
+	Cart::Type::RomMBC1,
+	Cart::Type::RomMBC1Ram,
+	Cart::Type::RomMBC1RamBattery
 };
 
-constexpr const Cartridge::System kSupportedCartridgeSystems[] {
-	Cartridge::System::Gameboy,
-	Cartridge::System::GameboyColorCompat
+constexpr const Cart::System kSupportedCartridgeSystems[] {
+	Cart::System::Gameboy,
+	Cart::System::GameboyColorCompat
 };
 
 
