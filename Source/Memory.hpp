@@ -1,7 +1,6 @@
 #ifndef GBX_MEMORY_HPP_
 #define GBX_MEMORY_HPP_
 #include "Common.hpp"
-#include "Cartridge.hpp"
 
 namespace gbx {
 

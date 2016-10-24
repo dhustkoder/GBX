@@ -2,6 +2,7 @@
 #define GBX_GAMEBOY_HPP_
 #include "Cpu.hpp"
 #include "Gpu.hpp"
+#include "Cart.hpp"
 #include "Keys.hpp"
 #include "HWState.hpp"
 #include "Memory.hpp"

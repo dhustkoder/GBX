@@ -4,7 +4,6 @@
 #include <signal.h>
 #include <assert.h>
 #include "Instructions.hpp"
-#include "Cartridge.hpp"
 #include "Gameboy.hpp"
 
 namespace gbx {
@@ -293,7 +292,7 @@ bool parse_cartridge_header(FILE* const file, Cart::Info* const cinfo)
 	//case 0x05: cinfo->rom_size = 1_Mib; break;   // 64 banks
 	//case 0x06: cinfo->rom_size = 2_Mib; break;   // 128 banks
 	default:
-		fprintf(stderr,"couldn't eval ROM information\n");
+		fprintf(stderr,"Couldn't eval ROM information\n");
 		return false;
 	}
 
@@ -303,10 +302,20 @@ bool parse_cartridge_header(FILE* const file, Cart::Info* const cinfo)
 	case 0x02: cinfo->ram_size = 8_Kib; break;  // 1 bank
 	case 0x03: cinfo->ram_size = 32_Kib; break; // 4 banks
 	default:
-		fprintf(stderr, "couldn't eval RAM information\n");
+		fprintf(stderr, "Couldn't eval RAM information\n");
 		return false;
 	}
 
+	cinfo->short_type = get_cart_short_type(cinfo->type);
+	
+	if (cinfo->short_type == Cart::ShortType::RomMBC2) {
+		if (cinfo->rom_size <= 256_Kib && cinfo->ram_size == 0) {
+			cinfo->ram_size = 512;
+		} else {
+			fprintf(stderr, "MBC2 with invalid size codes!\n");
+			return false;
+		}
+	}
 
 	printf("CARTRIDGE INFO\n"
 	       "NAME: %s\n"

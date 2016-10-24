@@ -1,5 +1,5 @@
-#ifndef GBX_CARTRIDGE_HPP_
-#define GBX_CARTRIDGE_HPP_
+#ifndef GBX_CART_HPP_
+#define GBX_CART_HPP_
 #include "Common.hpp"
 
 namespace gbx {
@@ -14,6 +14,11 @@ struct Cart
 		RomMBC2 = 0x05,
 		RomMBC2Battery = 0x06
 	};
+	enum class ShortType : uint8_t {
+		RomOnly,
+		RomMBC1,
+		RomMBC2
+	};
 	enum class System : uint8_t {
 		Gameboy, 
 		GameboyColorCompat,
@@ -26,6 +31,7 @@ struct Cart
 		int32_t rom_size;
 		int32_t ram_size;
 		Cart::Type type;
+		Cart::ShortType short_type;
 		Cart::System system;
 	} info;
 
@@ -50,13 +56,24 @@ constexpr const Cart::Type kSupportedCartridgeTypes[] {
 	Cart::Type::RomOnly,
 	Cart::Type::RomMBC1,
 	Cart::Type::RomMBC1Ram,
-	Cart::Type::RomMBC1RamBattery
+	Cart::Type::RomMBC1RamBattery,
 };
 
 constexpr const Cart::System kSupportedCartridgeSystems[] {
 	Cart::System::Gameboy,
 	Cart::System::GameboyColorCompat
 };
+
+constexpr Cart::ShortType get_cart_short_type(const Cart::Type type)
+{
+	using Type = Cart::Type;
+	using ShortType = Cart::ShortType;
+	return (type > Type::RomOnly && type <= Type::RomMBC1RamBattery)
+	    ? ShortType::RomMBC1
+	    : (type > Type::RomMBC1RamBattery && type <= Type::RomMBC2Battery)
+	    ? ShortType::RomMBC2
+	    : ShortType::RomOnly;
+}
 
 
 } // namespace gbx
