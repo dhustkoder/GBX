@@ -51,7 +51,11 @@ struct Cart
 	};
 	
 	int32_t rom_bank_offset;
-	int32_t ram_bank_offset;
+	union {
+		int32_t ram_bank_offset;
+		int32_t ram_enabled;
+	};
+
 	uint8_t banks[];
 };
 

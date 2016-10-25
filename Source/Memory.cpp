@@ -7,6 +7,8 @@
 
 namespace gbx {
 
+static int_fast32_t eval_cart_rom_offset(const Cart& cart, uint16_t address);
+static int_fast32_t eval_cart_ram_offset(const Cart& cart, uint16_t address);
 static int_fast32_t eval_hram_offset(uint16_t address);
 static int_fast32_t eval_oam_offset(uint16_t address);
 static int_fast32_t eval_wram_offset(uint16_t address);
@@ -119,8 +121,7 @@ uint16_t Gameboy::PopStack16()
 
 uint8_t read_cart(const uint16_t address, const Cart& cart)
 {
-	const auto offset = address < 0x4000 ?
-		address : cart.rom_bank_offset + address;
+	const auto offset = eval_cart_rom_offset(cart, address);
 	assert(offset < Cart::info.rom_size);
 	return cart.banks[offset];
 }
@@ -164,8 +165,8 @@ uint8_t read_vram(const uint16_t address, const Memory& mem)
 uint8_t read_cart_ram(const uint16_t address, const Cart& cart)
 {
 	debug_printf("Cartridge RAM read required at $%X\n", address);
-	if (cart.ram_bank_offset != 0x00) {
-		const auto offset = cart.ram_bank_offset + address;
+	if (cart.ram_enabled) {
+		const auto offset = eval_cart_ram_offset(cart, address);
 		return cart.banks[offset];
 	}
 	return 0x00;
@@ -285,8 +286,8 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 void write_cart_ram(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
-	if (cart->ram_bank_offset != 0) {
-		const auto offset = cart->ram_bank_offset + address;
+	if (cart->ram_enabled) {
+		const auto offset = eval_cart_ram_offset(*cart, address);
 		cart->banks[offset] = value;
 	}
 }
@@ -393,6 +394,24 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 			byte = gb->Read8(source_addr++);
 	}
 	gb->cpu.clock += 0x288;
+}
+
+
+int_fast32_t eval_cart_rom_offset(const Cart& cart, const uint16_t address)
+{
+	assert(address < 0x8000);
+	const auto offset = address < 0x4000
+		? address : cart.rom_bank_offset + address;
+	assert(offset >= 0 && address < Cart::info.rom_size);
+	return offset;
+}
+
+int_fast32_t eval_cart_ram_offset(const Cart& cart, const uint16_t address)
+{
+	const auto offset = cart.ram_bank_offset + address;
+	assert(offset >= 0 &&
+	       offset < (Cart::info.rom_size + Cart::info.ram_size));
+	return offset;
 }
 
 
