@@ -72,7 +72,7 @@ constexpr const Cart::System kSupportedCartridgeSystems[] {
 	Cart::System::GameboyColorCompat
 };
 
-constexpr Cart::ShortType get_cart_short_type(const Cart::Type type)
+constexpr Cart::ShortType get_short_type(const Cart::Type type)
 {
 	using Type = Cart::Type;
 	using ShortType = Cart::ShortType;

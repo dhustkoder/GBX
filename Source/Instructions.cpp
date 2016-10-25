@@ -47,7 +47,7 @@ static uint8_t inc(const uint8_t first, Cpu* const cpu)
 {
 	// flags effect: Z 0 H -
 	const uint8_t result = first + 1;
-	uint8_t flags = cpu->GetFlags(Cpu::Flag_C);
+	uint8_t flags = get_flags(*cpu, Cpu::Flag_C);
 
 	if (fcheck_z(result))
 		flags |= Cpu::Flag_Z;
@@ -63,7 +63,7 @@ static uint8_t dec(const uint8_t first, Cpu* const cpu)
 {
 	// flags effect: Z 1 H -
 	const uint8_t result = first - 1;
-	uint8_t flags = Cpu::Flag_N | cpu->GetFlags(Cpu::Flag_C);
+	uint8_t flags = Cpu::Flag_N | get_flags(*cpu, Cpu::Flag_C);
 
 	if (fcheck_z(result))
 		flags |= Cpu::Flag_Z;
@@ -87,7 +87,7 @@ static void add_hl_nn(const uint16_t second, Cpu* const cpu)
 	if ((result ^ first ^ second) & 0x1000)
 		hc |= Cpu::Flag_H;
 
-	cpu->f = cpu->GetFlags(Cpu::Flag_Z) | hc;
+	cpu->f = get_flags(*cpu, Cpu::Flag_Z) | hc;
 	cpu->hl = static_cast<uint16_t>(result);
 }
 
@@ -133,7 +133,7 @@ static void sub_a_n(const uint8_t second, Cpu* const cpu)
 static void adc_a_n(const uint8_t second, Cpu* const cpu)
 {
 	// flags effect Z 0 H C
-	const uint8_t carry = cpu->GetFlags(Cpu::Flag_C) ? 1 : 0;
+	const uint8_t carry = get_flags(*cpu, Cpu::Flag_C) ? 1 : 0;
 	const uint8_t first = cpu->a;
 	const uint16_t result = first + (second + carry);
 	uint8_t flags = 0x00;
@@ -154,7 +154,7 @@ static void sbc_a_n(const uint8_t second, Cpu* const cpu)
 {
 	// flags effect: Z 1 H C
 	const uint8_t first = cpu->a;
-	const uint16_t sec_n_carry = cpu->GetFlags(Cpu::Flag_C) ? second + 1 : second;
+	const uint16_t sec_n_carry = get_flags(*cpu, Cpu::Flag_C) ? second + 1 : second;
 	const uint32_t result = first - sec_n_carry;
 	uint8_t flags = Cpu::Flag_N;
 
@@ -515,7 +515,7 @@ void rla_17(Gameboy* const gb)
 	// RLA ( 0 0 0 C )
 	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit7 = a & 0x80;
-	const uint8_t old_carry = gb->cpu.GetFlags(Cpu::Flag_C);
+	const uint8_t old_carry = get_flags(gb->cpu, Cpu::Flag_C);
 	const uint8_t result = a << 1;
 	gb->cpu.a = old_carry ? (result | 0x01) : result;
 	gb->cpu.f = old_bit7 ? Cpu::Flag_C : 0x00;
@@ -597,7 +597,7 @@ void rra_1F(Gameboy* const gb)
 	// RRA  ( 0 0 0 C )
 	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit0 = a & 0x01;
-	const uint8_t old_carry = gb->cpu.GetFlags(Cpu::Flag_C);
+	const uint8_t old_carry = get_flags(gb->cpu, Cpu::Flag_C);
 	const uint8_t result = a >> 1;
 	gb->cpu.a = old_carry ? (result | 0x80) : result;
 	gb->cpu.f = old_bit0 ? Cpu::Flag_C : 0x00;
@@ -614,7 +614,7 @@ void rra_1F(Gameboy* const gb)
 void jr_20(Gameboy* const gb) 
 {
 	// JR NZ, r8 ( jump if Z flags is reset )
-	jr(gb->cpu.GetFlags(Cpu::Flag_Z) == 0, gb);
+	jr(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
 }
 
 
@@ -708,7 +708,7 @@ void daa_27(Gameboy* const gb)
 void jr_28(Gameboy* const gb) 
 {
 	// JR Z, r8 ( jump if Z flag is set )
-	jr(gb->cpu.GetFlags(Cpu::Flag_Z) != 0, gb);
+	jr(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
 }
 
 
@@ -775,7 +775,7 @@ void cpl_2F(Gameboy* const gb)
 	// CPL ( Complement A register, flip all bits )
 	// flags affected: - 1 1 -
 	gb->cpu.a = ~gb->cpu.a;
-	gb->cpu.SetFlags(Cpu::Flag_N | Cpu::Flag_H);
+	set_flags(Cpu::Flag_N | Cpu::Flag_H, &gb->cpu);
 }
 
 
@@ -788,7 +788,7 @@ void cpl_2F(Gameboy* const gb)
 void jr_30(Gameboy* const gb) 
 {
 	// JR NC, r8 ( jump if C flag is reset )
-	jr(gb->cpu.GetFlags(Cpu::Flag_C) == 0, gb);
+	jr(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
 }
 
 
@@ -861,7 +861,7 @@ void scf_37(Gameboy* const gb)
 void jr_38(Gameboy* const gb) 
 {
 	// JR C, r8 ( jump if C flag is set )
-	jr(gb->cpu.GetFlags(Cpu::Flag_C) != 0, gb);
+	jr(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
 }
 
 
@@ -923,8 +923,8 @@ void ld_3E(Gameboy* const gb)
 void ccf_3F(Gameboy* const gb)
 {
 	// CCF ( - 0 0 C )
-	const auto old_zero = gb->cpu.GetFlags(Cpu::Flag_Z);
-	const auto old_carry = gb->cpu.GetFlags(Cpu::Flag_C);
+	const auto old_zero = get_flags(gb->cpu, Cpu::Flag_Z);
+	const auto old_carry = get_flags(gb->cpu, Cpu::Flag_C);
 	gb->cpu.f = old_carry ? old_zero : old_zero | Cpu::Flag_C;
 }
 
@@ -1343,7 +1343,7 @@ void ld_75(Gameboy* const gb)
 
 void halt_76(Gameboy* const gb)
 {
-	gb->hwstate.SetFlags(HWState::CpuHalt);
+	set_flags(HWState::CpuHalt, &gb->hwstate);
 }
 
 
@@ -1909,7 +1909,7 @@ void cp_BF(Gameboy* const gb)
 void ret_C0(Gameboy* const gb) 
 { 
 	// RET NZ
-	ret(gb->cpu.GetFlags(Cpu::Flag_Z) == 0, gb);
+	ret(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
 }
 
 
@@ -1924,7 +1924,7 @@ void pop_C1(Gameboy* const gb)
 void jp_C2(Gameboy* const gb) 
 {
 	// JP NZ, a16
-	jp(gb->cpu.GetFlags(Cpu::Flag_Z) == 0, gb);
+	jp(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
 }
 
 
@@ -1939,7 +1939,7 @@ void jp_C3(Gameboy* const gb)
 void call_C4(Gameboy* const gb) 
 { 
 	// CALL NZ, a16
-	call(gb->cpu.GetFlags(Cpu::Flag_Z) == 0, gb);
+	call(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
 }
 
 
@@ -1970,7 +1970,7 @@ void rst_C7(Gameboy* const gb)
 void ret_C8(Gameboy* const gb) 
 {
 	// RET Z
-	ret(gb->cpu.GetFlags(Cpu::Flag_Z) != 0, gb);
+	ret(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
 }
 
 
@@ -1988,7 +1988,7 @@ void ret_C9(Gameboy* const gb)
 void jp_CA(Gameboy* const gb) 
 {
 	// JP Z, a16
-	jp(gb->cpu.GetFlags(Cpu::Flag_Z) != 0, gb);
+	jp(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
 }
 
 
@@ -2017,7 +2017,7 @@ void prefix_cb(Gameboy* const gb)
 void call_CC(Gameboy* const gb) 
 {
 	// CALL Z, a16
-	call(gb->cpu.GetFlags(Cpu::Flag_Z) != 0, gb);
+	call(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
 }
 
 
@@ -2053,7 +2053,7 @@ void rst_CF(Gameboy* const gb)
 void ret_D0(Gameboy* const gb) 
 { 
 	// RET NC
-	ret(gb->cpu.GetFlags(Cpu::Flag_C) == 0, gb);
+	ret(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
 }
 
 
@@ -2068,14 +2068,14 @@ void pop_D1(Gameboy* const gb)
 void jp_D2(Gameboy* const gb) 
 { 
 	// JP NC, a16
-	jp(gb->cpu.GetFlags(Cpu::Flag_C) == 0, gb);
+	jp(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
 }
 
 // MISSING D3 ----
 void call_D4(Gameboy* const gb)
 {
 	// CALL NC, a16
-	call(gb->cpu.GetFlags(Cpu::Flag_C) == 0, gb);
+	call(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
 }
 
 
@@ -2104,7 +2104,7 @@ void rst_D7(Gameboy* const gb)
 void ret_D8(Gameboy* const gb) 
 { 
 	// RET C
-	ret(gb->cpu.GetFlags(Cpu::Flag_C) != 0, gb);
+	ret(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
 }
 
 
@@ -2114,7 +2114,7 @@ void reti_D9(Gameboy* const gb)
 	// RETI
 	// return and enable interrupts
 	gb->cpu.pc = gb->PopStack16();
-	gb->hwstate.EnableIntMaster();	
+	set_flags(HWState::IntMasterEnable, &gb->hwstate);
 }
 
 
@@ -2122,7 +2122,7 @@ void reti_D9(Gameboy* const gb)
 void jp_DA(Gameboy* const gb)
 {
 	// JP C, a16
-	jp(gb->cpu.GetFlags(Cpu::Flag_C) != 0, gb);
+	jp(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
 }
 
 // MISSING DB -----
@@ -2131,7 +2131,7 @@ void jp_DA(Gameboy* const gb)
 void call_DC(Gameboy* const gb)
 {
 	// CALL C, a16
-	call(gb->cpu.GetFlags(Cpu::Flag_C) != 0, gb);
+	call(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
 }
 
 
@@ -2297,7 +2297,8 @@ void di_F3(Gameboy* const gb)
 {
 	// DI
 	// disable interrupts
-	gb->hwstate.DisableIntMaster(); 
+	clear_flags(HWState::IntMasterEnable | HWState::IntMasterActive,
+	            &gb->hwstate);
 }
 
 
@@ -2369,7 +2370,7 @@ void ld_FA(Gameboy* const gb)
 void ei_FB(Gameboy* const gb)
 { 
 	// EI ( enable interrupts )
-	gb->hwstate.EnableIntMaster();	
+	set_flags(HWState::IntMasterEnable, &gb->hwstate);
 }
 
 

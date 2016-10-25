@@ -28,22 +28,6 @@ struct HWState
 		TimerStop = 0x08
 	};
 
-	bool GetIntMaster() const;
-	bool GetIntActive() const;
-	Flags GetFlags(Flags hwflags) const;
-	uint8_t GetPendentInts() const;
-	void EnableIntMaster();
-	void EnableIntActive();
-	void DisableIntMaster();
-
-	void SetFlags(Flags hwflags);
-	void ClearFlags(Flags hwflags);
-
-	void EnableInt(Interrupt inter);
-	void DisableInt(Interrupt inter);
-	void RequestInt(Interrupt inter);
-	void ClearInt(Interrupt inter);
-
 	int16_t tima_clock;
 	int16_t tima_clock_limit;
 	int16_t div_clock;
@@ -56,78 +40,67 @@ struct HWState
 	uint8_t int_flags;
 };
 
-inline bool HWState::GetIntMaster() const 
-{
-	return (flags & IntMasterEnable) != 0;
-}
 
-inline bool HWState::GetIntActive() const 
+constexpr HWState::Flags operator|(const HWState::Flags f1, const HWState::Flags f2)
 {
-	return (flags & IntMasterActive) != 0;
+	return static_cast<HWState::Flags>
+		(static_cast<uint8_t>(f1) | static_cast<uint8_t>(f2));
 }
 
 
-inline HWState::Flags HWState::GetFlags(const Flags hwflags) const
+constexpr HWState::Flags operator&(const HWState::Flags f1, const HWState::Flags f2)
 {
-	return static_cast<Flags>(flags & hwflags);
-}
-
-
-inline uint8_t HWState::GetPendentInts() const
-{
-	return 0x1f & int_enable & int_flags;
+	return static_cast<HWState::Flags>
+		(static_cast<uint8_t>(f1) & static_cast<uint8_t>(f2));
 }
 
 
 
-inline void HWState::EnableIntMaster() 
+inline uint8_t get_pendent_interrupts(const HWState& hwstate)
 {
-	flags |= IntMasterEnable;
-}
-
-inline void HWState::EnableIntActive()
-{
-	flags |= IntMasterActive;
-}
-
-inline void HWState::DisableIntMaster() 
-{
-	flags &= ~(IntMasterEnable 
-	           | IntMasterActive);
+	return 0x1f & hwstate.int_enable & hwstate.int_flags;
 }
 
 
-inline void HWState::SetFlags(const Flags hwflags)
+inline HWState::Flags get_flags(const HWState& hwstate, const HWState::Flags hwflags)
 {
-	flags |= hwflags;
-}
-
-inline void HWState::ClearFlags(const Flags hwflags)
-{
-	flags &= ~hwflags;
+	return static_cast<HWState::Flags>(hwstate.flags & hwflags);
 }
 
 
-
-inline void HWState::EnableInt(const Interrupt inter)
+inline void set_flags(const HWState::Flags hwflags, HWState* const hwstate)
 {
-	int_enable |= inter.mask;
-}
-
-inline void HWState::DisableInt(const Interrupt inter)
-{
-	int_enable &= ~inter.mask;
-}
-
-inline void HWState::RequestInt(const Interrupt inter)
-{
-	int_flags |= inter.mask;
+	hwstate->flags |= hwflags;
 }
 
 
-inline void HWState::ClearInt(const Interrupt inter)
+inline void clear_flags(const HWState::Flags hwflags, HWState* const hwstate)
 {
-	int_flags &= ~inter.mask;
+	hwstate->flags &= ~hwflags;
+}
+
+
+inline void enable_interrupt(const Interrupt inter, HWState* const hwstate)
+{
+	hwstate->int_enable |= inter.mask;
+}
+
+
+inline void disable_interrupt(const Interrupt inter, HWState* const hwstate)
+{
+	hwstate->int_enable &= ~inter.mask;
+}
+
+
+inline void request_interrupt(const Interrupt inter, HWState* const hwstate)
+{
+	hwstate->int_flags |= inter.mask;
+}
+
+
+inline void clear_interrupt(const Interrupt inter, HWState* const hwstate)
+{
+	hwstate->int_flags &= ~inter.mask;
 }
 
 

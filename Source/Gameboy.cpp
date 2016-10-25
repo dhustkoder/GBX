@@ -92,13 +92,14 @@ void Gameboy::Run(const int32_t cycles)
 
 int16_t step_machine(Gameboy* const gb)
 {
-	if (!gb->hwstate.GetFlags(HWState::CpuHalt)) {
-		const volatile auto before = gb->cpu.clock;
+	if (!get_flags(gb->hwstate, HWState::CpuHalt)) {
+		const int32_t before = gb->cpu.clock;
 		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
 		main_instructions[opcode](gb);
-		const volatile auto after = gb->cpu.clock;
-		const auto step_cycles = clock_table[opcode];
+		const uint8_t step_cycles = clock_table[opcode];
+		const int32_t after = gb->cpu.clock;
 		gb->cpu.clock += step_cycles;
+		assert((after - before) <= INT16_MAX);
 		const auto add_cycles = static_cast<int16_t>(after - before);
 		return step_cycles + add_cycles;
 	}
@@ -120,7 +121,7 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 		if (hwstate->tima_clock >= hwstate->tima_clock_limit) {
 			if (++hwstate->tima == 0x00) {
 				hwstate->tima = hwstate->tma;
-				hwstate->RequestInt(interrupts::timer);
+				request_interrupt(interrupts::timer, hwstate);
 			}
 			hwstate->tima_clock -= hwstate->tima_clock_limit;
 		}
@@ -131,26 +132,28 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 void update_interrupts(Gameboy* const gb)
 {
 	auto& hwstate = gb->hwstate;
-	const uint8_t pendents = hwstate.GetPendentInts();
+	const uint8_t pendents = get_pendent_interrupts(hwstate);
+	const auto flags = hwstate.flags;
 
-	if (pendents && hwstate.GetFlags(HWState::CpuHalt))
-		hwstate.ClearFlags(HWState::CpuHalt);
+	if (pendents && (flags & HWState::CpuHalt))
+		clear_flags(HWState::CpuHalt, &hwstate);
 
-	if (!hwstate.GetIntMaster()) {
+	if (!(flags & HWState::IntMasterEnable)) {
 		return;
-	} else if (!hwstate.GetIntActive()) {
-		hwstate.EnableIntActive();
+	} else if (!(flags & HWState::IntMasterActive)) {
+		set_flags(HWState::IntMasterActive, &hwstate);
 		return;
 	}
 
 	if (!pendents)
 		return;
 
-	hwstate.DisableIntMaster();
+	clear_flags(HWState::IntMasterEnable | HWState::IntMasterActive,
+	            &gb->hwstate);
 	
 	for (const auto inter : interrupts::array) {
 		if (pendents & inter.mask) {
-			hwstate.ClearInt(inter);
+			clear_interrupt(inter, &hwstate);
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
 			gb->cpu.clock += 16;
@@ -304,7 +307,7 @@ bool parse_cartridge_header(FILE* const file, Cart::Info* const cinfo)
 		return false;
 	}
 
-	cinfo->short_type = get_cart_short_type(cinfo->type);
+	cinfo->short_type = get_short_type(cinfo->type);
 	
 	if (cinfo->short_type == Cart::ShortType::RomMBC2) {
 		if (cinfo->rom_size <= 256_Kib && cinfo->ram_size == 0) {

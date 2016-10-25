@@ -37,7 +37,7 @@ static uint8_t rl(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value << 1;
-	if (cpu->GetFlags(Cpu::Flag_C)) {
+	if (get_flags(*cpu, Cpu::Flag_C)) {
 		result |= 0x01;
 		cpu->f = 0;
 	} else {
@@ -55,7 +55,7 @@ static uint8_t rr(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value >> 1;
-	if (cpu->GetFlags(Cpu::Flag_C)) {
+	if (get_flags(*cpu, Cpu::Flag_C)) {
 		result |= 0x80;
 		cpu->f = 0;
 	} else {
@@ -118,7 +118,7 @@ static void bit_n(const uint8_t bit, const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 1 -
 	cpu->f = fcheck_z(value & (0x01 << bit))
-	         | Cpu::Flag_H | cpu->GetFlags(Cpu::Flag_C);
+	         | Cpu::Flag_H | get_flags(*cpu, Cpu::Flag_C);
 }
 
 
