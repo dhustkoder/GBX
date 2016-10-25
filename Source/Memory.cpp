@@ -177,10 +177,11 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
 
 	const auto eval_banks_mbc1 = [cart] {
-		const auto banking_mode = cart->mbc1.banking_mode;
+		const auto mbc1 = cart->mbc1;
+		const auto banking_mode = mbc1.banking_mode;
 		const auto rom_bank_num = banking_mode
-			? cart->mbc1.banks_num_lower_bits 
-			: cart->mbc1.banks_num;
+			? mbc1.banks_num_lower_bits 
+			: mbc1.banks_num;
 
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
@@ -190,13 +191,15 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 		} else {
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 		}
-
-		if (banking_mode && cart->mbc1.banks_num_upper_bits) {
-			cart->ram_bank_offset =
-			 (Cart::info.rom_size - 0xA000) + 
-			 0x2000 * cart->mbc1.banks_num_upper_bits;
-		} else {
-			cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
+		
+		if (Cart::info.type >= Cart::Type::RomMBC1Ram) {
+			if (banking_mode && mbc1.banks_num_upper_bits) {
+				cart->ram_bank_offset =
+				  (Cart::info.rom_size - 0xA000) + 
+				  0x2000 * mbc1.banks_num_upper_bits;
+			} else {
+				cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
+			}
 		}
 	};
 

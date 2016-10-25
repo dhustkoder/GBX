@@ -25,7 +25,6 @@ struct HWState
 		IntMasterEnable = 0x01,
 		IntMasterActive = 0x02,
 		CpuHalt = 0x04,
-		TimerStop = 0x08
 	};
 
 	int16_t tima_clock;
