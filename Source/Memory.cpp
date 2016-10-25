@@ -14,13 +14,13 @@ static int_fast32_t eval_oam_offset(uint16_t address);
 static int_fast32_t eval_wram_offset(uint16_t address);
 static int_fast32_t eval_vram_offset(uint16_t address);
 
-static uint8_t read_cart(uint16_t address, const Cart& cart);
-static uint8_t read_hram(uint16_t address, const Gameboy& gb);
-static uint8_t read_oam(uint16_t address, const Memory& mem);
-static uint8_t read_wram(uint16_t address, const Memory& mem);
-static uint8_t read_vram(uint16_t address, const Memory& mem);
-static uint8_t read_cart_ram(uint16_t address, const Cart& cart);
-static uint8_t read_io(uint16_t address, const Gameboy& gb);
+static uint8_t read_cart(const Cart& cart, uint16_t address);
+static uint8_t read_hram(const Gameboy& gb, uint16_t address);
+static uint8_t read_oam(const Memory& mem, uint16_t address);
+static uint8_t read_wram(const Memory& mem, uint16_t address);
+static uint8_t read_vram(const Memory& mem, uint16_t address);
+static uint8_t read_cart_ram(const Cart& cart, uint16_t address);
+static uint8_t read_io(const Gameboy& gb, uint16_t address);
 
 static void write_cart(uint16_t address, uint8_t value, Cart* cart);
 static void write_hram(uint16_t address, uint8_t value, Gameboy* gb);
@@ -40,19 +40,19 @@ static void dma_transfer(uint8_t value, Gameboy* gb);
 uint8_t Gameboy::Read8(const uint16_t address) const 
 {
 	if (address < 0x8000)
-		return read_cart(address, cart);
+		return read_cart(cart, address);
 	else if (address >= 0xFF80)
-		return read_hram(address, *this);
+		return read_hram(*this, address);
 	else if (address >= 0xFF00)
-		return read_io(address, *this);
+		return read_io(*this, address);
 	else if (address >= 0xFE00)
-		return read_oam(address, memory);
+		return read_oam(memory, address);
 	else if (address >= 0xC000)
-		return read_wram(address, memory);
+		return read_wram(memory, address);
 	else if (address >= 0xA000)
-		return read_cart_ram(address, cart);
+		return read_cart_ram(cart, address);
 	else
-		return read_vram(address, memory);
+		return read_vram(memory, address);
 }
 
 
@@ -119,7 +119,7 @@ uint16_t Gameboy::PopStack16()
 
 
 
-uint8_t read_cart(const uint16_t address, const Cart& cart)
+uint8_t read_cart(const Cart& cart, const uint16_t address)
 {
 	const auto offset = eval_cart_rom_offset(cart, address);
 	assert(offset < Cart::info.rom_size);
@@ -127,7 +127,7 @@ uint8_t read_cart(const uint16_t address, const Cart& cart)
 }
 
 
-uint8_t read_hram(const uint16_t address, const Gameboy& gb)
+uint8_t read_hram(const Gameboy& gb, const uint16_t address)
 {
 	if (address != 0xFFFF) {
 		const auto offset = eval_hram_offset(address);
@@ -138,7 +138,7 @@ uint8_t read_hram(const uint16_t address, const Gameboy& gb)
 }
 
 
-uint8_t read_oam(const uint16_t address, const Memory& mem)
+uint8_t read_oam(const Memory& mem, const uint16_t address)
 {
 	if (address < 0xFEA0) {
 		const auto offset = eval_oam_offset(address);
@@ -148,21 +148,21 @@ uint8_t read_oam(const uint16_t address, const Memory& mem)
 }
 
 
-uint8_t read_wram(const uint16_t address, const Memory& mem)
+uint8_t read_wram(const Memory& mem, const uint16_t address)
 {
 	const auto offset = eval_wram_offset(address);
 	return mem.wram[offset];
 }
 
 
-uint8_t read_vram(const uint16_t address, const Memory& mem)
+uint8_t read_vram(const Memory& mem, const uint16_t address)
 {
 	const auto offset = eval_vram_offset(address);
 	return mem.vram[offset];
 }
 
 
-uint8_t read_cart_ram(const uint16_t address, const Cart& cart)
+uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 {
 	debug_printf("Cartridge RAM read required at $%X\n", address);
 	if (cart.ram_enabled) {
@@ -285,7 +285,7 @@ void write_vram(const uint16_t address, const uint8_t value, Memory* const mem)
 
 void write_cart_ram(const uint16_t address, const uint8_t value, Cart* const cart)
 {
-	debug_printf("Cartridge RAM write value $%X required at $%X\n", value, address);
+	debug_printf("Cartridge RAM: write $%X to $%X\n", value, address);
 	if (cart->ram_enabled) {
 		const auto offset = eval_cart_ram_offset(*cart, address);
 		cart->banks[offset] = value;
@@ -294,7 +294,7 @@ void write_cart_ram(const uint16_t address, const uint8_t value, Cart* const car
 
 
 
-uint8_t read_io(const uint16_t address, const Gameboy& gb)
+uint8_t read_io(const Gameboy& gb, const uint16_t address)
 {
 	switch (address) {
 	case 0xFF00: return gb.keys.value;
@@ -315,7 +315,7 @@ uint8_t read_io(const uint16_t address, const Gameboy& gb)
 	case 0xFF4A: return gb.gpu.wy;
 	case 0xFF4B: return gb.gpu.wx;
 	default:
-		debug_printf("required read hardware io address: %4x\n", address);
+		debug_printf("Hardware I/O: read $%X\n", address);
 		break;
 	}
 
@@ -345,7 +345,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF4A: gb->gpu.wy = value; break;
 	case 0xFF4B: gb->gpu.wx = value; break;
 	default:
-		debug_printf("required write hardware io address: %4x\n", address);
+		debug_printf("Hardware I/O: write $%X to $%X\n", value, address);
 		break;
 	}
 }

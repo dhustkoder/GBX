@@ -294,7 +294,8 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 	for (size_t i = 0; i < sizeof(mem.oam); i += 4) {
 		const int ypos = mem.oam[i] - 16;
 		const int xpos = mem.oam[i + 1] - 8;
-		if (ly < ypos || ly >= (ypos+yres) || xpos <= -8)
+		if (ly < ypos || ly >= (ypos+yres) ||
+		    xpos <= -8 || xpos >= 160)
 			continue;
 
 		const auto ly_ypos_diff = ly - ypos;
