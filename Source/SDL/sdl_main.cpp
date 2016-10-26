@@ -309,9 +309,5 @@ void quit_sdl()
 }
 
 
-
-
-
-
 } // anonymous namespace
 

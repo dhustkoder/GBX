@@ -76,30 +76,6 @@ constexpr const Cart::System kSupportedCartridgeSystems[] {
 	Cart::System::GameboyColorCompat
 };
 
-constexpr Cart::ShortType get_short_type(const Cart::Type type)
-{
-	using Type = Cart::Type;
-	using ShortType = Cart::ShortType;
-	return (type > Type::RomOnly && type <= Type::RomMBC1RamBattery)
-	    ? ShortType::RomMBC1
-	    : (type > Type::RomMBC1RamBattery && type <= Type::RomMBC2Battery)
-	    ? ShortType::RomMBC2
-	    : ShortType::RomOnly;
-}
-
-
-
-inline void enable_cart_ram(Cart* const cart)
-{
-	cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
-}
-
-inline void disable_cart_ram(Cart* const cart)
-{
-	cart->ram_bank_offset = 0x00;
-}
-
-
 
 } // namespace gbx
 #endif

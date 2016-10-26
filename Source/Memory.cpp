@@ -177,6 +177,13 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
 
+	const auto enable_cart_ram = [cart] {
+		cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
+	};
+	const auto disable_cart_ram = [cart] {
+		cart->ram_bank_offset = 0x00;
+	};
+
 	const auto eval_banks_mbc1 = [cart] {
 		const auto mbc1 = cart->mbc1;
 		const auto banking_mode = mbc1.banking_mode;
@@ -237,10 +244,10 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 				eval_banks_mbc1();
 			}
 		} else if ((value & 0x0F) == 0x0A) {
-			enable_cart_ram(cart);
+			enable_cart_ram();
 			eval_banks_mbc1();
 		} else {
-			disable_cart_ram(cart);
+			disable_cart_ram();
 		}
 	} else if (Cart::info.short_type == Cart::ShortType::RomMBC2 &&
 	           address <= 0x3FFF && test_bit(0, get_high_byte(address))) {
@@ -252,9 +259,9 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 				eval_banks_mbc2();
 			}
 		} else if ((value & 0x0F) == 0x0A) {
-			enable_cart_ram(cart);
+			enable_cart_ram();
 		} else {
-			disable_cart_ram(cart);
+			disable_cart_ram();
 		}
 	}
 }

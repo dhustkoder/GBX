@@ -226,7 +226,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 
 
 bool fill_cart_info(FILE* const file)
-{	
+{
 	const auto read_buff = [=](long int offset, size_t size, void* buffer) {
 		fseek(file, offset, SEEK_SET);
 		fread(buffer, 1, size, file);
@@ -254,7 +254,7 @@ bool fill_cart_info(FILE* const file)
 	}
 
 	cinfo.type = static_cast<Cart::Type>(read_byte(0x147));
-	
+
 	const auto is_supported_type = [](const Cart::Type type) {
 		for (const auto supported_type : kSupportedCartridgeTypes)
 			if (supported_type == type)
@@ -276,6 +276,16 @@ bool fill_cart_info(FILE* const file)
 		fprintf(stderr, "Cartridge system %u not supported.\n",
 		        static_cast<unsigned>(cinfo.system));
 		return false;
+	}
+
+	if (cinfo.type >= Cart::Type::RomMBC1 &&
+	     cinfo.type <= Cart::Type::RomMBC1RamBattery) {
+		cinfo.short_type = Cart::ShortType::RomMBC1;
+	} else if (cinfo.type >= Cart::Type::RomMBC2 &&
+	            cinfo.type <= Cart::Type::RomMBC2Battery) {
+		cinfo.short_type = Cart::ShortType::RomMBC2;
+	} else {
+		cinfo.short_type = Cart::ShortType::RomOnly;
 	}
 
 	uint8_t size_codes[2];
@@ -303,11 +313,9 @@ bool fill_cart_info(FILE* const file)
 		fprintf(stderr, "Couldn't eval RAM information\n");
 		return false;
 	}
-
-	cinfo.short_type = get_short_type(cinfo.type);
 	
 	if (cinfo.short_type == Cart::ShortType::RomMBC2) {
-		if (cinfo.rom_size <= 256_Kib && cinfo.ram_size == 0) {
+		if (cinfo.rom_size <= 256_Kib && cinfo.ram_size == 0x00) {
 			cinfo.ram_size = 512;
 		} else {
 			fprintf(stderr, "invalid size codes for MBC2!\n");

@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -Werror -fstrict-aliasing \
 	-march=native -fomit-frame-pointer -ffunction-sections \
 	-fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
 
-set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O0 -g3")
+set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -Og -g3")
 
 option(ASAN OFF)
 option(USAN OFF)
