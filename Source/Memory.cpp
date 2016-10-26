@@ -184,6 +184,9 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 			? mbc1.banks_num_lower_bits 
 			: mbc1.banks_num;
 
+		// subtracting 0x4000 from the bank offset here
+		// save us from subtracting on read rom operation
+		// which is used much more often
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
 		} else if (banking_mode || (rom_bank_num != 0x20 && 
@@ -193,14 +196,14 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 		}
 		
-		if (Cart::info.type >= Cart::Type::RomMBC1Ram) {
-			if (banking_mode && mbc1.banks_num_upper_bits) {
-				cart->ram_bank_offset =
-				  (Cart::info.rom_size - 0xA000) + 
-				  0x2000 * mbc1.banks_num_upper_bits;
-			} else {
-				cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
-			}
+		if (Cart::info.type >= Cart::Type::RomMBC1Ram && banking_mode
+		    && cart->ram_enabled && mbc1.banks_num_upper_bits) {
+			// subtracting 0xA000 from rom_size save us
+			// from subtracting it on the read/write ram operations
+			const auto init_offset = Cart::info.rom_size - 0xA000;
+			const auto ram_bank_num = mbc1.banks_num_upper_bits;
+			const auto bank_offset = 0x2000 * ram_bank_num;
+			cart->ram_bank_offset = init_offset + bank_offset;
 		}
 	};
 
@@ -212,7 +215,6 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 			cart->rom_bank_offset = 0x4000 * (rom_bank_num - 1);
 		}
 	};
-
 
 	if (Cart::info.short_type == Cart::ShortType::RomMBC1) {
 		auto& mbc1 = cart->mbc1;
@@ -234,16 +236,25 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 				mbc1.banks_num_lower_bits = new_val;
 				eval_banks_mbc1();
 			}
+		} else if ((value & 0x0F) == 0x0A) {
+			enable_cart_ram(cart);
+			eval_banks_mbc1();
+		} else {
+			disable_cart_ram(cart);
 		}
-	} else if (Cart::info.short_type == Cart::ShortType::RomMBC2) {
+	} else if (Cart::info.short_type == Cart::ShortType::RomMBC2 &&
+	           address <= 0x3FFF && test_bit(0, get_high_byte(address))) {
 		auto& mbc2 = cart->mbc2;
-		if (address >= 0x2000 && address <= 0x3FFF &&
-		    test_bit(0, get_high_byte(address))) {
+		if (address >= 0x2000) {
 			const uint8_t new_val = value & 0x0F;
 			if (mbc2.rom_bank_num != new_val) {
 				mbc2.rom_bank_num = new_val;
 				eval_banks_mbc2();
 			}
+		} else if ((value & 0x0F) == 0x0A) {
+			enable_cart_ram(cart);
+		} else {
+			disable_cart_ram(cart);
 		}
 	}
 }

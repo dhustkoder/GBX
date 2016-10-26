@@ -40,10 +40,6 @@ void Gameboy::Reset()
 	keys.value = 0xCF;
 	keys.pad.value = 0xFF;
 
-	if (cart.info.type >= Cart::Type::RomMBC1Ram) {
-		cart.ram_bank_offset = cart.info.rom_size - 0xA000;
-	}
-
 	// addresses and inital values for hardware registers
 	// Write8(0xFF05, 0x00); TIMA, in HWState
 	// Write8(0xFF06, 0x00); TMA, in HWState
