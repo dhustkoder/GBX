@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
-#include <assert.h>
 #include "Instructions.hpp"
 #include "Gameboy.hpp"
 
@@ -95,7 +93,6 @@ int16_t step_machine(Gameboy* const gb)
 		const uint8_t step_cycles = clock_table[opcode];
 		const int32_t after = gb->cpu.clock;
 		gb->cpu.clock += step_cycles;
-		assert((after - before) <= INT16_MAX);
 		const auto add_cycles = static_cast<int16_t>(after - before);
 		return step_cycles + add_cycles;
 	}

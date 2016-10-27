@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
+#include "Debug.hpp"
 #include "Gameboy.hpp"
 
 
