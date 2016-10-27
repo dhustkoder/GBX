@@ -239,15 +239,10 @@ bool fill_cart_info(FILE* const file)
 	read_buff(0x134, 16, cinfo.internal_name);
 	cinfo.internal_name[16] = '\0';
 
-	if (read_byte(0x146) == 0x03 && read_byte(0x14B) == 0x33) {
-		cinfo.system = Cart::System::SuperGameboy;
-	} else {
-		using System = Cart::System;
-		switch (read_byte(0x143)) {
-		case 0x80: cinfo.system = System::GameboyColorCompat; break;
-		case 0xC0: cinfo.system = System::GameboyColorOnly; break;
-		default: cinfo.system = System::Gameboy; break;
-		}
+	switch (read_byte(0x143)) {
+	case 0xC0: cinfo.system = Cart::System::GameboyColorOnly; break;
+	case 0x80: cinfo.system = Cart::System::GameboyColorCompat; break;
+	default: cinfo.system = Cart::System::Gameboy; break;
 	}
 
 	cinfo.type = static_cast<Cart::Type>(read_byte(0x147));
@@ -289,13 +284,13 @@ bool fill_cart_info(FILE* const file)
 	read_buff(0x148, 0x02, size_codes);
 
 	switch (size_codes[0]) {
-	case 0x00: cinfo.rom_size = 32_Kib; break;    // 2 banks
-	case 0x01: cinfo.rom_size = 64_Kib; break;    // 4 banks
-	case 0x02: cinfo.rom_size = 128_Kib; break;   // 8 banks
-	case 0x03: cinfo.rom_size = 256_Kib; break;   // 16 banks
-	case 0x04: cinfo.rom_size = 512_Kib; break;   // 32 banks
-	//case 0x05: cinfo.rom_size = 1_Mib; break;   // 64 banks
-	//case 0x06: cinfo.rom_size = 2_Mib; break;   // 128 banks
+	case 0x00: cinfo.rom_size = 32_Kib; break;  // 2 banks
+	case 0x01: cinfo.rom_size = 64_Kib; break;  // 4 banks
+	case 0x02: cinfo.rom_size = 128_Kib; break; // 8 banks
+	case 0x03: cinfo.rom_size = 256_Kib; break; // 16 banks
+	case 0x04: cinfo.rom_size = 512_Kib; break; // 32 banks
+	case 0x05: cinfo.rom_size = 1_Mib; break;   // 64 banks
+	case 0x06: cinfo.rom_size = 2_Mib; break;   // 128 banks
 	default:
 		fprintf(stderr,"Couldn't eval ROM information\n");
 		return false;
@@ -313,12 +308,15 @@ bool fill_cart_info(FILE* const file)
 
 	cinfo.rom_banks =
 	  static_cast<int16_t>(static_cast<uint32_t>(cinfo.rom_size) >> 0x0E);
-	cinfo.ram_banks = (cinfo.ram_banks == 2_Kib) ? 1
-	 : static_cast<int8_t>(static_cast<uint32_t>(cinfo.ram_size) >> 0x0D);
 
-	if (cinfo.short_type == Cart::ShortType::RomMBC2) {
+	if (cinfo.short_type == Cart::ShortType::RomMBC1 && cinfo.ram_size) {
+		cinfo.ram_banks = cinfo.ram_size == 2_Kib ? 1
+		 : static_cast<int8_t>
+		    (static_cast<uint32_t>(cinfo.ram_size) >> 0x0D);
+	} else if (cinfo.short_type == Cart::ShortType::RomMBC2) {
 		if (cinfo.rom_size <= 256_Kib && cinfo.ram_size == 0x00) {
 			cinfo.ram_size = 512;
+			cinfo.ram_banks = 1;
 		} else {
 			fprintf(stderr, "invalid size codes for MBC2!\n");
 			return false;

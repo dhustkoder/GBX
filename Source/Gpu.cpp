@@ -175,10 +175,8 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 {
 	const auto lcdc = gpu.lcdc;
 	const auto ly = gpu.ly;
-	auto& screen = Gpu::screen;
-
 	if (!lcdc.bg_on) {
-		memset(&screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
+		memset(&Gpu::screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
 		return;
 	} else if (lcdc.win_on && ly >= gpu.wy && gpu.wx <= 7) {
 		return;
@@ -214,7 +212,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
 	
-	ScanlineFiller fill_line{&screen[ly][0], Pallete{gpu.bgp}};
+	ScanlineFiller fill_line{&Gpu::screen[ly][0], Pallete{gpu.bgp}};
 
 	int xbeg = 0;
 	if (scxmod) {
@@ -236,9 +234,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	const auto lcdc = gpu.lcdc;
 	const int wy = gpu.wy;
 	const int wx = gpu.wx - 7;
-	auto& screen = Gpu::screen;
-
-	if (!lcdc.win_on || ly < wy || wy >= 144 || wx >= 160)
+	if (!lcdc.win_on || ly < wy || wx >= 160)
 		return;
 
 	const int wx_max = max(0, wx);
@@ -257,7 +253,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		return (tile_data[addr + 1] << 8) | tile_data[addr];
 	};
 
-	ScanlineFiller fill_line{&screen[ly][wx_max], Pallete{gpu.bgp}};
+	ScanlineFiller fill_line{&Gpu::screen[ly][wx_max], Pallete{gpu.bgp}};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);

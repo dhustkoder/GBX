@@ -22,8 +22,7 @@ struct Cart
 	enum class System : uint8_t {
 		Gameboy, 
 		GameboyColorCompat,
-		GameboyColorOnly,	
-		SuperGameboy
+		GameboyColorOnly
 	};
 
 	static struct Info {

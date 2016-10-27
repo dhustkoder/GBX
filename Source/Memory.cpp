@@ -162,7 +162,7 @@ uint8_t read_vram(const Memory& mem, const uint16_t address)
 
 uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 {
-	debug_printf("Cartridge RAM read required at $%X\n", address);
+	debug_printf("Cartridge RAM: read from $%X\n", address);
 	if (cart.ram_enabled) {
 		const auto offset = eval_cart_ram_offset(cart, address);
 		return cart.data[offset];
@@ -173,7 +173,7 @@ uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 
 void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
-	debug_printf("Cartridge write request at $%X value $%X\n", address, value);
+	debug_printf("Cartridge ROM: write $%X to $%X\n", value, address);
 
 	const auto enable_cart_ram = [cart] {
 		cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
@@ -214,7 +214,8 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 	};
 
 	const auto eval_banks_mbc2 = [cart] {
-		const auto rom_bank_num = cart->mbc2.rom_bank_num;
+		const auto mask = Cart::info.rom_banks - 1;
+		const auto rom_bank_num = cart->mbc2.rom_bank_num & mask;
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
 		} else {
@@ -312,6 +313,7 @@ void write_cart_ram(const uint16_t address, const uint8_t value, Cart* const car
 
 uint8_t read_io(const Gameboy& gb, const uint16_t address)
 {
+	debug_printf("Hardware I/O: read $%X\n", address);
 	switch (address) {
 	case 0xFF00: return gb.keys.value;
 	case 0xFF04: return gb.hwstate.div;
@@ -330,9 +332,7 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF49: return gb.gpu.obp1;
 	case 0xFF4A: return gb.gpu.wy;
 	case 0xFF4B: return gb.gpu.wx;
-	default:
-		debug_printf("Hardware I/O: read $%X\n", address);
-		break;
+	default: break;
 	}
 
 	return 0;
@@ -341,6 +341,7 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 
 void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
+	debug_printf("Hardware I/O: write $%X to $%X\n", value, address);
 	switch (address) {
 	case 0xFF00: write_keys(value, &gb->keys); break;
 	case 0xFF04: write_div(value, &gb->hwstate); break;
@@ -360,9 +361,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF49: gb->gpu.obp1 = value; break;
 	case 0xFF4A: gb->gpu.wy = value; break;
 	case 0xFF4B: gb->gpu.wx = value; break;
-	default:
-		debug_printf("Hardware I/O: write $%X to $%X\n", value, address);
-		break;
+	default: break;
 	}
 }
 
