@@ -399,14 +399,21 @@ void write_div(const uint8_t /*value*/, HWState* const hwstate)
 void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
 	constexpr const auto nbytes = sizeof(uint8_t) * 0xA0;
-	uint16_t source_addr = value * 0x100;
-	if (source_addr == 0xC000) {
-		memcpy(gb->memory.oam, gb->memory.wram, nbytes);
-	} else if (source_addr == 0x8000) {
-		memcpy(gb->memory.oam, gb->memory.vram, nbytes);
+	const uint16_t address = value * 0x100;
+	if (address <= 0x7F5F) {
+		const auto offset = eval_cart_rom_offset(gb->cart, address);
+		memcpy(gb->memory.oam, &gb->cart.data[offset], nbytes);
+	} else if (address <= 0x9F5F) {
+		const auto offset = eval_vram_offset(address);
+		memcpy(gb->memory.oam, &gb->memory.vram[offset], nbytes);
+	} else if (address >= 0xC000 && address <= 0xFD5F) {
+		const auto offset = eval_wram_offset(address);
+		memcpy(gb->memory.oam, &gb->memory.wram[offset], nbytes);
 	} else {
+		debug_printf("DMA TRANSFER OPTIMIZATION MISSED!\n");
+		auto addr = address;
 		for (auto& byte : gb->memory.oam)
-			byte = gb->Read8(source_addr++);
+			byte = gb->Read8(addr++);
 	}
 	gb->cpu.clock += 0x288;
 }
