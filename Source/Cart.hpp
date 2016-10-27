@@ -27,7 +27,7 @@ struct Cart
 	};
 
 	static struct Info {
-		char internal_name[0x11];
+		char internal_name[17];
 		int32_t rom_size;
 		int32_t ram_size;
 		Cart::Type type;

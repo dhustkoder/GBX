@@ -238,9 +238,9 @@ bool fill_cart_info(FILE* const file)
 
 	auto& cinfo = Cart::info;
 
-	// 0134 - 0142 game's title
-	read_buff(0x134, 0x10, cinfo.internal_name);
-	cinfo.internal_name[0x10] = '\0';
+	// 0134 - 0143 game's title
+	read_buff(0x134, 16, cinfo.internal_name);
+	cinfo.internal_name[16] = '\0';
 	
 	if (read_byte(0x146) == 0x03) {
 		cinfo.system = Cart::System::SuperGameboy;
