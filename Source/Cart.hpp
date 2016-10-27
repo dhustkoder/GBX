@@ -30,6 +30,8 @@ struct Cart
 		char internal_name[17];
 		int32_t rom_size;
 		int32_t ram_size;
+		int16_t rom_banks;
+		int8_t ram_banks;
 		Cart::Type type;
 		Cart::ShortType short_type;
 		Cart::System system;
@@ -56,7 +58,7 @@ struct Cart
 		const int32_t ram_enabled;
 	};
 
-	uint8_t banks[];
+	uint8_t data[];
 };
 
 constexpr const int32_t kCartridgeMaxSize = 64_Kib;

@@ -74,7 +74,7 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 	if (!gpu->lcdc.lcd_on) {
 		gpu->clock = 0;
 		gpu->ly = 0;
-		gpu->stat.mode = Gpu::Mode::VBlank;
+		gpu->stat.mode = Gpu::Mode::HBlank;
 		return;
 	}
 

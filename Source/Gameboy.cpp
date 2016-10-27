@@ -210,7 +210,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 	});
 
 	fseek(file, 0, SEEK_SET);
-	fread(gb->cart.banks, 1, Cart::info.rom_size, file);
+	fread(gb->cart.data, 1, Cart::info.rom_size, file);
 
 	if (ferror(file)) {
 		perror("error while reading from file");
@@ -238,8 +238,8 @@ bool fill_cart_info(FILE* const file)
 	// 0134 - 0143 game's title
 	read_buff(0x134, 16, cinfo.internal_name);
 	cinfo.internal_name[16] = '\0';
-	
-	if (read_byte(0x146) == 0x03) {
+
+	if (read_byte(0x146) == 0x03 && read_byte(0x14B) == 0x33) {
 		cinfo.system = Cart::System::SuperGameboy;
 	} else {
 		using System = Cart::System;
@@ -310,7 +310,12 @@ bool fill_cart_info(FILE* const file)
 		fprintf(stderr, "Couldn't eval RAM information\n");
 		return false;
 	}
-	
+
+	cinfo.rom_banks =
+	  static_cast<int16_t>(static_cast<uint32_t>(cinfo.rom_size) >> 0x0E);
+	cinfo.ram_banks = (cinfo.ram_banks == 2_Kib) ? 1
+	 : static_cast<int8_t>(static_cast<uint32_t>(cinfo.ram_size) >> 0x0D);
+
 	if (cinfo.short_type == Cart::ShortType::RomMBC2) {
 		if (cinfo.rom_size <= 256_Kib && cinfo.ram_size == 0x00) {
 			cinfo.ram_size = 512;
@@ -324,10 +329,13 @@ bool fill_cart_info(FILE* const file)
 	       "NAME: %s\n"
 	       "ROM SIZE: %d\n"
 	       "RAM SIZE: %d\n"
+	       "ROM BANKS: %d\n"
+	       "RAM BANKS: %d\n"
 	       "TYPE CODE: %u\n"
 	       "SYSTEM CODE: %u\n",
 	       cinfo.internal_name,
 	       cinfo.rom_size, cinfo.ram_size,
+	       cinfo.rom_banks, cinfo.ram_banks,
 	       static_cast<unsigned>(cinfo.type),
 	       static_cast<unsigned>(cinfo.system));
 
