@@ -224,11 +224,12 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 
 bool fill_cart_info(FILE* const file)
 {
-	const auto read_buff = [=](long int offset, size_t size, void* buffer) {
+	const auto read_buff =
+	[=](const long int offset, const size_t size, void* const buffer) {
 		fseek(file, offset, SEEK_SET);
 		fread(buffer, 1, size, file);
 	};
-	const auto read_byte = [=](long int offset) {
+	const auto read_byte = [=](const long int offset) {
 		fseek(file, offset, SEEK_SET);
 		return static_cast<uint8_t>(fgetc(file));
 	};
@@ -306,12 +307,12 @@ bool fill_cart_info(FILE* const file)
 		return false;
 	}
 
-	cinfo.rom_banks =
-	  static_cast<int16_t>(static_cast<uint32_t>(cinfo.rom_size) >> 0x0E);
+	cinfo.rom_banks = static_cast<uint8_t>
+	  (static_cast<uint32_t>(cinfo.rom_size) >> 0x0E);
 
 	if (cinfo.short_type == Cart::ShortType::RomMBC1 && cinfo.ram_size) {
 		cinfo.ram_banks = cinfo.ram_size == 2_Kib ? 1
-		 : static_cast<int8_t>
+		 : static_cast<uint8_t>
 		    (static_cast<uint32_t>(cinfo.ram_size) >> 0x0D);
 	} else if (cinfo.short_type == Cart::ShortType::RomMBC2) {
 		if (cinfo.rom_size <= 256_Kib && cinfo.ram_size == 0x00) {
