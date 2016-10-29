@@ -80,7 +80,7 @@ void Gameboy::Run(const int32_t cycles)
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
 	} while (cpu.clock < cycles);
-	cpu.clock = 0;
+	cpu.clock = 0x00;
 }
 
 
@@ -149,9 +149,6 @@ void update_interrupts(Gameboy* const gb)
 			clear_interrupt(inter, &hwstate);
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
-			gb->cpu.clock += 16;
-			update_gpu(16, gb->memory, &gb->hwstate, &gb->gpu);
-			update_timers(16, &gb->hwstate);
 		}
 	}
 }
@@ -195,9 +192,9 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 		return nullptr;
 
 	const owner<Gameboy*> gb = 
-		reinterpret_cast<Gameboy*>(malloc(sizeof(Gameboy) +
-		                           Cart::info.rom_size + 
-		                           Cart::info.ram_size));
+	  reinterpret_cast<Gameboy*>(malloc(sizeof(Gameboy) +
+	                              Cart::info.rom_size + 
+	                              Cart::info.ram_size));
 	if (gb == nullptr) {
 		perror("failed to allocate memory");
 		return nullptr;

@@ -71,12 +71,8 @@ static void update_sprite_scanline(const Gpu& gpu, const Memory& mem);
 
 void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
 {
-	if (!gpu->lcdc.lcd_on) {
-		gpu->clock = 0;
-		gpu->ly = 0;
-		gpu->stat.mode = Gpu::Mode::HBlank;
+	if (!gpu->lcdc.lcd_on)
 		return;
-	}
 
 	gpu->clock += cycles;
 	

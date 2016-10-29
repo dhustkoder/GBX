@@ -29,6 +29,7 @@ static void write_vram(uint16_t address, uint8_t value, Memory* mem);
 static void write_cart_ram(uint16_t address, uint8_t value, Cart* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
+static void write_lcdc(uint8_t value, Gpu* gpu);
 static void write_stat(uint8_t value, Gpu* gpu);
 static void write_keys(uint8_t value, Keys* keys);
 static void write_div(uint8_t value, HWState* hwstate);
@@ -349,7 +350,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
 	case 0xFF0F: gb->hwstate.int_flags = value; break;
-	case 0xFF40: gb->gpu.lcdc.value = value; break;
+	case 0xFF40: write_lcdc(value, &gb->gpu); break;
 	case 0xFF41: write_stat(value, &gb->gpu); break;
 	case 0xFF42: gb->gpu.scy = value; break;
 	case 0xFF43: gb->gpu.scx = value; break;
@@ -365,6 +366,20 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	}
 }
 
+
+void write_lcdc(const uint8_t value, Gpu* const gpu)
+{
+	const auto old_lcd_off = !gpu->lcdc.lcd_on;
+	gpu->lcdc.value = value;
+	const auto new_lcd_off = !gpu->lcdc.lcd_on;
+	if (new_lcd_off) {
+		gpu->clock = 0;
+		gpu->ly = 0;
+		gpu->stat.mode = Gpu::Mode::HBlank;
+	} else if (old_lcd_off) {
+		gpu->stat.mode = Gpu::Mode::OAM;
+	}
+}
 
 void write_stat(const uint8_t value, Gpu* const gpu)
 {
@@ -387,6 +402,8 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 	constexpr const int16_t limits[] { 0x400, 0x10, 0x40, 0x100 };
 	hwstate->tac = 0xF8 | (value&0x07);
 	hwstate->tima_clock_limit = limits[value&0x03];
+	hwstate->tima_clock = 0x00;
+	hwstate->tima = 0x00;
 }
 
 void write_div(const uint8_t /*value*/, HWState* const hwstate)
@@ -415,7 +432,6 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 		for (auto& byte : gb->memory.oam)
 			byte = gb->Read8(addr++);
 	}
-	gb->cpu.clock += 0x288;
 }
 
 
