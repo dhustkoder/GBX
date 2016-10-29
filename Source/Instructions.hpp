@@ -11,9 +11,9 @@ namespace gbx {
 struct Cpu;
 struct Gameboy;
 
-using instruction_table_t = void(*)(Gameboy*);
-extern const instruction_table_t main_instructions[256];
-extern const instruction_table_t cb_instructions[256];
+using InstructionPtr = void(*)(Gameboy*);
+extern const InstructionPtr main_instructions[256];
+extern const InstructionPtr cb_instructions[256];
 extern const uint8_t clock_table[256];
 
 
