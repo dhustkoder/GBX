@@ -24,7 +24,7 @@ struct HWState
 	enum Flags : uint8_t {
 		IntMasterEnable = 0x01,
 		IntMasterActive = 0x02,
-		CpuHalt = 0x04,
+		CpuHalt = 0x04
 	};
 
 	int16_t tima_clock;

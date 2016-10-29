@@ -149,6 +149,10 @@ void update_interrupts(Gameboy* const gb)
 			clear_interrupt(inter, &hwstate);
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
+			gb->cpu.clock += 20;
+			update_timers(20, &hwstate);
+			update_gpu(20, gb->memory, &hwstate, &gb->gpu);
+			update_interrupts(gb);
 		}
 	}
 }

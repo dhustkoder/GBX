@@ -349,7 +349,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF05: gb->hwstate.tima = value; break;
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
-	case 0xFF0F: gb->hwstate.int_flags = value; break;
+	case 0xFF0F: gb->hwstate.int_flags = value & 0x1F; break;
 	case 0xFF40: write_lcdc(value, &gb->gpu); break;
 	case 0xFF41: write_stat(value, &gb->gpu); break;
 	case 0xFF42: gb->gpu.scy = value; break;
