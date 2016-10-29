@@ -23,13 +23,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-if (ASM_OUTPUT)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S")
-	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAG "-save-temps")
-endif()
-
-
-
 # "Release" full optimization , no debug info.
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 	set(LINK_FLAGS "-nodefaultlibs -s -Wl,--gc-sections")
@@ -71,4 +64,12 @@ add_executable(${PROJECT_NAME} ${GBX_SRC})
 
 # link libraries
 target_link_libraries(${PROJECT_NAME} -lc -lSDL2)
+
+
+if (ASM_OUTPUT)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S")
+	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAG "-save-temps")
+endif()
+
+
 
