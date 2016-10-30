@@ -152,7 +152,6 @@ void update_interrupts(Gameboy* const gb)
 			gb->cpu.clock += 20;
 			update_timers(20, &hwstate);
 			update_gpu(20, gb->memory, &hwstate, &gb->gpu);
-			update_interrupts(gb);
 		}
 	}
 }
