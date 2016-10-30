@@ -1,11 +1,11 @@
 #ifndef GBX_GAMEBOY_HPP_
 #define GBX_GAMEBOY_HPP_
-#include "Cpu.hpp"
-#include "Gpu.hpp"
-#include "Cart.hpp"
-#include "Keys.hpp"
-#include "HWState.hpp"
-#include "Memory.hpp"
+#include "cpu.hpp"
+#include "gpu.hpp"
+#include "cart.hpp"
+#include "keys.hpp"
+#include "hwstate.hpp"
+#include "memory.hpp"
 
 namespace gbx {
 

@@ -1,10 +1,10 @@
 #ifndef GBX_MEMORY_HPP_
 #define GBX_MEMORY_HPP_
-#include "Common.hpp"
+#include "common.hpp"
 
 namespace gbx {
 
-/*	General Memory Map (see References/GBPandocs.html)
+/*	General Memory Map (see references/bgb_doc_html)
  *	0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
  *	4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
  *	8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)

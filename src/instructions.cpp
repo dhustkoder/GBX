@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "Gameboy.hpp"
-#include "Instructions.hpp"
+#include "gameboy.hpp"
+#include "instructions.hpp"
 
 
 namespace gbx {

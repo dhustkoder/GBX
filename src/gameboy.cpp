@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Instructions.hpp"
-#include "Gameboy.hpp"
+#include "instructions.hpp"
+#include "gameboy.hpp"
 
 namespace gbx {
 

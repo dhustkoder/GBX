@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
-#include "Debug.hpp"
-#include "Gameboy.hpp"
+#include "debug.hpp"
+#include "gameboy.hpp"
 
 
 namespace gbx {

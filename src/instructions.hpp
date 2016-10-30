@@ -1,10 +1,9 @@
 #ifndef GBX_INSTRUCTIONS_HPP_
 #define GBX_INSTRUCTIONS_HPP_
 #include <stdint.h>
-#include "Debug.hpp"
-#define ASSERT_INSTR_IMPL() \
-	debug_puts(__func__); \
-	assert(false && "Instruction Not Implemented")
+#include "debug.hpp"
+#define ASSERT_INSTR_IMPL() { debug_puts(__func__); \
+	assert(false && "Instruction Not Implemented"); }
 
 namespace gbx {
 

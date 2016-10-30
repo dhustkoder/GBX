@@ -1,6 +1,6 @@
 #ifndef GBX_CART_HPP_
 #define GBX_CART_HPP_
-#include "Common.hpp"
+#include "common.hpp"
 
 namespace gbx {
 

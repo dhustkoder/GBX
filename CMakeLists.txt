@@ -49,7 +49,7 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif()
 
 #directories
-set(GBX_SRC_DIR "./Source")
+set(GBX_SRC_DIR "./src")
 
 #include utix
 include_directories("./Dependencies/Utix/Utix/include/")
@@ -57,7 +57,7 @@ include_directories("./Dependencies/Utix/Utix/include/")
 include_directories("${GBX_SRC_DIR}")
 
 #files
-file(GLOB GBX_SRC "${GBX_SRC_DIR}/*.cpp" "${GBX_SRC_DIR}/SDL/*.cpp")
+file(GLOB GBX_SRC "${GBX_SRC_DIR}/*.cpp" "${GBX_SRC_DIR}/SDL2/*.cpp")
 
 # compile
 add_executable(${PROJECT_NAME} ${GBX_SRC})
