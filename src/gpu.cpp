@@ -79,7 +79,7 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 	switch (gpu->stat.mode) {
 	case Gpu::Mode::HBlank: mode_hblank(gpu, hwstate); break;
 	case Gpu::Mode::VBlank: mode_vblank(gpu, hwstate); break;
-	case Gpu::Mode::OAM: mode_oam(gpu); break;
+	case Gpu::Mode::SearchOAM: mode_oam(gpu); break;
 	case Gpu::Mode::Transfer: mode_transfer(mem, gpu, hwstate); break;
 	default: break;
 	}
@@ -90,7 +90,7 @@ void mode_hblank(Gpu* const gpu, HWState* const hwstate)
 {
 	if (gpu->clock >= 204) {
 		if (++gpu->ly < 144) {
-			set_gpu_mode(Gpu::Mode::OAM, gpu, hwstate);
+			set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
 		} else {
 			request_interrupt(interrupts::vblank, hwstate);
 			set_gpu_mode(Gpu::Mode::VBlank, gpu, hwstate);
@@ -106,7 +106,7 @@ void mode_vblank(Gpu* const gpu, HWState* const hwstate)
 	if (gpu->clock >= 456) {
 		if (++gpu->ly > 153) {
 			gpu->ly = 0;
-			set_gpu_mode(Gpu::Mode::OAM, gpu, hwstate);
+			set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
 		}
 		gpu->clock -= 456;
 		check_gpu_lyc(gpu, hwstate);
@@ -143,7 +143,7 @@ void set_gpu_mode(const Gpu::Mode mode, Gpu* const gpu, HWState* const hwstate)
 	switch (mode) {
 	case Gpu::Mode::HBlank: int_on = stat.int_on_hblank; break;
 	case Gpu::Mode::VBlank: int_on = stat.int_on_vblank; break;
-	case Gpu::Mode::OAM: int_on = stat.int_on_oam; break;
+	case Gpu::Mode::SearchOAM: int_on = stat.int_on_oam; break;
 	default: break;
 	}
 

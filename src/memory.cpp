@@ -375,7 +375,7 @@ void write_lcdc(const uint8_t value, Gpu* const gpu)
 		gpu->ly = 0;
 		gpu->stat.mode = Gpu::Mode::HBlank;
 	} else if (old_lcd_off) {
-		gpu->stat.mode = Gpu::Mode::OAM;
+		gpu->stat.mode = Gpu::Mode::SearchOAM;
 	}
 }
 

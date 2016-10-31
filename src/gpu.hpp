@@ -13,7 +13,7 @@ struct Gpu
 {
 	enum Mode : uint8_t {
 		HBlank = 0x0, VBlank = 0x1,
-		OAM = 0x2, Transfer = 0x3
+		SearchOAM = 0x2, Transfer = 0x3
 	};
 
 	int16_t clock;

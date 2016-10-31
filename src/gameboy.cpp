@@ -79,22 +79,21 @@ void Gameboy::Run(const int32_t cycles)
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
 		update_interrupts(this);
-	} while (cpu.clock < cycles);
-	cpu.clock = 0x00;
+	} while (cpu.clock <= cycles);
+	cpu.clock -= cycles;
 }
 
 
 int16_t step_machine(Gameboy* const gb)
 {
-	if (!gb->hwstate.flags.cpu_halt) {
+	if (gb->hwstate.flags.cpu_halt == 0x00) {
 		const int32_t before = gb->cpu.clock;
 		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
 		main_instructions[opcode](gb);
-		const uint8_t step_cycles = clock_table[opcode];
 		const int32_t after = gb->cpu.clock;
-		gb->cpu.clock += step_cycles;
-		const auto add_cycles = static_cast<int16_t>(after - before);
-		return step_cycles + add_cycles;
+		const int16_t op_cycles = clock_table[opcode];
+		gb->cpu.clock += op_cycles;
+		return op_cycles + static_cast<int16_t>(after - before);
 	}
 	gb->cpu.clock += 4;
 	return 4;
@@ -124,32 +123,32 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 
 void update_interrupts(Gameboy* const gb)
 {
-	auto& hwstate = gb->hwstate;
-	const uint8_t pendents = get_pendent_interrupts(hwstate);
-	const auto flags = hwstate.flags;
+	const uint8_t pendents = get_pendent_interrupts(gb->hwstate);
+	const auto flags = gb->hwstate.flags;
 
 	if (pendents && flags.cpu_halt)
-		hwstate.flags.cpu_halt = 0x00;
+		gb->hwstate.flags.cpu_halt = 0x00;
 
 	if (flags.ime == 0x00) {
 		return;
 	} else if (flags.ime == 0x01) {
-		hwstate.flags.ime = 0x02;
+		gb->hwstate.flags.ime = 0x02;
 		return;
 	}
 
 	if (!pendents)
 		return;
 
-	hwstate.flags.ime = 0x00;
+	gb->hwstate.flags.ime = 0x00;
 	for (const auto inter : interrupts::array) {
 		if (pendents & inter.mask) {
-			clear_interrupt(inter, &hwstate);
+			clear_interrupt(inter, &gb->hwstate);
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
 			gb->cpu.clock += 20;
-			update_timers(20, &hwstate);
-			update_gpu(20, gb->memory, &hwstate, &gb->gpu);
+			update_timers(20, &gb->hwstate);
+			update_gpu(20, gb->memory, &gb->hwstate, &gb->gpu);
+			break;
 		}
 	}
 }
