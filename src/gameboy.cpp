@@ -60,15 +60,15 @@ void Gameboy::Reset()
 	// Write8(0xFF24, 0x77); NR50
 	// Write8(0xFF25, 0xF3); NR51
 	// Write8(0xFF26, 0xF1); NR52
-	// Write8(0xFF40, 0x91); LCDC, in GPU
-	// Write8(0xFF42, 0x00); SCY, in GPU
-	// Write8(0xFF43, 0x00); SCX, in GPU
-	// Write8(0xFF45, 0x00); LYC, in GPU
-	// Write8(0xFF47, 0xFC); BGP, in GPU
-	// Write8(0xFF48, 0xFF); OBP0, in GPU
-	// Write8(0xFF49, 0xFF); OBP1, in GPU
-	// Write8(0xFF4A, 0x00); WY, in GPU
-	// Write8(0xFF4B, 0x00); WX, in GPU
+	// Write8(0xFF40, 0x91); LCDC, in Gpu
+	// Write8(0xFF42, 0x00); SCY, in Gpu
+	// Write8(0xFF43, 0x00); SCX, in Gpu
+	// Write8(0xFF45, 0x00); LYC, in Gpu
+	// Write8(0xFF47, 0xFC); BGP, in Gpu
+	// Write8(0xFF48, 0xFF); OBP0, in Gpu
+	// Write8(0xFF49, 0xFF); OBP1, in Gpu
+	// Write8(0xFF4A, 0x00); WY, in Gpu
+	// Write8(0xFF4B, 0x00); WX, in Gpu
 }
 
 
@@ -86,7 +86,7 @@ void Gameboy::Run(const int32_t cycles)
 
 int16_t step_machine(Gameboy* const gb)
 {
-	if (!get_flags(gb->hwstate, HWState::CpuHalt)) {
+	if (!gb->hwstate.flags.cpu_halt) {
 		const int32_t before = gb->cpu.clock;
 		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
 		main_instructions[opcode](gb);
@@ -128,22 +128,20 @@ void update_interrupts(Gameboy* const gb)
 	const uint8_t pendents = get_pendent_interrupts(hwstate);
 	const auto flags = hwstate.flags;
 
-	if (pendents && (flags & HWState::CpuHalt))
-		clear_flags(HWState::CpuHalt, &hwstate);
+	if (pendents && flags.cpu_halt)
+		hwstate.flags.cpu_halt = 0x00;
 
-	if (!(flags & HWState::IntMasterEnable)) {
+	if (flags.ime == 0x00) {
 		return;
-	} else if (!(flags & HWState::IntMasterActive)) {
-		set_flags(HWState::IntMasterActive, &hwstate);
+	} else if (flags.ime == 0x01) {
+		hwstate.flags.ime = 0x02;
 		return;
 	}
 
 	if (!pendents)
 		return;
 
-	clear_flags(HWState::IntMasterEnable | HWState::IntMasterActive,
-	            &gb->hwstate);
-	
+	hwstate.flags.ime = 0x00;
 	for (const auto inter : interrupts::array) {
 		if (pendents & inter.mask) {
 			clear_interrupt(inter, &hwstate);

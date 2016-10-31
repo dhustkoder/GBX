@@ -272,7 +272,7 @@ void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
 		const auto offset = eval_hram_offset(address);
 		gb->memory.hram[offset] = value;
 	} else {
-		gb->hwstate.int_enable = value;
+		gb->hwstate.int_enable = value&0x1F;
 	}
 }
 

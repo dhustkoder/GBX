@@ -1343,7 +1343,7 @@ void ld_75(Gameboy* const gb)
 
 void halt_76(Gameboy* const gb)
 {
-	set_flags(HWState::CpuHalt, &gb->hwstate);
+	gb->hwstate.flags.cpu_halt = 0x01;
 }
 
 
@@ -1769,7 +1769,6 @@ void xor_AE(Gameboy* const gb)
 
 void xor_AF(Gameboy* const gb) 
 {
-	// TODO: optimize
 	// XOR A
 	xor_a_n(gb->cpu.a, &gb->cpu);
 }
@@ -2117,7 +2116,7 @@ void reti_D9(Gameboy* const gb)
 	// RETI
 	// return and enable interrupts
 	gb->cpu.pc = gb->PopStack16();
-	set_flags(HWState::IntMasterEnable, &gb->hwstate);
+	gb->hwstate.flags.ime = 0x01;
 }
 
 
@@ -2300,8 +2299,7 @@ void di_F3(Gameboy* const gb)
 {
 	// DI
 	// disable interrupts
-	clear_flags(HWState::IntMasterEnable | HWState::IntMasterActive,
-	            &gb->hwstate);
+	gb->hwstate.flags.ime = 0x00;
 }
 
 
@@ -2373,7 +2371,7 @@ void ld_FA(Gameboy* const gb)
 void ei_FB(Gameboy* const gb)
 { 
 	// EI ( enable interrupts )
-	set_flags(HWState::IntMasterEnable, &gb->hwstate);
+	gb->hwstate.flags.ime = 0x01;
 }
 
 

@@ -21,16 +21,15 @@ namespace interrupts {
 
 struct HWState 
 {
-	enum Flags : uint8_t {
-		IntMasterEnable = 0x01,
-		IntMasterActive = 0x02,
-		CpuHalt = 0x04
-	};
-
 	int16_t tima_clock;
 	int16_t tima_clock_limit;
 	int16_t div_clock;
-	uint8_t flags;
+	
+	struct {
+		uint8_t ime : 2;
+		uint8_t cpu_halt : 1;
+	} flags;
+
 	uint8_t div;
 	uint8_t tima;
 	uint8_t tma;
@@ -40,42 +39,9 @@ struct HWState
 };
 
 
-constexpr HWState::Flags operator|(const HWState::Flags f1, const HWState::Flags f2)
-{
-	return static_cast<HWState::Flags>
-		(static_cast<uint8_t>(f1) | static_cast<uint8_t>(f2));
-}
-
-
-constexpr HWState::Flags operator&(const HWState::Flags f1, const HWState::Flags f2)
-{
-	return static_cast<HWState::Flags>
-		(static_cast<uint8_t>(f1) & static_cast<uint8_t>(f2));
-}
-
-
-
 inline uint8_t get_pendent_interrupts(const HWState& hwstate)
 {
-	return 0x1f & hwstate.int_enable & hwstate.int_flags;
-}
-
-
-inline HWState::Flags get_flags(const HWState& hwstate, const HWState::Flags hwflags)
-{
-	return static_cast<HWState::Flags>(hwstate.flags & hwflags);
-}
-
-
-inline void set_flags(const HWState::Flags hwflags, HWState* const hwstate)
-{
-	hwstate->flags |= hwflags;
-}
-
-
-inline void clear_flags(const HWState::Flags hwflags, HWState* const hwstate)
-{
-	hwstate->flags &= ~hwflags;
+	return hwstate.int_enable & hwstate.int_flags;
 }
 
 
