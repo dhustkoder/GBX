@@ -1,5 +1,5 @@
-# GBX
-#### A Gameboy emulator written in C++11.
+## GBX
+#### Gameboy emulator project C++11.
 ![ScreenShot](https://github.com/dhustkoder/GBX/blob/master/bin/images/ZELDA1.png?raw=true "Zelda intro")
 ![ScreenShot](https://github.com/dhustkoder/GBX/blob/master/bin/images/ZELDA2.png?raw=true "Zelda intro")
 ![ScreenShot](https://github.com/dhustkoder/GBX/blob/master/bin/images/ZELDA3.png?raw=true "Zelda title screen")

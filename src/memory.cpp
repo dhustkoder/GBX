@@ -20,6 +20,8 @@ static uint8_t read_cart_ram(const Cart& cart, uint16_t address);
 static uint8_t read_io(const Gameboy& gb, uint16_t address);
 
 static void write_cart(uint16_t address, uint8_t value, Cart* cart);
+static void write_mbc1(uint16_t address, uint8_t value, Cart* cart);
+static void write_mbc2(uint16_t address, uint8_t value, Cart* cart);
 static void write_hram(uint16_t address, uint8_t value, Gameboy* gb);
 static void write_oam(uint16_t address, uint8_t value, Memory* mem);
 static void write_wram(uint16_t address, uint8_t value, Memory* mem);
@@ -116,7 +118,6 @@ uint16_t Gameboy::PopStack16()
 
 
 
-
 uint8_t read_cart(const Cart& cart, const uint16_t address)
 {
 	const auto offset = eval_cart_rom_offset(cart, address);
@@ -173,14 +174,14 @@ uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge ROM: write $%X to $%X\n", value, address);
+	if (Cart::info.short_type == Cart::ShortType::RomMBC1)
+		write_mbc1(address, value, cart);
+	else if (Cart::info.short_type == Cart::ShortType::RomMBC2)
+		write_mbc2(address, value, cart);
+}
 
-	const auto enable_cart_ram = [cart] {
-		cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
-	};
-	const auto disable_cart_ram = [cart] {
-		cart->ram_bank_offset = 0x00;
-	};
-
+void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
+{
 	const auto eval_banks_mbc1 = [cart] {
 		const auto mbc1 = cart->mbc1;
 		const auto banking_mode = mbc1.banking_mode;
@@ -188,9 +189,6 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 			? mbc1.banks_num_lower_bits 
 			: mbc1.banks_num) & (Cart::info.rom_banks - 1);
 
-		// subtracting 0x4000 from the bank offset here
-		// save us from subtracting on read rom operation
-		// which is used much more often
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
 		} else if (banking_mode || (rom_bank_num != 0x20 && 
@@ -199,12 +197,10 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 		} else {
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 		}
-		
+
 		if (Cart::info.type >= Cart::Type::RomMBC1Ram &&
 		    Cart::info.ram_banks > 1 && banking_mode &&
 		    cart->ram_enabled && mbc1.banks_num_upper_bits) {
-			// subtracting 0xA000 from rom_size save us
-			// from subtracting it on the read/write ram operations
 			const auto init_offset = Cart::info.rom_size - 0xA000;
 			const auto ram_bank_num = mbc1.banks_num_upper_bits;
 			const auto bank_offset = 0x2000 * ram_bank_num;
@@ -212,59 +208,54 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 		}
 	};
 
-	const auto eval_banks_mbc2 = [cart] {
-		const auto mask = Cart::info.rom_banks - 1;
-		const auto rom_bank_num = cart->mbc2.rom_bank_num & mask;
-		if (rom_bank_num < 0x02) {
-			cart->rom_bank_offset = 0x00;
-		} else {
-			cart->rom_bank_offset = 0x4000 * (rom_bank_num - 1);
-		}
-	};
-
-	if (Cart::info.short_type == Cart::ShortType::RomMBC1) {
-		auto& mbc1 = cart->mbc1;
-		if (address >= 0x6000) {
-			const uint8_t new_mode = value ? 1 : 0;
-			if (mbc1.banking_mode != new_mode) {
-				mbc1.banking_mode = new_mode;
-				eval_banks_mbc1();
-			}
-		} else if (address >= 0x4000) {
-			const uint8_t new_val = value & 0x03;
-			if (mbc1.banks_num_upper_bits != new_val) {
-				mbc1.banks_num_upper_bits = new_val;
-				eval_banks_mbc1();
-			}
-		} else if (address >= 0x2000) {
-			const uint8_t new_val = value & 0x1F;
-			if (mbc1.banks_num_lower_bits != new_val) {
-				mbc1.banks_num_lower_bits = new_val;
-				eval_banks_mbc1();
-			}
-		} else if ((value & 0x0F) == 0x0A && Cart::info.ram_banks) {
-			enable_cart_ram();
+	auto& mbc1 = cart->mbc1;
+	if (address >= 0x6000) {
+		const uint8_t new_mode = value ? 1 : 0;
+		if (mbc1.banking_mode != new_mode) {
+			mbc1.banking_mode = new_mode;
 			eval_banks_mbc1();
-		} else {
-			disable_cart_ram();
 		}
-	} else if (Cart::info.short_type == Cart::ShortType::RomMBC2 &&
-	           address <= 0x3FFF && test_bit(0, get_lsb(address))) {
-		auto& mbc2 = cart->mbc2;
-		if (address >= 0x2000) {
-			const uint8_t new_val = value & 0x0F;
-			if (mbc2.rom_bank_num != new_val) {
-				mbc2.rom_bank_num = new_val;
-				eval_banks_mbc2();
-			}
-		} else if ((value & 0x0F) == 0x0A) {
-			enable_cart_ram();
-		} else {
-			disable_cart_ram();
+	} else if (address >= 0x4000) {
+		const uint8_t new_val = value & 0x03;
+		if (mbc1.banks_num_upper_bits != new_val) {
+			mbc1.banks_num_upper_bits = new_val;
+			eval_banks_mbc1();
 		}
+	} else if (address >= 0x2000) {
+		const uint8_t new_val = value & 0x1F;
+		if (mbc1.banks_num_lower_bits != new_val) {
+			mbc1.banks_num_lower_bits = new_val;
+			eval_banks_mbc1();
+		}
+	} else if ((value & 0x0F) == 0x0A && Cart::info.ram_banks) {
+		enable_cart_ram(cart);
+		eval_banks_mbc1();
+	} else {
+		disable_cart_ram(cart);
 	}
 }
 
+void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
+{
+	if (address > 0x3FFF || !test_bit(0, get_msb(address)))
+		return;
+
+	auto& mbc2 = cart->mbc2;
+	if (address >= 0x2000) {
+		const uint8_t new_val = value & 0x0F;
+		if (mbc2.rom_bank_num != new_val) {
+			mbc2.rom_bank_num = new_val;
+			const auto mask = Cart::info.rom_banks - 1;
+			const auto bank_num = mbc2.rom_bank_num & mask;
+			cart->rom_bank_offset = bank_num < 0x02
+			  ? 0x00 : (0x4000 * (bank_num - 1));
+		}
+	} else if ((value & 0x0F) == 0x0A) {
+		enable_cart_ram(cart);
+	} else {
+		disable_cart_ram(cart);
+	}
+}
 
 void write_hram(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
@@ -431,6 +422,7 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 			byte = gb->Read8(addr++);
 	}
 }
+
 
 
 int_fast32_t eval_cart_rom_offset(const Cart& cart, const uint16_t address)
