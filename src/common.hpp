@@ -8,12 +8,12 @@ namespace gbx {
 template<class T>
 using owner = T;
 
-constexpr int32_t operator""_Kib(unsigned long long kibs)
+constexpr int32_t operator"" _Kib(unsigned long long kibs)
 {
 	return static_cast<int32_t>(kibs * 1024);
 }
 
-constexpr int32_t operator""_Mib(unsigned long long mibs)
+constexpr int32_t operator"" _Mib(unsigned long long mibs)
 {
 	return static_cast<int32_t>(mibs * 1024 * 1024);
 }

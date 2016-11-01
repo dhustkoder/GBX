@@ -154,7 +154,8 @@ static void sbc_a_n(const uint8_t second, Cpu* const cpu)
 {
 	// flags effect: Z 1 H C
 	const uint8_t first = cpu->a;
-	const uint16_t sec_n_carry = get_flags(*cpu, Cpu::Flag_C) ? second + 1 : second;
+	const uint16_t sec_n_carry = get_flags(*cpu, Cpu::Flag_C) ?
+		second + 1 : second;
 	const uint32_t result = first - sec_n_carry;
 	uint8_t flags = Cpu::Flag_N;
 
@@ -725,7 +726,8 @@ void add_29(Gameboy* const gb)
 
 void ld_2A(Gameboy* const gb) 
 {
-	// LD A, (HL+)  ( store value in address pointed by HL into A, increment HL _
+	// LD A, (HL+)
+	// ( store value in address pointed by HL into A, increment HL )
 	gb->cpu.a = gb->Read8(gb->cpu.hl++);
 }
 
@@ -879,7 +881,7 @@ void add_39(Gameboy* const gb)
 
 void ld_3A(Gameboy* const gb)
 {
-	// LD A, (HL-)  ( load value in mem pointed by HL in A, decrement HL )
+	// LD A, (HL-) (load value in mem pointed by HL in A, decrement HL)
 	gb->cpu.a = gb->Read8(gb->cpu.hl--);
 }
 
