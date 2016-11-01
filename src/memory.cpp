@@ -81,8 +81,8 @@ uint16_t Gameboy::Read16(const uint16_t address) const
 
 void Gameboy::Write16(const uint16_t address, const uint16_t value) 
 {
-	Write8(address, get_low_byte(value));
-	Write8(address + 1, get_high_byte(value));
+	Write8(address, get_lsb(value));
+	Write8(address + 1, get_msb(value));
 }
 
 
@@ -249,7 +249,7 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 			disable_cart_ram();
 		}
 	} else if (Cart::info.short_type == Cart::ShortType::RomMBC2 &&
-	           address <= 0x3FFF && test_bit(0, get_high_byte(address))) {
+	           address <= 0x3FFF && test_bit(0, get_lsb(address))) {
 		auto& mbc2 = cart->mbc2;
 		if (address >= 0x2000) {
 			const uint8_t new_val = value & 0x0F;

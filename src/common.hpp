@@ -48,9 +48,9 @@ constexpr Finally<F> finally(F&& f)
 }
 
 
-constexpr uint16_t concat_bytes(const uint8_t high_byte, const uint8_t low_byte)
+constexpr uint16_t concat_bytes(const uint8_t msb, const uint8_t lsb)
 {
-	return (high_byte << 8) | low_byte;
+	return (msb << 8) | lsb;
 }
 
 template<class T>
@@ -73,17 +73,18 @@ constexpr T res_bit(const uint8_t bit, const T value)
 }
 
 
-
-constexpr uint8_t get_low_byte(const uint16_t value) 
+template<class T>
+constexpr T get_lsb(const T value) 
 {
-	return value & 0x00FF;
+	return value & 0xFF;
 }
 
-constexpr uint8_t get_high_byte(const uint16_t value) 
+template<class T>
+constexpr T get_msb(const T value)
 {
-	return (value & 0xFF00) >> 8;
+	static_assert(sizeof(T) > 1, "");
+	return (value >> ((sizeof(T) - 1) * 8)) & 0xFF;
 }
-
 
 
 

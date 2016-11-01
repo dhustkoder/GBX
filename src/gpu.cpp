@@ -205,7 +205,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 		const uint8_t id = map[(mapx + scxdiv)&31];
 		const int addr = (unsig_data 
 			? id : static_cast<int8_t>(id)) * 16;
-		return (tile_data[addr + 1] << 8) | tile_data[addr];
+		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 	
 	ScanlineFiller fill_line{&Gpu::screen[ly][0], Pallete{gpu.bgp}};
@@ -246,7 +246,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	[map, unsig_data, tile_data] (const int mapx) -> uint16_t {
 		const uint8_t id = map[mapx&31];
 		const int addr = (unsig_data ? id : static_cast<int8_t>(id)) * 16;
-		return (tile_data[addr + 1] << 8) | tile_data[addr];
+		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
 	ScanlineFiller fill_line{&Gpu::screen[ly][wx_max], Pallete{gpu.bgp}};
@@ -305,23 +305,23 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 		if (yres == 8) {
 			const auto tile = &mem.vram[mem.oam[i + 2] * 16];
 			const auto tile_y = get_tile_y(ly_ypos_diff);
-			row = (tile[tile_y + 1] << 8) | tile[tile_y];
+			row = concat_bytes(tile[tile_y + 1], tile[tile_y]);
 		} else {
 			const int pattern = mem.oam[i + 2];
 			const uint8_t* tile;
 			int tile_y;
 			if (ly_ypos_diff < 8) {
 				tile = yflip
-					? &mem.vram[(pattern|0x01) * 16]
-					: &mem.vram[(pattern&0xFE) * 16];
+				  ? &mem.vram[(pattern | 0x01) * 16]
+				  : &mem.vram[(pattern & 0xFE) * 16];
 				tile_y = get_tile_y(ly_ypos_diff);
 			} else {
 				tile = yflip 
-					? &mem.vram[(pattern&0xFE) * 16]
-					: &mem.vram[(pattern|0x01) * 16]; 
+				  ? &mem.vram[(pattern & 0xFE) * 16]
+				  : &mem.vram[(pattern | 0x01) * 16];
 				tile_y = get_tile_y(ly_ypos_diff - 8);
 			}
-			row = (tile[tile_y + 1] << 8) | tile[tile_y];
+			row = concat_bytes(tile[tile_y + 1], tile[tile_y]);
 		}
 
 		uint32_t* line;
