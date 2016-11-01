@@ -24,6 +24,10 @@ struct Cart
 		GameboyColorCompat,
 		GameboyColorOnly
 	};
+	enum BankingMode : uint8_t {
+		RomBankingMode,
+		RamBankingMode
+	};
 
 	static struct Info {
 		char internal_name[17];

@@ -43,25 +43,20 @@ int main(int argc, char** argv)
 
 	SDL_Event events;
 	Uint32 last_ticks = 0;
-	size_t itr = 0;
+	int fps = 0;
 	
-	while (true) {
-		if (!update_events(&events, gameboy))
-			break;
-
+	while (update_events(&events, gameboy)) {	
 		gameboy->Run(70256);
 		render_graphics(gameboy);
 		SDL_Delay(15);
-
+		++fps;
 		const auto ticks = SDL_GetTicks();
-		if (ticks > (last_ticks + 1000)) {
-			printf("GBX FPS: %zu\r", itr);
+		if (ticks >= (last_ticks + 1000)) {
+			printf("FPS: %d\r", fps);
 			fflush(stdout);
-			itr = 0;
 			last_ticks = ticks;
+			fps = 0;
 		}
-
-		++itr;
 	}
 
 	return EXIT_SUCCESS;
