@@ -10,7 +10,6 @@ namespace gbx {
 extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
-static int16_t step_machine(Gameboy* gb);
 Cart::Info Cart::info;
 
 void Gameboy::Reset()
@@ -19,7 +18,7 @@ void Gameboy::Reset()
 	memset(Gpu::screen, 0xFF, sizeof(Gpu::screen));
 
 	// init the system
-	// up to now only Gameboy mode is supported
+	// up to now only Gameboy (DMG) mode is supported
 	cpu.pc = 0x0100;
 	cpu.sp = 0xFFFE;
 	cpu.af = 0x01B0;
@@ -43,28 +42,25 @@ void Gameboy::Reset()
 void Gameboy::Run(const int32_t cycles)
 {
 	do {
-		const auto step_cycles = step_machine(this);
+		const int32_t before = cpu.clock;
+		update_interrupts(this);
+
+		int16_t step_cycles;
+		if (!hwstate.flags.cpu_halt) {
+			const uint8_t opcode = Read8(cpu.pc++);
+			main_instructions[opcode](this);
+			step_cycles = clock_table[opcode];
+		} else {
+			step_cycles = 4;
+		}
+
+		const int32_t after = cpu.clock;
+		cpu.clock += step_cycles;
+		step_cycles += static_cast<int16_t>(after - before);
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
-		update_interrupts(this);
 	} while (cpu.clock <= cycles);
 	cpu.clock -= cycles;
-}
-
-
-int16_t step_machine(Gameboy* const gb)
-{
-	if (gb->hwstate.flags.cpu_halt == 0x00) {
-		const int32_t before = gb->cpu.clock;
-		const uint8_t opcode = gb->Read8(gb->cpu.pc++);
-		main_instructions[opcode](gb);
-		const int32_t after = gb->cpu.clock;
-		const int16_t op_cycles = clock_table[opcode];
-		gb->cpu.clock += op_cycles;
-		return op_cycles + static_cast<int16_t>(after - before);
-	}
-	gb->cpu.clock += 4;
-	return 4;
 }
 
 
@@ -93,9 +89,10 @@ void update_interrupts(Gameboy* const gb)
 {
 	const uint8_t pendents = get_pendent_interrupts(gb->hwstate);
 	const auto flags = gb->hwstate.flags;
-
-	if (pendents && flags.cpu_halt)
+	if (pendents && flags.cpu_halt) {
 		gb->hwstate.flags.cpu_halt = 0x00;
+		gb->cpu.clock += 4;
+	}
 
 	if (flags.ime == 0x00) {
 		return;
@@ -114,8 +111,6 @@ void update_interrupts(Gameboy* const gb)
 			gb->PushStack16(gb->cpu.pc);
 			gb->cpu.pc = inter.addr;
 			gb->cpu.clock += 20;
-			update_timers(20, &gb->hwstate);
-			update_gpu(20, gb->memory, &gb->hwstate, &gb->gpu);
 			break;
 		}
 	}

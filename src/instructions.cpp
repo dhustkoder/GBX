@@ -1345,7 +1345,10 @@ void ld_75(Gameboy* const gb)
 
 void halt_76(Gameboy* const gb)
 {
-	gb->hwstate.flags.cpu_halt = 0x01;
+	if (!get_pendent_interrupts(gb->hwstate))
+		gb->hwstate.flags.cpu_halt = 0x01;
+	else
+		gb->cpu.clock += 4;
 }
 
 
@@ -2118,7 +2121,7 @@ void reti_D9(Gameboy* const gb)
 	// RETI
 	// return and enable interrupts
 	gb->cpu.pc = gb->PopStack16();
-	gb->hwstate.flags.ime = 0x01;
+	gb->hwstate.flags.ime = 0x02;
 }
 
 
@@ -2272,7 +2275,7 @@ void rst_EF(Gameboy* const gb)
 
 
 
-// 0XF0
+// 0xF0
 void ldh_F0(Gameboy* const gb) 
 {
 	// LDH A, (a8)

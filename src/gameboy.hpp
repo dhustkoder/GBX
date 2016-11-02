@@ -33,8 +33,8 @@ struct Gameboy
 
 	Cpu cpu;
 	Gpu gpu;
-	Keys keys;
 	HWState hwstate;
+	Keys keys;
 	Memory memory;
 	Cart cart;
 };

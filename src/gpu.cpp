@@ -265,7 +265,6 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		to_draw -= pend;
 		fill_line(0, pend, get_row(x));
 	}
-
 }
 
 void update_sprite_scanline(const Gpu& gpu, const Memory& mem)

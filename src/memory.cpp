@@ -387,16 +387,18 @@ void write_lcdc(const uint8_t value, Gpu* const gpu)
 
 void write_stat(const uint8_t value, Gpu* const gpu)
 {
-	gpu->stat.value = (value & 0xf8) | (gpu->stat.value & 0x07);
+	gpu->stat.value = (value&0xf8) | (gpu->stat.value&0x87);
 }
 
 
 void write_keys(const uint8_t value, Keys* const keys)
 {
-	switch (value & 0x30) {
-	case 0x10: keys->value = 0xD0 | (keys->pad.value >> 4); break;
-	case 0x20: keys->value = 0xE0 | (keys->pad.value & 0x0f); break;
-	default: keys->value = 0xFF; break;
+	const auto pad = keys->pad.value;
+	switch (value&0x30) {
+	case 0x10: keys->value = 0xD0 | (pad >> 4); break;
+	case 0x20: keys->value = 0xE0 | (pad & 0x0f); break;
+	case 0x00: keys->value = 0xC0 | ((pad >> 4) | (pad & 0x0f)); break;
+	default: break;
 	}
 }
 
