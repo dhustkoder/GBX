@@ -124,7 +124,7 @@ void update_interrupts(Gameboy* const gb)
 
 
 static owner<Gameboy*> allocate_gb(const char* rom_path);
-static bool fill_cart_info(const uint8_t* header);
+static bool fill_cart_info(const uint8_t(&header)[0x4F]);
 
 owner<Gameboy*> create_gameboy(const char* const rom_path)
 {
@@ -194,7 +194,7 @@ owner<Gameboy*> allocate_gb(const char* const rom_path)
 }
 
 
-bool fill_cart_info(const uint8_t* const header)
+bool fill_cart_info(const uint8_t(&header)[0x4F])
 {
 	auto& cinfo = Cart::info;
 	memcpy(cinfo.internal_name, &header[0x34], 16);
