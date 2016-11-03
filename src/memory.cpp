@@ -396,8 +396,8 @@ void write_keys(const uint8_t value, Keys* const keys)
 	const auto pad = keys->pad.value;
 	switch (value&0x30) {
 	case 0x10: keys->value = 0xD0 | (pad >> 4); break;
-	case 0x20: keys->value = 0xE0 | (pad & 0x0f); break;
-	case 0x00: keys->value = 0xC0 | ((pad >> 4) | (pad & 0x0f)); break;
+	case 0x20: keys->value = 0xE0 | (pad & 0x0F); break;
+	case 0x00: keys->value = 0xC0 | ((pad >> 4) | (pad & 0x0F)); break;
 	default: break;
 	}
 }

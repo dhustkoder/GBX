@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 	int fps = 0;
 	
 	while (update_events(&events, gameboy)) {	
-		gameboy->Run(70256);
+		gameboy->Run(70224);
 		render_graphics(gameboy);
 		SDL_Delay(15);
 		++fps;

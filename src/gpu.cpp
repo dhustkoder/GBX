@@ -74,9 +74,14 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 	if (!gpu->lcdc.lcd_on)
 		return;
 
-	gpu->clock += cycles;
-	
-	switch (gpu->stat.mode) {
+	constexpr const int16_t limits[] { 204, 456, 80, 172 };
+	const auto mode = gpu->stat.mode;
+	const auto clock_limit = limits[mode];
+	if ((gpu->clock += cycles) < clock_limit)
+		return;
+
+	gpu->clock -= clock_limit;
+	switch (mode) {
 	case Gpu::Mode::HBlank: mode_hblank(gpu, hwstate); break;
 	case Gpu::Mode::VBlank: mode_vblank(gpu, hwstate); break;
 	case Gpu::Mode::SearchOAM: mode_oam(gpu); break;
@@ -88,50 +93,38 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 
 void mode_hblank(Gpu* const gpu, HWState* const hwstate)
 {
-	if (gpu->clock >= 204) {
-		if (++gpu->ly < 144) {
-			set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
-		} else {
-			request_interrupt(interrupts::vblank, hwstate);
-			set_gpu_mode(Gpu::Mode::VBlank, gpu, hwstate);
-		}
-		check_gpu_lyc(gpu, hwstate);
-		gpu->clock -= 204;
+	if (++gpu->ly < 144) {
+		set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
+	} else {
+		request_interrupt(interrupts::vblank, hwstate);
+		set_gpu_mode(Gpu::Mode::VBlank, gpu, hwstate);
 	}
+	check_gpu_lyc(gpu, hwstate);
 }
 
 
 void mode_vblank(Gpu* const gpu, HWState* const hwstate)
 {
-	if (gpu->clock >= 456) {
-		if (++gpu->ly > 153) {
-			gpu->ly = 0;
-			set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
-		}
-		gpu->clock -= 456;
-		check_gpu_lyc(gpu, hwstate);
+	if (++gpu->ly > 153) {
+		gpu->ly = 0;
+		set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
 	}
+	check_gpu_lyc(gpu, hwstate);
 }
 
 
 void mode_oam(Gpu* const gpu)
 {
-	if (gpu->clock >= 80) {
-		gpu->stat.mode = Gpu::Mode::Transfer;
-		gpu->clock -= 80;
-	}
+	gpu->stat.mode = Gpu::Mode::Transfer;
 }
 
 
 void mode_transfer(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
 {
-	if (gpu->clock >= 172) {
-		update_bg_scanline(*gpu, mem);
-		update_win_scanline(*gpu, mem);
-		update_sprite_scanline(*gpu, mem);
-		set_gpu_mode(Gpu::Mode::HBlank, gpu, hwstate);
-		gpu->clock -= 172;
-	}
+	update_bg_scanline(*gpu, mem);
+	update_win_scanline(*gpu, mem);
+	update_sprite_scanline(*gpu, mem);
+	set_gpu_mode(Gpu::Mode::HBlank, gpu, hwstate);
 }
 
 
@@ -150,7 +143,7 @@ void set_gpu_mode(const Gpu::Mode mode, Gpu* const gpu, HWState* const hwstate)
 	if (int_on)
 		request_interrupt(interrupts::lcd, hwstate);
 
-	gpu->stat.mode = static_cast<uint8_t>(mode);
+	gpu->stat.mode = mode;
 };
 
 
@@ -210,18 +203,15 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	
 	ScanlineFiller fill_line{&Gpu::screen[ly][0], Pallete{gpu.bgp}};
 
-	int xbeg = 0;
-	if (scxmod) {
+	if (!scxmod) {
+		for (int x = 0; x < 20; ++x)
+			fill_line(0, 8, get_row(x));
+	} else {
 		fill_line(scxmod, 8, get_row(0));
-		++xbeg;
-	}
-
-	for (int x = xbeg; x < 20; ++x)
-		fill_line(0, 8, get_row(x));
-
-	if (scxmod)
+		for (int x = 1; x < 20; ++x)
+			fill_line(0, 8, get_row(x));
 		fill_line(0, scxmod, get_row(20));
-
+	}
 }
 
 void update_win_scanline(const Gpu& gpu, const Memory& mem)

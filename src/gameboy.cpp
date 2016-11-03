@@ -41,6 +41,7 @@ void Gameboy::Reset()
 
 void Gameboy::Run(const int32_t cycles)
 {
+	// TODO: pass instr_timing test, get rid of vsync hack
 	do {
 		const int32_t before = cpu.clock;
 		update_interrupts(this);
@@ -59,7 +60,7 @@ void Gameboy::Run(const int32_t cycles)
 		step_cycles += static_cast<int16_t>(after - before);
 		update_gpu(step_cycles, memory, &hwstate, &gpu);
 		update_timers(step_cycles, &hwstate);
-	} while (cpu.clock <= cycles);
+	} while (cpu.clock < cycles || (gpu.ly > 0 && gpu.ly < 144));
 	cpu.clock -= cycles;
 }
 
