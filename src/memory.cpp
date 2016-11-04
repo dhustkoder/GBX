@@ -31,7 +31,7 @@ static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
 static void write_lcdc(uint8_t value, Gpu* gpu);
 static void write_stat(uint8_t value, Gpu* gpu);
-static void write_keys(uint8_t value, Keys* keys);
+static void write_joypad(uint8_t value, Joypad* keys);
 static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
@@ -320,7 +320,7 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 {
 	debug_printf("Hardware I/O: read $%X\n", address);
 	switch (address) {
-	case 0xFF00: return gb.keys.value;
+	case 0xFF00: return gb.joypad.reg.value;
 	case 0xFF04: return gb.hwstate.div;
 	case 0xFF05: return gb.hwstate.tima;
 	case 0xFF06: return gb.hwstate.tma;
@@ -348,7 +348,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	debug_printf("Hardware I/O: write $%X to $%X\n", value, address);
 	switch (address) {
-	case 0xFF00: write_keys(value, &gb->keys); break;
+	case 0xFF00: write_joypad(value, &gb->joypad); break;
 	case 0xFF04: write_div(value, &gb->hwstate); break;
 	case 0xFF05: gb->hwstate.tima = value; break;
 	case 0xFF06: gb->hwstate.tma = value; break;
@@ -387,17 +387,20 @@ void write_lcdc(const uint8_t value, Gpu* const gpu)
 
 void write_stat(const uint8_t value, Gpu* const gpu)
 {
-	gpu->stat.value = (value&0xf8) | (gpu->stat.value&0x87);
+	gpu->stat.value = (value&0xF8) | (gpu->stat.value&0x87);
 }
 
 
-void write_keys(const uint8_t value, Keys* const keys)
+void write_joypad(const uint8_t value, Joypad* const pad)
 {
-	const auto pad = keys->pad.value;
-	switch (value&0x30) {
-	case 0x10: keys->value = 0xD0 | (pad >> 4); break;
-	case 0x20: keys->value = 0xE0 | (pad & 0x0F); break;
-	case 0x00: keys->value = 0xC0 | ((pad >> 4) | (pad & 0x0F)); break;
+	const auto buttons = pad->buttons.value;
+	const auto directions = pad->directions.value;
+	auto& reg = pad->reg;
+	reg.value = (reg.value&0xCF) | (value&0x30);
+	switch (pad->reg.mode) {
+	case Joypad::Mode::Buttons: reg.keys = buttons; break;
+	case Joypad::Mode::Directions: reg.keys = directions; break;
+	case Joypad::Mode::Both: reg.keys = buttons&directions; break;
 	default: break;
 	}
 }

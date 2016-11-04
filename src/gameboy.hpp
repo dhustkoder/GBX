@@ -3,7 +3,7 @@
 #include "cpu.hpp"
 #include "gpu.hpp"
 #include "cart.hpp"
-#include "keys.hpp"
+#include "joypad.hpp"
 #include "hwstate.hpp"
 #include "memory.hpp"
 
@@ -34,7 +34,7 @@ struct Gameboy
 	Cpu cpu;
 	Gpu gpu;
 	HWState hwstate;
-	Keys keys;
+	Joypad joypad;
 	Memory memory;
 	Cart cart;
 };

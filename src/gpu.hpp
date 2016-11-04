@@ -30,7 +30,7 @@ struct Gpu
 			uint8_t win_map   : 1;
 			uint8_t lcd_on    : 1;
 		};
-	}lcdc;
+	} lcdc;
 
 	union {
 		uint8_t value;
@@ -43,7 +43,7 @@ struct Gpu
 			uint8_t int_on_coincidence : 1;
 			uint8_t dummy              : 1;
 		};
-	}stat;
+	} stat;
 
 	uint8_t scy;
 	uint8_t scx;
