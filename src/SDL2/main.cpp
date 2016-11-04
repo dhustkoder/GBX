@@ -83,9 +83,8 @@ static gbx::owner<SDL_Renderer*> renderer = nullptr;
 bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 {
 	using State = gbx::Joypad::KeyState;
-	const auto& scancode = events->key.keysym.scancode;
-	const auto& jbutton = events->jbutton;
-	
+	constexpr const auto escape = SDL_SCANCODE_ESCAPE;
+
 	const auto update_key =
 	[gb] (const State state, const uint32_t keycode) {
 		gbx::update_joypad(keycodes, keycode, state,
@@ -95,19 +94,21 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 	while (SDL_PollEvent(events)) {
 		switch (events->type) {
 		case SDL_KEYDOWN:
-			if (scancode != SDL_SCANCODE_ESCAPE)
-				update_key(State::Down, scancode);
-			else
+			if (events->key.keysym.scancode != escape) {
+				update_key(State::Down,
+				           events->key.keysym.scancode);
+			} else {
 				return false;
+			}
 			break;
-		case SDL_KEYUP:
-			update_key(State::Up, scancode);
+		case SDL_KEYUP: 
+			update_key(State::Up, events->key.keysym.scancode);
 			break;
-		case SDL_JOYBUTTONDOWN:
-			update_key(State::Down, jbutton.button);
+		case SDL_JOYBUTTONDOWN: 
+			update_key(State::Down, events->jbutton.button);
 			break;
 		case SDL_JOYBUTTONUP:
-			update_key(State::Up, jbutton.button);
+			update_key(State::Up, events->jbutton.button);
 			break;
 		case SDL_JOYAXISMOTION: {
 			State state;

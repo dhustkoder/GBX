@@ -31,10 +31,10 @@ struct Gameboy
 	uint8_t PopStack8();
 	uint16_t PopStack16();
 
-	Cpu cpu;
-	Gpu gpu;
-	HWState hwstate;
 	Joypad joypad;
+	HWState hwstate;
+	Gpu gpu;
+	Cpu cpu;
 	Memory memory;
 	Cart cart;
 };

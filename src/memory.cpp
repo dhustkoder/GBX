@@ -393,16 +393,8 @@ void write_stat(const uint8_t value, Gpu* const gpu)
 
 void write_joypad(const uint8_t value, Joypad* const pad)
 {
-	const auto buttons = pad->buttons.value;
-	const auto directions = pad->directions.value;
-	auto& reg = pad->reg;
-	reg.value = (reg.value&0xCF) | (value&0x30);
-	switch (pad->reg.mode) {
-	case Joypad::Mode::Buttons: reg.keys = buttons; break;
-	case Joypad::Mode::Directions: reg.keys = directions; break;
-	case Joypad::Mode::Both: reg.keys = buttons&directions; break;
-	default: break;
-	}
+	pad->reg.value = (pad->reg.value&0xCF) | (value&0x30);
+	eval_joypad_keys(pad);
 }
 
 

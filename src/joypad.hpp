@@ -48,6 +48,20 @@ struct Joypad
 	} directions;
 };
 
+
+inline void eval_joypad_keys(Joypad* const pad)
+{
+	const auto buttons = pad->buttons.value;
+	const auto directions = pad->directions.value;
+	switch (pad->reg.mode) {
+	case Joypad::Mode::Buttons: pad->reg.keys = buttons; break;
+	case Joypad::Mode::Directions: pad->reg.keys = directions; break;
+	case Joypad::Mode::Both: pad->reg.keys = buttons&directions; break;
+	default: pad->reg.keys = 0xF; break;
+	};
+}
+
+
  
 inline void update_joypad(const uint32_t(&keycodes)[8], const uint32_t keycode,
        const Joypad::KeyState state, HWState* const /*hwstate*/, Joypad* const pad)
@@ -72,6 +86,8 @@ inline void update_joypad(const uint32_t(&keycodes)[8], const uint32_t keycode,
 	case 7: pad->directions.down = state; break;
 	default: break;
 	}
+
+	eval_joypad_keys(pad);
 }
 
 
