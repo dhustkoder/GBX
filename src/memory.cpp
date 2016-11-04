@@ -201,16 +201,18 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		}
 	};
 	const auto eval_ram_bank_offset = [cart] {
+		if (Cart::info.type < Cart::Type::RomMBC1Ram ||
+		    Cart::info.ram_banks < 2 || !cart->ram_enabled)
+			return;
+		
 		const auto mbc1 = cart->mbc1;
-		if (Cart::info.type >= Cart::Type::RomMBC1Ram &&
-		    Cart::info.ram_banks > 1 &&
-		    mbc1.banking_mode == Cart::RamBankingMode &&
-		    cart->ram_enabled && mbc1.banks_num_upper_bits) {
-			const auto init_offset = Cart::info.rom_size - 0xA000;
+		auto offset = Cart::info.rom_size - 0xA000;
+		if (mbc1.banking_mode == Cart::RamBankingMode) {
 			const auto ram_bank_num = mbc1.banks_num_upper_bits;
 			const auto bank_offset = 0x2000 * ram_bank_num;
-			cart->ram_bank_offset = init_offset + bank_offset;
+			offset += bank_offset;
 		}
+		cart->ram_bank_offset = offset;
 	};
 
 	auto& mbc1 = cart->mbc1;
@@ -415,7 +417,7 @@ void write_div(const uint8_t /*value*/, HWState* const hwstate)
 
 void dma_transfer(const uint8_t value, Gameboy* const gb)
 {
-	constexpr const auto nbytes = sizeof(uint8_t) * 0xA0;
+	constexpr const auto nbytes = sizeof(Memory::oam);
 	const uint16_t address = value * 0x100;
 	if (address <= 0x7F5F) {
 		const auto offset = eval_cart_rom_offset(gb->cart, address);

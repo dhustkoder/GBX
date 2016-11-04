@@ -42,12 +42,12 @@ struct Cart
 
 	union {
 		union {
+			uint8_t banks_num : 7;
 			struct {
 				uint8_t banks_num_lower_bits : 5;
 				uint8_t banks_num_upper_bits : 2;
 				uint8_t banking_mode : 1;
 			};
-			uint8_t banks_num : 7;
 		} mbc1;
 
 		union {
