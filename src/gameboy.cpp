@@ -34,8 +34,9 @@ void Gameboy::Reset()
 
 	hwstate.tac = 0xF8;
 
-	keys.value = 0xCF;
-	keys.pad.value = 0xFF;
+	joypad.reg.value = 0xCF;
+	joypad.buttons.value = 0x0F;
+	joypad.directions.value = 0x0F;
 }
 
 

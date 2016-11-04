@@ -11,7 +11,6 @@ static bool init_sdl(bool enable_joystick);
 static void quit_sdl();
 static bool update_events(SDL_Event* events, gbx::Gameboy* gb);
 static void render_graphics(gbx::Gameboy* gb);
-static void update_key(gbx::Keys::State state, Uint32 keycode, gbx::Keys* keys);
 
 }
 
@@ -42,7 +41,7 @@ int main(int argc, char** argv)
 	});
 
 	SDL_Event events;
-	Uint32 last_ticks = 0;
+	uint32_t last_ticks = 0;
 	int fps = 0;
 	
 	while (update_events(&events, gameboy)) {	
@@ -68,7 +67,7 @@ namespace {
 constexpr const int WinWidth = 160;
 constexpr const int WinHeight = 144;
 
-Uint32 input_keys[8] {
+uint32_t keycodes[8] {
 	SDL_SCANCODE_Z, SDL_SCANCODE_X, 
 	SDL_SCANCODE_C, SDL_SCANCODE_V,
 	SDL_SCANCODE_RIGHT, SDL_SCANCODE_LEFT, 
@@ -83,26 +82,32 @@ static gbx::owner<SDL_Renderer*> renderer = nullptr;
 
 bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 {
-	using State = gbx::Keys::State;
+	using State = gbx::Joypad::KeyState;
 	const auto& scancode = events->key.keysym.scancode;
 	const auto& jbutton = events->jbutton;
-	auto& gb_keys = gb->keys;
+	
+	const auto update_key =
+	[gb] (const State state, const uint32_t keycode) {
+		gbx::update_joypad(keycodes, keycode, state,
+		                   &gb->hwstate, &gb->joypad);
+	};
+
 	while (SDL_PollEvent(events)) {
 		switch (events->type) {
 		case SDL_KEYDOWN:
 			if (scancode != SDL_SCANCODE_ESCAPE)
-				update_key(State::Down, scancode, &gb_keys);
+				update_key(State::Down, scancode);
 			else
 				return false;
 			break;
 		case SDL_KEYUP:
-			update_key(State::Up, scancode, &gb_keys);
+			update_key(State::Up, scancode);
 			break;
 		case SDL_JOYBUTTONDOWN:
-			update_key(State::Down, jbutton.button, &gb_keys);
+			update_key(State::Down, jbutton.button);
 			break;
 		case SDL_JOYBUTTONUP:
-			update_key(State::Up, jbutton.button, &gb_keys);
+			update_key(State::Up, jbutton.button);
 			break;
 		case SDL_JOYAXISMOTION: {
 			State state;
@@ -126,10 +131,10 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 
 			if (state == State::Down) {
 				keycode = codes[value > 0 ? 1 : 0];
-				update_key(state, keycode, &gb_keys);
+				update_key(state, keycode);
 			} else {
-				update_key(state, codes[0], &gb_keys);
-				update_key(state, codes[1], &gb_keys);
+				update_key(state, codes[0]);
+				update_key(state, codes[1]);
 			}
 
 			break;
@@ -167,29 +172,6 @@ void render_graphics(gbx::Gameboy* const gb)
 	SDL_RenderPresent(renderer);
 }
 
-
-void update_key(const gbx::Keys::State state, const Uint32 keycode,
-                 gbx::Keys* const keys)
-{
-	int key_index = 0;
-	for (const auto key : input_keys) {
-		if (key == keycode)
-			break;
-		++key_index;
-	}
-
-	switch (key_index) {
-	case 0: keys->pad.a = state; break;
-	case 1: keys->pad.b = state; break;
-	case 2: keys->pad.select = state; break;
-	case 3: keys->pad.start = state; break;
-	case 4: keys->pad.right = state; break;
-	case 5: keys->pad.left = state; break;
-	case 6: keys->pad.up = state; break;
-	case 7: keys->pad.down = state; break;
-	default: break;
-	}
-}
 
 bool setup_joystick()
 {
@@ -229,7 +211,7 @@ bool setup_joystick()
 			}
 		}
 
-		input_keys[i] = keycode;
+		keycodes[i] = keycode;
 		printf("%d\n", keycode);
 	}
 
