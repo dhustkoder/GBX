@@ -12,57 +12,57 @@ static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 Cart::Info Cart::info;
 
-void Gameboy::Reset()
+void reset(Gameboy* const gb)
 {
-	memset(this, 0, sizeof(Gameboy));
+	memset(gb, 0, sizeof(*gb));
 	memset(Gpu::screen, 0xFF, sizeof(Gpu::screen));
 
 	// init the system
 	// up to now only Gameboy (DMG) mode is supported
-	cpu.pc = 0x0100;
-	cpu.sp = 0xFFFE;
-	cpu.af = 0x01B0;
-	cpu.bc = 0x0013;
-	cpu.de = 0x00D8;
-	cpu.hl = 0x014D;
+	gb->cpu.pc = 0x0100;
+	gb->cpu.sp = 0xFFFE;
+	gb->cpu.af = 0x01B0;
+	gb->cpu.bc = 0x0013;
+	gb->cpu.de = 0x00D8;
+	gb->cpu.hl = 0x014D;
 
-	gpu.lcdc.value = 0x91;
-	gpu.stat.value = 0x85;
-	gpu.bgp = 0xFC;
-	gpu.obp0 = 0xFF;
-	gpu.obp1 = 0xFF;
+	gb->gpu.lcdc.value = 0x91;
+	gb->gpu.stat.value = 0x85;
+	gb->gpu.bgp = 0xFC;
+	gb->gpu.obp0 = 0xFF;
+	gb->gpu.obp1 = 0xFF;
 
-	hwstate.tac = 0xF8;
+	gb->hwstate.tac = 0xF8;
 
-	joypad.reg.value = 0xFF;
-	joypad.buttons.value = 0xF;
-	joypad.directions.value = 0xF;
+	gb->joypad.reg.value = 0xFF;
+	gb->joypad.buttons.value = 0xF;
+	gb->joypad.directions.value = 0xF;
 }
 
 
-void Gameboy::Run(const int32_t cycles)
+void run_for(const int32_t cycles, Gameboy* const gb)
 {
 	// TODO: pass instr_timing test, get rid of vsync hack
 	do {
-		const int32_t before = cpu.clock;
-		update_interrupts(this);
+		const int32_t before = gb->cpu.clock;
+		update_interrupts(gb);
 
 		int16_t step_cycles;
-		if (!hwstate.flags.cpu_halt) {
-			const uint8_t opcode = Read8(cpu.pc++);
-			main_instructions[opcode](this);
+		if (!gb->hwstate.flags.cpu_halt) {
+			const uint8_t opcode = mem_read8(*gb, gb->cpu.pc++);
+			main_instructions[opcode](gb);
 			step_cycles = clock_table[opcode];
 		} else {
 			step_cycles = 4;
 		}
 
-		const int32_t after = cpu.clock;
-		cpu.clock += step_cycles;
+		const int32_t after = gb->cpu.clock;
+		gb->cpu.clock += step_cycles;
 		step_cycles += static_cast<int16_t>(after - before);
-		update_gpu(step_cycles, memory, &hwstate, &gpu);
-		update_timers(step_cycles, &hwstate);
-	} while (cpu.clock < cycles || (gpu.ly > 0 && gpu.ly < 144));
-	cpu.clock -= cycles;
+		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
+		update_timers(step_cycles, &gb->hwstate);
+	} while (gb->cpu.clock < cycles || (gb->gpu.ly && gb->gpu.ly < 144));
+	gb->cpu.clock -= cycles;
 }
 
 
@@ -110,7 +110,7 @@ void update_interrupts(Gameboy* const gb)
 	for (const auto inter : interrupts::array) {
 		if (pendents & inter.mask) {
 			clear_interrupt(inter, &gb->hwstate);
-			gb->PushStack16(gb->cpu.pc);
+			stack_push16(gb->cpu.pc, gb);
 			gb->cpu.pc = inter.addr;
 			gb->cpu.clock += 20;
 			break;
@@ -126,7 +126,7 @@ static bool fill_cart_info(const uint8_t(&header)[0x4F]);
 owner<Gameboy*> create_gameboy(const char* const rom_path)
 {
 	if (const owner<Gameboy*> gb = allocate_gb(rom_path)) {
-		gb->Reset();
+		reset(gb);
 		return gb;
 	}
 	return nullptr;

@@ -166,8 +166,8 @@ inline void srl_r(uint8_t* const reg, Cpu* const cpu)
 inline void op_hlp(uint8_t(&op)(uint8_t,Cpu*), Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.hl;
-	const uint8_t result = op(gb->Read8(hl), &gb->cpu);
-	gb->Write8(hl, result);
+	const uint8_t result = op(mem_read8(*gb, hl), &gb->cpu);
+	mem_write8(hl, result, gb);
 }
 
 
@@ -187,16 +187,16 @@ inline void res_r(const uint8_t bit, uint8_t* const reg)
 inline void set_hlp(const uint8_t bit, Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.hl;
-	const uint8_t result = set_bit(bit, gb->Read8(hl));
-	gb->Write8(hl, result);
+	const uint8_t result = set_bit(bit, mem_read8(*gb, hl));
+	mem_write8(hl, result, gb);
 }
 
 
 inline void res_hlp(const uint8_t bit, Gameboy* const gb)
 {
 	const uint16_t hl = gb->cpu.hl;
-	const uint8_t result = res_bit(bit, gb->Read8(hl));
-	gb->Write8(hl, result);
+	const uint8_t result = res_bit(bit, mem_read8(*gb, hl));
+	mem_write8(hl, result, gb);
 }
 
 
@@ -207,7 +207,7 @@ inline void bit_r(const uint8_t bit, const uint8_t reg, Cpu* const cpu)
 
 inline void bit_hlp(const uint8_t bit, Gameboy* const gb)
 {
-	bit_n(bit, gb->Read8(gb->cpu.hl), &gb->cpu);
+	bit_n(bit, mem_read8(*gb, gb->cpu.hl), &gb->cpu);
 }
 
 

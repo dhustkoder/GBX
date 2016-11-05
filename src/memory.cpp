@@ -37,84 +37,42 @@ static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
 
 
-uint8_t Gameboy::Read8(const uint16_t address) const 
+uint8_t mem_read8(const Gameboy& gb, const uint16_t address)
 {
 	if (address < 0x8000)
-		return read_cart(cart, address);
+		return read_cart(gb.cart, address);
 	else if (address >= 0xFF80)
-		return read_hram(*this, address);
+		return read_hram(gb, address);
 	else if (address >= 0xFF00)
-		return read_io(*this, address);
+		return read_io(gb, address);
 	else if (address >= 0xFE00)
-		return read_oam(memory, address);
+		return read_oam(gb.memory, address);
 	else if (address >= 0xC000)
-		return read_wram(memory, address);
+		return read_wram(gb.memory, address);
 	else if (address >= 0xA000)
-		return read_cart_ram(cart, address);
+		return read_cart_ram(gb.cart, address);
 	else
-		return read_vram(memory, address);
+		return read_vram(gb.memory, address);
 }
 
 
-void Gameboy::Write8(const uint16_t address, const uint8_t value) 
+void mem_write8(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	if (address >= 0xFF80)
-		write_hram(address, value, this);
+		write_hram(address, value, gb);
 	else if (address >= 0xFF00)
-		write_io(address, value, this);
+		write_io(address, value, gb);
 	else if (address >= 0xFE00)
-		write_oam(address, value, &memory);
+		write_oam(address, value, &gb->memory);
 	else if (address >= 0xC000)
-		write_wram(address, value, &memory);
+		write_wram(address, value, &gb->memory);
 	else if (address >= 0xA000)
-		write_cart_ram(address, value, &cart);
+		write_cart_ram(address, value, &gb->cart);
 	else if (address >= 0x8000)
-		write_vram(address, value, &memory);
+		write_vram(address, value, &gb->memory);
 	else
-		write_cart(address, value, &cart);
+		write_cart(address, value, &gb->cart);
 }
-
-
-uint16_t Gameboy::Read16(const uint16_t address) const 
-{
-	return concat_bytes(Read8(address + 1), Read8(address));
-}
-
-
-void Gameboy::Write16(const uint16_t address, const uint16_t value) 
-{
-	Write8(address, get_lsb(value));
-	Write8(address + 1, get_msb(value));
-}
-
-
-void Gameboy::PushStack8(const uint8_t value) 
-{
-	Write8(--cpu.sp, value);
-}
-
-
-void Gameboy::PushStack16(const uint16_t value) 
-{
-	cpu.sp -= 2;
-	Write16(cpu.sp, value);
-}
-
-
-uint8_t Gameboy::PopStack8() 
-{
-	return Read8(cpu.sp++);
-}
-
-
-uint16_t Gameboy::PopStack16() 
-{
-	const uint16_t val = Read16(cpu.sp);
-	cpu.sp += 2;
-	return val;
-}
-
-
 
 
 
@@ -432,7 +390,7 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 		debug_printf("DMA TRANSFER OPTIMIZATION MISSED!\n");
 		auto addr = address;
 		for (auto& byte : gb->memory.oam)
-			byte = gb->Read8(addr++);
+			byte = mem_read8(*gb, addr++);
 	}
 }
 

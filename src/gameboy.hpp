@@ -9,7 +9,7 @@
 
 namespace gbx {
 
-struct Gameboy 
+struct Gameboy
 {
 	Gameboy()=delete;
 	Gameboy(Gameboy&)=delete;
@@ -17,19 +17,6 @@ struct Gameboy
 	~Gameboy()=delete;
 	Gameboy&operator=(Gameboy&)=delete;
 	Gameboy&operator=(Gameboy&&)=delete;
-
-	void Reset();
-	void Run(int32_t cycles);
-
-	uint8_t Read8(uint16_t address) const;
-	uint16_t Read16(uint16_t address) const;
-	void Write8(uint16_t address, uint8_t value);
-	void Write16(uint16_t address, uint16_t value);
-
-	void PushStack8(uint8_t value);
-	void PushStack16(uint16_t value);
-	uint8_t PopStack8();
-	uint16_t PopStack16();
 
 	Joypad joypad;
 	HWState hwstate;
@@ -41,6 +28,35 @@ struct Gameboy
 
 extern owner<Gameboy*> create_gameboy(const char* rom_path);
 extern void destroy_gameboy(owner<Gameboy*> gb);
+extern void reset(Gameboy* gb);
+extern void run_for(int32_t clock_cycles, Gameboy* gb);
+
+inline void stack_push8(const uint8_t value, Gameboy* const gb)
+{
+	mem_write8(--gb->cpu.sp, value, gb);
+}
+
+
+inline void stack_push16(const uint16_t value, Gameboy* const gb)
+{
+	gb->cpu.sp -= 2;
+	mem_write16(gb->cpu.sp, value, gb);
+}
+
+
+inline uint8_t stack_pop8(Gameboy* const gb)
+{
+	return mem_read8(*gb, gb->cpu.sp++);
+}
+
+
+inline uint16_t stack_pop16(Gameboy* const gb)
+{
+	const uint16_t val = mem_read16(*gb, gb->cpu.sp);
+	gb->cpu.sp += 2;
+	return val;
+}
+
 
 
 } // namespace gbx
