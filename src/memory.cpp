@@ -210,11 +210,12 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 
 void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
 {
-	if (address > 0x3FFF || !test_bit(0, get_msb(address)))
+	if (address > 0x3FFF)
 		return;
 
+	const auto addr_bit = test_bit(0, get_msb(address));
 	auto& mbc2 = cart->mbc2;
-	if (address >= 0x2000) {
+	if (address >= 0x2000 && addr_bit) {
 		const uint8_t new_val = value & 0x0F;
 		if (mbc2.rom_bank_num != new_val) {
 			mbc2.rom_bank_num = new_val;
@@ -223,7 +224,7 @@ void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
 			cart->rom_bank_offset = bank_num < 0x02
 			  ? 0x00 : (0x4000 * (bank_num - 1));
 		}
-	} else {
+	} else if (address <= 0x1FFF && !addr_bit) {
 		const auto new_val = value&0x0F;
 		if (new_val == 0x0A && !cart->ram_enabled)
 			enable_cart_ram(cart);
