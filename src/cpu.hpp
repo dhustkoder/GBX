@@ -125,7 +125,7 @@ inline void set_flags(const Cpu::Flags flags, Cpu* const cpu)
 }
 
 
-inline void ClearFlags(const Cpu::Flags flags, Cpu* const cpu)
+inline void clear_flags(const Cpu::Flags flags, Cpu* const cpu)
 {
 	cpu->f &= ~flags;
 }

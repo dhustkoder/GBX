@@ -184,14 +184,14 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	const auto eval_rom_bank_offset = [cart] {
 		const auto mbc1 = cart->mbc1;
-		const auto banking_mode = mbc1.banking_mode;
-		const auto rom_bank_num = (banking_mode
-			? mbc1.banks_num_lower_bits 
-			: mbc1.banks_num) & (Cart::info.rom_banks - 1);
+		const auto rom_bank_num = 
+		  (mbc1.banking_mode == Cart::RomBankingMode
+		   ? mbc1.banks_num : mbc1.banks_num_lower_bits)
+		   & (Cart::info.rom_banks - 1);
 
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
-		} else if (banking_mode == Cart::RamBankingMode ||
+		} else if (mbc1.banking_mode == Cart::RamBankingMode ||
 		            (rom_bank_num != 0x20 && 
 			     rom_bank_num != 0x40 && 
 			     rom_bank_num != 0x60)) {
@@ -208,9 +208,9 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		const auto mbc1 = cart->mbc1;
 		auto offset = Cart::info.rom_size - 0xA000;
 		if (mbc1.banking_mode == Cart::RamBankingMode) {
-			const auto ram_bank_num = mbc1.banks_num_upper_bits;
-			const auto bank_offset = 0x2000 * ram_bank_num;
-			offset += bank_offset;
+			const auto bank_num = 
+			  mbc1.banks_num_upper_bits&(Cart::info.ram_banks - 1);
+			offset += 0x2000 * bank_num;
 		}
 		cart->ram_bank_offset = offset;
 	};
