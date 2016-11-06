@@ -31,6 +31,8 @@ struct Cart
 
 	static struct Info {
 		char internal_name[17];
+		const char* rom_file_path = nullptr;
+		owner<char*> sav_file_path = nullptr;
 		int32_t rom_size;
 		int32_t ram_size;
 		uint8_t rom_banks;

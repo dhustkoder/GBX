@@ -47,7 +47,6 @@ constexpr Finally<F> finally(F&& f)
 	return Finally<F>(static_cast<F&&>(f));
 }
 
-
 constexpr uint16_t concat_bytes(const uint8_t msb, const uint8_t lsb)
 {
 	return (msb << 8) | lsb;
@@ -86,6 +85,15 @@ constexpr T get_msb(const T value)
 	return (value >> ((sizeof(T) - 1) * 8)) & 0xFF;
 }
 
+template<class T, const size_t ArrSize>
+bool is_in_array(const T(&array)[ArrSize], const T& value)
+{
+	for (const auto& elem : array) {
+		if (elem == value)
+			return true;
+	}
+	return false;
+}
 
 
 } // namespace gbx
