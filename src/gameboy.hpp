@@ -26,7 +26,7 @@ struct Gameboy
 	Cart cart;
 };
 
-extern owner<Gameboy*> create_gameboy(const char* rom_path);
+extern owner<Gameboy*> create_gameboy(const char* rom_file_path);
 extern void destroy_gameboy(owner<Gameboy*> gb);
 extern void reset(Gameboy* gb);
 extern void run_for(int32_t clock_cycles, Gameboy* gb);

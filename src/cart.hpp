@@ -30,16 +30,15 @@ struct Cart
 	};
 
 	static struct Info {
-		char internal_name[17];
-		const char* rom_file_path = nullptr;
+		char internal_name[18] { 0 };
 		owner<char*> sav_file_path = nullptr;
-		int32_t rom_size;
-		int32_t ram_size;
-		uint8_t rom_banks;
-		uint8_t ram_banks;
-		Cart::Type type;
-		Cart::ShortType short_type;
-		Cart::System system;
+		int32_t rom_size = 0;
+		int32_t ram_size = 0;
+		uint8_t rom_banks = 0;
+		uint8_t ram_banks = 0;
+		Cart::Type type = Type::RomOnly;
+		Cart::ShortType short_type = ShortType::RomOnly;
+		Cart::System system = System::Gameboy;
 	} info;
 
 	union {
