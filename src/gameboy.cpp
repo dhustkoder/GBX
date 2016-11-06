@@ -159,7 +159,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	const size_t rom_size = Cart::info.rom_size;
 	const size_t bytes_read = fread(gb->cart.data, 1, rom_size, rom_file);
 	if (bytes_read < rom_size) {
-		fprintf(stderr, "Error while reading from file.\n");
+		fprintf(stderr, "Error while reading from file\n");
 		return nullptr;
 	}
 	
@@ -207,7 +207,7 @@ bool eval_header_info(FILE* const rom_file)
 	uint8_t header[0x4F];
 	fseek(rom_file, 0x100, SEEK_SET);
 	if (fread(header, 1, 0x4F, rom_file) < 0x4F) {
-		fprintf(stderr, "Error while reading from file.\n");
+		fprintf(stderr, "Error while reading from file\n");
 		return false;
 	}
 
@@ -222,11 +222,11 @@ bool eval_header_info(FILE* const rom_file)
 	Cart::info.type = static_cast<Cart::Type>(header[0x47]);
 
 	if (!is_in_array(kSupportedCartridgeTypes, Cart::info.type)) {
-		fprintf(stderr, "Cartridge type %u not supported.\n",
+		fprintf(stderr, "Cartridge type %u not supported\n",
 		        static_cast<unsigned>(Cart::info.type));
 		return false;
 	} else if (!is_in_array(kSupportedCartridgeSystems, Cart::info.system)) {
-		fprintf(stderr, "Cartridge system %u not supported.\n",
+		fprintf(stderr, "Cartridge system %u not supported\n",
 		        static_cast<unsigned>(Cart::info.system));
 		return false;
 	}
@@ -252,7 +252,7 @@ bool eval_header_info(FILE* const rom_file)
 	const uint8_t size_codes[2] { header[0x48], header[0x49] };
 	
 	if (size_codes[0] >= 7 || size_codes[1] >= 4) {
-		fprintf(stderr, "Invalid size codes.\n");
+		fprintf(stderr, "Invalid size codes\n");
 		return false;
 	}
 	
@@ -263,7 +263,7 @@ bool eval_header_info(FILE* const rom_file)
 
 	if (Cart::info.short_type == Cart::ShortType::RomOnly) {
 		if (Cart::info.ram_size != 0x00 || Cart::info.rom_size != 32_Kib) {
-			fprintf(stderr, "invalid size codes for RomOnly!\n");
+			fprintf(stderr, "Invalid size codes for RomOnly\n");
 			return false;
 		}
 	} else if (Cart::info.short_type == Cart::ShortType::RomMBC2) {
@@ -271,7 +271,7 @@ bool eval_header_info(FILE* const rom_file)
 			Cart::info.ram_size = 512;
 			Cart::info.ram_banks = 1;
 		} else {
-			fprintf(stderr, "invalid size codes for MBC2!\n");
+			fprintf(stderr, "Invalid size codes for MBC2\n");
 			return false;
 		}
 	}
@@ -296,7 +296,7 @@ bool check_for_sav_file(const char* const rom_file_path, Cart* const cart)
 		static_cast<char*>(calloc(sav_path_size, sizeof(char)));
 
 	if (sav_file_path == nullptr) {
-		perror("Couldn't allocate memory: ");
+		perror("Couldn't allocate memory");
 		return false;
 	}
 
@@ -324,7 +324,7 @@ bool check_for_sav_file(const char* const rom_file_path, Cart* const cart)
 		const auto bytes_read_sav_file =
 			fread(cart_ram, 1, cart_ram_size, sav_file);
 		if (bytes_read_sav_file < cart_ram_size)
-			fprintf(stderr, "Error while loading sav file\n");
+			fprintf(stderr, "Error while reading sav file\n");
 	}
 
 	return true;
@@ -334,7 +334,7 @@ void save_sav_file(const Cart& cart)
 {
 	owner<FILE* const> sav_file = fopen(Cart::info.sav_file_path, "wb");
 	if (sav_file == nullptr) {
-		perror("Couldn't open sav file: ");
+		perror("Couldn't open sav file");
 		return;
 	}
 	
@@ -345,7 +345,7 @@ void save_sav_file(const Cart& cart)
 	const size_t ramsize = Cart::info.ram_size;
 	const uint8_t* ram = &cart.data[Cart::info.rom_size];
 	if (fwrite(ram, 1, ramsize, sav_file) < ramsize)
-		perror("Error while writting to sav file: ");
+		perror("Error while writting sav file");
 }
 
 
