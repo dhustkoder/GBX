@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 	SDL_Event events;
 	uint32_t last_ticks = 0;
 	int fps = 0;
-	
+
 	while (update_events(&events, gameboy)) {	
 		gbx::run_for(70224, gameboy);
 		render_graphics(gameboy);

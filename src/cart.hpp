@@ -104,15 +104,6 @@ constexpr const Cart::System kSupportedCartridgeSystems[] {
 };
 
 
-inline void enable_cart_ram(Cart* const cart) 
-{
-	cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
-}
-
-inline void disable_cart_ram(Cart* const cart)
-{
-	cart->ram_bank_offset = 0x00;
-}
 
 
 } // namespace gbx

@@ -1,11 +1,12 @@
 #ifndef GBX_DEBUG_HPP_
 #define GBX_DEBUG_HPP_
-
 #if defined(_DEBUG) || defined(DEBUG)
 #include <stdio.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <assert.h>
+
+#define GBX_DEBUG
 
 #if defined(__linux__) || defined(__APPLE__)
 #define GBX_DEBUG_BREAK() raise(SIGTRAP)
@@ -23,7 +24,7 @@
 namespace gbx {
 
 
-#if defined(_DEBUG) || defined(DEBUG)
+#ifdef GBX_DEBUG
 
 inline void debug_puts(const char* str) 
 {

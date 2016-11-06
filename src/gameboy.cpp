@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "instructions.hpp"
 #include "gameboy.hpp"
 
@@ -121,9 +122,9 @@ void update_interrupts(Gameboy* const gb)
 }
 
 
-static bool check_for_sav_file(const char* rom_file_path, Cart* cart);
-static void save_sav_file(const Cart& cart);
 static bool eval_header_info(FILE* rom_file);
+static bool eval_and_load_sav_file(const char* rom_file_path, Cart* cart);
+static void update_sav_file(const Cart& cart);
 
 owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 {
@@ -157,14 +158,20 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	fseek(rom_file, 0, SEEK_SET);
 	const size_t rom_size = Cart::info.rom_size;
-	const size_t bytes_read = fread(gb->cart.data, 1, rom_size, rom_file);
-	if (bytes_read < rom_size) {
+	if (fread(gb->cart.data, 1, rom_size, rom_file) < rom_size) {
 		fprintf(stderr, "Error while reading from file\n");
 		return nullptr;
 	}
+
+	constexpr const Cart::Type battery_cart_types[] {
+		Cart::Type::RomMBC1RamBattery,
+		Cart::Type::RomMBC2Battery
+	};
 	
-	if (!check_for_sav_file(rom_file_path, &gb->cart))
-		return nullptr;
+	if (is_in_array(battery_cart_types, Cart::info.type)) {
+		if (!eval_and_load_sav_file(rom_file_path, &gb->cart))
+			return nullptr;
+	}
 
 	printf("CARTRIDGE INFO\n"
 	       "NAME: %s\n"
@@ -191,9 +198,8 @@ void destroy_gameboy(const owner<Gameboy*> gb)
 	assert(gb != nullptr);
 
 	if (Cart::info.sav_file_path != nullptr) {
-		save_sav_file(gb->cart);
+		update_sav_file(gb->cart);
 		free(Cart::info.sav_file_path);
-		memset(&Cart::info, 0, sizeof(Cart::info));
 		Cart::info.sav_file_path = nullptr;
 	}
 
@@ -279,20 +285,11 @@ bool eval_header_info(FILE* const rom_file)
 	return true;
 }
 
-
-bool check_for_sav_file(const char* const rom_file_path, Cart* const cart)
+bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 {
-	constexpr const Cart::Type battery_cart_types[] {
-		Cart::Type::RomMBC1RamBattery,
-		Cart::Type::RomMBC2Battery
-	};
-	
-	if (!is_in_array(battery_cart_types, Cart::info.type))
-		return true;
-
 	const auto rom_path_size = strlen(rom_file_path);
 	const auto sav_path_size = rom_path_size + 5;
-	char* const sav_file_path = 
+	owner<char* const> sav_file_path = 
 		static_cast<char*>(calloc(sav_path_size, sizeof(char)));
 
 	if (sav_file_path == nullptr) {
@@ -309,28 +306,30 @@ bool check_for_sav_file(const char* const rom_file_path, Cart* const cart)
 			? p - &rom_file_path[0] : rom_path_size - 1;
 	}();
 
-	memcpy(sav_file_path, rom_file_path, sizeof(char) * dot_offset);
+	const auto size = sizeof(char) * dot_offset;
+	memcpy(sav_file_path, rom_file_path, size);
 	strcat(sav_file_path, ".sav");
 
-	Cart::info.sav_file_path = sav_file_path;
-	owner<FILE* const> sav_file = fopen(sav_file_path, "rb");
-	
-	if (sav_file != nullptr) {
+	owner<FILE* const> sav_file = fopen(sav_file_path, "rb+");
+	if (sav_file == nullptr && errno != ENOENT) {
+		perror("Couldn't open sav file");
+		free(sav_file_path);
+		return false;
+	} else if (sav_file != nullptr) {
 		const auto sav_file_guard = finally([sav_file] {
 			fclose(sav_file);
 		});
-		uint8_t* const cart_ram = &cart->data[Cart::info.rom_size];
-		const size_t cart_ram_size = Cart::info.ram_size;
-		const auto bytes_read_sav_file =
-			fread(cart_ram, 1, cart_ram_size, sav_file);
-		if (bytes_read_sav_file < cart_ram_size)
-			fprintf(stderr, "Error while reading sav file\n");
+		const size_t ram_size = Cart::info.ram_size;
+		uint8_t* const ram = &cart->data[Cart::info.rom_size];
+		if (fread(ram, 1, ram_size, sav_file) < ram_size)
+			fprintf(stderr, "Error while loading sav file");
 	}
 
+	Cart::info.sav_file_path = sav_file_path;
 	return true;
 }
 
-void save_sav_file(const Cart& cart)
+void update_sav_file(const Cart& cart)
 {
 	owner<FILE* const> sav_file = fopen(Cart::info.sav_file_path, "wb");
 	if (sav_file == nullptr) {
