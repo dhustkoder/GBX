@@ -20,10 +20,10 @@ namespace gbx {
  */
 struct Gameboy;
 struct Memory {
-	uint8_t hram[127];
-	uint8_t wram[8_Kib];
 	uint8_t vram[8_Kib];
 	uint8_t oam[160];
+	uint8_t wram[8_Kib];
+	uint8_t hram[127];
 };
 
 extern uint8_t mem_read8(const Gameboy& gb, uint16_t address);

@@ -47,7 +47,6 @@ int main(int argc, char** argv)
 	while (update_events(&events, gameboy)) {	
 		gbx::run_for(70224, gameboy);
 		render_graphics(gameboy);
-		SDL_Delay(15);
 		++fps;
 		const auto ticks = SDL_GetTicks();
 		if (ticks >= (last_ticks + 1000)) {
@@ -238,7 +237,8 @@ bool init_sdl(const bool enable_joystick)
 		goto free_sdl;
 	}
 
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	renderer = SDL_CreateRenderer(window, -1,
+	  SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	if (renderer == nullptr) {
 		fprintf(stderr, "failed to create SDL_Renderer: %s\n",
