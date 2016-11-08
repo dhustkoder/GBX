@@ -73,13 +73,13 @@ constexpr T res_bit(const uint8_t bit, const T value)
 
 
 template<class T>
-constexpr T get_lsb(const T value) 
+constexpr uint8_t get_lsb(const T value) 
 {
 	return value & 0xFF;
 }
 
 template<class T>
-constexpr T get_msb(const T value)
+constexpr uint8_t get_msb(const T value)
 {
 	static_assert(sizeof(T) > 1, "");
 	return (value >> ((sizeof(T) - 1) * 8)) & 0xFF;

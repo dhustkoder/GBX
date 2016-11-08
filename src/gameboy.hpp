@@ -21,8 +21,8 @@ struct Gameboy
 	Joypad joypad;
 	HWState hwstate;
 	Gpu gpu;
-	Memory memory;
 	Cpu cpu;
+	Memory memory;
 	Cart cart;
 };
 

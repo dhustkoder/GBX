@@ -272,7 +272,7 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 	const int yres = gpu.lcdc.obj_size ? 16 : 8;
 	const auto ly = gpu.ly;
 
-	for (size_t i = 0; i < sizeof(mem.oam); i += 4) {
+	for (int i = sizeof(mem.oam) - 4; i >= 0; i -= 4) {
 		const int ypos = mem.oam[i] - 16;
 		const int xpos = mem.oam[i + 1] - 8;
 		if (ly < ypos || ly >= (ypos+yres) ||

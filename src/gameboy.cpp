@@ -310,12 +310,7 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 	memcpy(sav_file_path, rom_file_path, size);
 	strcat(sav_file_path, ".sav");
 
-	owner<FILE* const> sav_file = fopen(sav_file_path, "rb+");
-	if (sav_file == nullptr && errno != ENOENT) {
-		perror("Couldn't open sav file");
-		free(sav_file_path);
-		return false;
-	} else if (sav_file != nullptr) {
+	if (owner<FILE* const> sav_file = fopen(sav_file_path, "rb+")) {
 		const auto sav_file_guard = finally([sav_file] {
 			fclose(sav_file);
 		});
@@ -323,6 +318,10 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 		uint8_t* const ram = &cart->data[Cart::info.rom_size];
 		if (fread(ram, 1, ram_size, sav_file) < ram_size)
 			fprintf(stderr, "Error while loading sav file");
+	} else if (errno != ENOENT) {
+		perror("Couldn't open sav file");
+		free(sav_file_path);
+		return false;
 	}
 
 	Cart::info.sav_file_path = sav_file_path;
