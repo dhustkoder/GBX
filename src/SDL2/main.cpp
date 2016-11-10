@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	const gbx::owner<gbx::Gameboy*> gameboy = gbx::create_gameboy(argv[1]);
+	gbx::owner<gbx::Gameboy* const> gameboy = gbx::create_gameboy(argv[1]);
 	
 	if (gameboy == nullptr)
 		return EXIT_FAILURE;
@@ -66,11 +66,23 @@ namespace {
 constexpr const int WinWidth = 160;
 constexpr const int WinHeight = 144;
 
-uint32_t keycodes[8] {
+struct Joyaxis {
+	uint32_t kcode_high;
+	uint32_t kcode_low;
+	int16_t value;
+	uint8_t id;
+};
+
+static uint32_t keycodes[8] {
 	SDL_SCANCODE_Z, SDL_SCANCODE_X, 
 	SDL_SCANCODE_C, SDL_SCANCODE_V,
 	SDL_SCANCODE_RIGHT, SDL_SCANCODE_LEFT, 
 	SDL_SCANCODE_UP, SDL_SCANCODE_DOWN
+};
+
+static Joyaxis joyaxis[] {
+	{SDL_SCANCODE_RIGHT, SDL_SCANCODE_LEFT, 0, 0},
+	{SDL_SCANCODE_DOWN, SDL_SCANCODE_UP, 0, 1}
 };
 
 static gbx::owner<SDL_Joystick*> joystick = nullptr;
@@ -110,31 +122,27 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 			update_key(State::Up, events->jbutton.button);
 			break;
 		case SDL_JOYAXISMOTION: {
-			State state;
-			Uint32 keycode;
-			Uint32 codes[2];
-			const auto value = events->jaxis.value;
-			const auto axis = events->jaxis.axis;
+			const auto axis_id = events->jaxis.axis;
+			const auto axis_value = events->jaxis.value;
+			const State state = 
+			  (axis_value < -3000 || axis_value > 3000) 
+			  ? State::Down
+			  : State::Up;
 
-			if (value > -30000 && value < 30000)
-				state = State::Up;
-			else
-				state = State::Down;
-
-			if (axis == 0) {
-				codes[0] = SDL_SCANCODE_LEFT;
-				codes[1] = SDL_SCANCODE_RIGHT;
-			} else if (axis == 1) {
-				codes[0] = SDL_SCANCODE_UP;
-				codes[1] = SDL_SCANCODE_DOWN;
-			}
-
-			if (state == State::Down) {
-				keycode = codes[value > 0 ? 1 : 0];
-				update_key(state, keycode);
-			} else {
-				update_key(state, codes[0]);
-				update_key(state, codes[1]);
+			auto& jaxis = axis_id == joyaxis[0].id
+			  ? joyaxis[0] : joyaxis[1];
+			
+			if (jaxis.value != axis_value) {
+				if (state == State::Down) {
+					const auto kcode = axis_value > 0
+					  ? jaxis.kcode_high : jaxis.kcode_low;
+					update_key(state, kcode);
+				} else if (state == State::Up) {
+					const auto kcode = jaxis.value > 0
+					  ? jaxis.kcode_high : jaxis.kcode_low;
+					update_key(state, kcode);
+				}
+				jaxis.value = axis_value;
 			}
 
 			break;
@@ -184,37 +192,84 @@ bool setup_joystick()
 		return false;
 	}
 
+	bool success = false;
 	joystick = SDL_JoystickOpen(0);
+	const auto joystick_guard = gbx::finally([&] {
+		if (!success)
+			SDL_JoystickClose(joystick);
+	});
 
 	if (joystick == nullptr) {
 		fprintf(stderr, "error: %s\n", SDL_GetError());
 		return false;
 	}
 
-	const char* const keywords[]{
-		"A", "B", "SELECT", "START"
+	constexpr const char* const keywords[] {
+		"A", "B", "SELECT", "START",
+		"RIGHT", "LEFT", "UP", "DOWN"
+	};
+
+	const auto is_quit_event = [] (const SDL_Event& ev) {
+		if (ev.type == SDL_QUIT)
+			return true;
+		else if (ev.type == SDL_KEYDOWN &&
+		          ev.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+			return true;
+		return false;
 	};
 
 	SDL_Event ev;
-	Uint32 keycode = 255;
-
-	for (int i = 0; i < 4; ++i) {
+	uint32_t prev_button = ~0;
+	int16_t prev_axis_value = -1;
+	uint8_t prev_axis_id = -1;
+	for (int i = 0; i < 8; ++i) {
 		printf("press key for %s: ", keywords[i]);
 		fflush(stdout);
 
 		while (true) {
-			SDL_PollEvent(&ev);
-			if (ev.type == SDL_JOYBUTTONDOWN
-				&& ev.jbutton.button != keycode) {
-				keycode = ev.jbutton.button;
+			if (!SDL_PollEvent(&ev))
+				continue;
+
+			if (is_quit_event(ev)) {
+				putchar('\n');
+				return false;
+			} else if (ev.type == SDL_JOYBUTTONDOWN &&
+			     ev.jbutton.button != prev_button) {
+				prev_button = keycodes[i] = ev.jbutton.button;
+				printf("%d\n", prev_button);
+				break;
+			} else if (i > 3 && ev.type == SDL_JOYAXISMOTION) {
+				constexpr const uint32_t scancodes[] {
+					SDL_SCANCODE_RIGHT, SDL_SCANCODE_LEFT,
+					SDL_SCANCODE_UP, SDL_SCANCODE_DOWN
+				};
+
+				const auto axis_id = ev.jaxis.axis;
+				const auto axis_value = ev.jaxis.value;
+
+				if (!axis_value ||
+				     (axis_id == prev_axis_id &&
+				     axis_value == prev_axis_value))
+					continue;
+
+				auto& jaxis = i < 6 ? joyaxis[0] : joyaxis[1];
+				jaxis.id = axis_id;
+				
+				if (axis_value > 0)
+					jaxis.kcode_high = scancodes[i - 4];
+				else
+					jaxis.kcode_low = scancodes[i - 4];
+
+				prev_axis_id = axis_id;
+				prev_axis_value = axis_value;
+				printf("axis %u, value %d\n",
+				         axis_id, axis_value);
 				break;
 			}
 		}
-
-		keycodes[i] = keycode;
-		printf("%d\n", keycode);
 	}
 
+	success = true;
 	return true;
 }
 
