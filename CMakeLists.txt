@@ -10,18 +10,18 @@ set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -Werror -fstrict-aliasing \
 
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O1 -g3")
 
+# build options
+set(TARGET_PLATFORM "Linux" CACHE STRING "Specifies your target platform for build config")
 option(ASAN OFF)
 option(USAN OFF)
-option(MSAN OFF)
-
 option(ENABLE_LTO OFF)
 option(ASM_OUTPUT OFF)
+
 
 if(NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type selected, defaulted to Release")
 	set(CMAKE_BUILD_TYPE "Release")
 endif()
-
 
 # "Release" full optimization , no debug info.
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
@@ -48,23 +48,22 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	endif()
 endif()
 
-#directories
+# gbx src directory
 set(GBX_SRC_DIR "./src")
-
-#include utix
-include_directories("./Dependencies/Utix/Utix/include/")
-#include project
+# include src directory
 include_directories("${GBX_SRC_DIR}")
 
-#files
-file(GLOB GBX_SRC "${GBX_SRC_DIR}/*.cpp" "${GBX_SRC_DIR}/SDL2/*.cpp")
+# specific platform builds
+if (${TARGET_PLATFORM} STREQUAL "Linux")
+	set(GBX_PLATFORM_SRC_FILES "${GBX_SRC_DIR}/SDL2/*.cpp")
+	set(GBX_LINK_LIBRARIES "-lc -lSDL2")
+else()
+	message(FATAL_ERROR "Add your platform build configuration")
+endif()
 
-# compile
-add_executable(${PROJECT_NAME} ${GBX_SRC})
 
-# link libraries
-target_link_libraries(${PROJECT_NAME} -lc -lSDL2)
-
+add_executable(${PROJECT_NAME} "${GBX_SRC_DIR}/*.cpp" ${GBX_PLATFORM_SRC_FILES})
+target_link_libraries(${PROJECT_NAME} ${GBX_LINK_LIBRARIES})
 
 if (ASM_OUTPUT)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S")
