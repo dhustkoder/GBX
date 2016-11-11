@@ -86,9 +86,6 @@ struct Cart
 	uint8_t data[];
 };
 
-constexpr const int32_t kCartridgeMaxSize = 64_Kib;
-constexpr const int32_t kCartridgeMinSize = 32_Kib;
-
 constexpr const Cart::Type kSupportedCartridgeTypes[] {
 	Cart::Type::RomOnly,
 	Cart::Type::RomMBC1,
@@ -102,7 +99,6 @@ constexpr const Cart::System kSupportedCartridgeSystems[] {
 	Cart::System::Gameboy,
 	Cart::System::GameboyColorCompat
 };
-
 
 
 

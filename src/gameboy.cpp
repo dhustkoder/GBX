@@ -41,7 +41,7 @@ void reset(Gameboy* const gb)
 }
 
 
-void run_for(const int32_t clock_cycles, Gameboy* const gb)
+void run_for(const int32_t clock_limit, Gameboy* const gb)
 {
 	// TODO: pass instr_timing test, get rid of vsync hack
 	do {
@@ -62,10 +62,10 @@ void run_for(const int32_t clock_cycles, Gameboy* const gb)
 		step_cycles += static_cast<int16_t>(after - before);
 		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
 		update_timers(step_cycles, &gb->hwstate);
-	} while (gb->cpu.clock < clock_cycles || 
-		 (gb->gpu.ly > 0 && gb->gpu.ly < 144));
+	} while (gb->cpu.clock < clock_limit ||
+		  (gb->gpu.ly > 0 && gb->gpu.ly < 144));
 
-	gb->cpu.clock -= clock_cycles;
+	gb->cpu.clock -= clock_limit;
 }
 
 
@@ -80,10 +80,7 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 	if (test_bit(2, hwstate->tac)) {
 		hwstate->tima_clock += cycles;
 		if (hwstate->tima_clock >= hwstate->tima_clock_limit) {
-			if (++hwstate->tima == 0x00) {
-				hwstate->tima = hwstate->tma;
-				request_interrupt(interrupts::timer, hwstate);
-			}
+			inc_tima(hwstate);
 			hwstate->tima_clock -= hwstate->tima_clock_limit;
 		}
 	}

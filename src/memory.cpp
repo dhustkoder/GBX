@@ -364,8 +364,9 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 {
 	constexpr const int16_t limits[] { 0x400, 0x10, 0x40, 0x100 };
 	hwstate->tac = 0xF8|(value&0x07);
+	if (hwstate->tima_clock >= hwstate->tima_clock_limit >> 1)
+		inc_tima(hwstate);
 	hwstate->tima_clock_limit = limits[value&0x03];
-	hwstate->tima_clock = 0x00;
 }
 
 void write_div(const uint8_t /*value*/, HWState* const hwstate)

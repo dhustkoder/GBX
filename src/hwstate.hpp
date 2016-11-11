@@ -68,6 +68,13 @@ inline void clear_interrupt(const Interrupt inter, HWState* const hwstate)
 	hwstate->int_flags &= ~inter.mask;
 }
 
+inline void inc_tima(HWState* const hwstate)
+{
+	if (++hwstate->tima == 0x00) {
+		hwstate->tima = hwstate->tma;
+		request_interrupt(interrupts::timer, hwstate);
+	}
+}
 
 
 } // namespace gbx
