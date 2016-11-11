@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 	uint32_t last_ticks = 0;
 	int fps = 0;
 
-	while (update_events(&events, gameboy)) {	
+	while (update_events(&events, gameboy)) {
 		gbx::run_for(70224, gameboy);
 		render_graphics(gameboy);
 		++fps;
@@ -67,11 +67,13 @@ constexpr const int WinWidth = 160;
 constexpr const int WinHeight = 144;
 
 struct Joyaxis {
+	static constexpr const int16_t dead_zone = INT16_MAX - 3000;
 	uint32_t kcode_high;
 	uint32_t kcode_low;
 	int16_t value;
 	uint8_t id;
 };
+constexpr const int16_t Joyaxis::dead_zone;
 
 static uint32_t keycodes[8] {
 	SDL_SCANCODE_Z, SDL_SCANCODE_X, 
@@ -124,10 +126,8 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 		case SDL_JOYAXISMOTION: {
 			const auto axis_id = events->jaxis.axis;
 			const auto axis_value = events->jaxis.value;
-			const State state = 
-			  (axis_value < -3000 || axis_value > 3000) 
-			  ? State::Down
-			  : State::Up;
+			const auto state = abs(axis_value) > Joyaxis::dead_zone
+			  ? State::Down : State::Up;
 
 			auto& jaxis = axis_id == joyaxis[0].id
 			  ? joyaxis[0] : joyaxis[1];
@@ -209,19 +209,19 @@ bool setup_joystick()
 		"RIGHT", "LEFT", "UP", "DOWN"
 	};
 
-	const auto is_quit_event = [] (const SDL_Event& ev) {
+	const auto is_quit_event = [](const SDL_Event& ev) {
 		if (ev.type == SDL_QUIT)
 			return true;
-		else if (ev.type == SDL_KEYDOWN &&
-		          ev.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
-			return true;
+		else if (ev.type == SDL_KEYDOWN)
+			return ev.key.keysym.scancode == SDL_SCANCODE_ESCAPE;
 		return false;
 	};
 
 	SDL_Event ev;
-	uint32_t prev_button = ~0;
-	int16_t prev_axis_value = -1;
-	uint8_t prev_axis_id = -1;
+	uint32_t prev_button = UINT32_MAX;
+	uint8_t prev_axis_id = UINT8_MAX;
+	int16_t prev_axis_value = 0;
+
 	for (int i = 0; i < 8; ++i) {
 		printf("press key for %s: ", keywords[i]);
 		fflush(stdout);
@@ -247,10 +247,13 @@ bool setup_joystick()
 				const auto axis_id = ev.jaxis.axis;
 				const auto axis_value = ev.jaxis.value;
 
-				if (!axis_value ||
-				     (axis_id == prev_axis_id &&
-				     axis_value == prev_axis_value))
+				if (abs(axis_value) < Joyaxis::dead_zone) {
 					continue;
+				} else if (axis_id == prev_axis_id) {
+					if ((axis_value > 0 && prev_axis_value > 0) ||
+					    (axis_value < 0 && prev_axis_value < 0))
+						continue;
+				}
 
 				auto& jaxis = i < 6 ? joyaxis[0] : joyaxis[1];
 				jaxis.id = axis_id;
