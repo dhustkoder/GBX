@@ -125,25 +125,21 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 		case SDL_JOYAXISMOTION: {
 			const auto axis_id = events->jaxis.axis;
 			const auto axis_value = events->jaxis.value;
-			const auto state = abs(axis_value) > kJoyaxisDeadZone
-			  ? State::Down : State::Up;
-
-			auto& jaxis = axis_id == joyaxis[0].id
+			auto& jaxis = axis_id == joyaxis[0].id 
 			  ? joyaxis[0] : joyaxis[1];
-			
+
 			if (jaxis.value != axis_value) {
-				if (state == State::Down) {
-					const auto kcode = axis_value > 0
-					  ? jaxis.kcode_high : jaxis.kcode_low;
-					update_key(state, kcode);
-				} else if (state == State::Up) {
-					const auto kcode = jaxis.value > 0
-					  ? jaxis.kcode_high : jaxis.kcode_low;
-					update_key(state, kcode);
-				}
+				const auto state = 
+				  abs(axis_value) > kJoyaxisDeadZone 
+				  ? State::Down : State::Up;
+				const auto value = state == State::Down
+				  ? axis_value : jaxis.value;
+				const auto kcode = value > 0 
+				  ? jaxis.kcode_high : jaxis.kcode_low;
+
+				update_key(state, kcode);
 				jaxis.value = axis_value;
 			}
-
 			break;
 		}
 		case SDL_QUIT:
@@ -159,18 +155,18 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 
 void render_graphics(gbx::Gameboy* const gb)
 {
-	const auto lcdc = gb->gpu.lcdc;
-	if (lcdc.lcd_on) {
+	if (gb->gpu.lcdc.lcd_on) {
 		int pitch;
 		void* pixels;
 		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			memcpy(pixels, gbx::Gpu::screen,
-			        sizeof(uint32_t) * kWinWidth * kWinHeight);
+			const uint32_t* const screen = &gbx::Gpu::screen[0][0];
+			const size_t size = sizeof(gbx::Gpu::screen);
+			memcpy(pixels, screen, size);
 			SDL_UnlockTexture(texture);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		} else {
-			fprintf(stderr, "failed to lock texture: %s\n",
-			        SDL_GetError());
+			const char* const err = SDL_GetError();
+			fprintf(stderr, "failed to lock texture: %s\n", err);
 		}
 	} else {
 		SDL_RenderClear(renderer);
@@ -219,10 +215,9 @@ bool setup_joystick()
 	SDL_Event ev;
 	uint32_t prev_button = UINT32_MAX;
 	uint8_t prev_axis_id = UINT8_MAX;
-	int16_t prev_axis_value = 0;
 
 	for (int i = 0; i < 8; ++i) {
-		printf("press key for %s: ", keywords[i]);
+		printf("PRESS KEY FOR %s: ", keywords[i]);
 		fflush(stdout);
 
 		while (true) {
@@ -246,26 +241,26 @@ bool setup_joystick()
 				const auto axis_id = ev.jaxis.axis;
 				const auto axis_value = ev.jaxis.value;
 
-				if (abs(axis_value) < kJoyaxisDeadZone) {
+				if (abs(axis_value) < kJoyaxisDeadZone ||
+				     axis_id == prev_axis_id)
 					continue;
-				} else if (axis_id == prev_axis_id) {
-					if ((axis_value > 0 && prev_axis_value > 0) ||
-					    (axis_value < 0 && prev_axis_value < 0))
-						continue;
-				}
+
+				if (i == 5 || i == 7)
+					--i;
 
 				auto& jaxis = i < 6 ? joyaxis[0] : joyaxis[1];
 				jaxis.id = axis_id;
-				
-				if (axis_value > 0)
+				if (axis_value > 0) {
 					jaxis.kcode_high = scancodes[i - 4];
-				else
+					jaxis.kcode_low = scancodes[(i + 1) - 4];
+				} else {
 					jaxis.kcode_low = scancodes[i - 4];
+					jaxis.kcode_high = scancodes[(i + 1) - 4];
+				}
+				++i;
 
 				prev_axis_id = axis_id;
-				prev_axis_value = axis_value;
-				printf("axis %u, value %d\n",
-				         axis_id, axis_value);
+				printf("axis %u\n", axis_id);
 				break;
 			}
 		}
