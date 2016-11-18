@@ -252,10 +252,10 @@ bool setup_joystick()
 				jaxis.id = axis_id;
 				if (axis_value > 0) {
 					jaxis.kcode_high = scancodes[i - 4];
-					jaxis.kcode_low = scancodes[(i + 1) - 4];
+					jaxis.kcode_low = scancodes[i - 3];
 				} else {
 					jaxis.kcode_low = scancodes[i - 4];
-					jaxis.kcode_high = scancodes[(i + 1) - 4];
+					jaxis.kcode_high = scancodes[i - 3];
 				}
 				++i;
 

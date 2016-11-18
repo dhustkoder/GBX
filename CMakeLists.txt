@@ -18,7 +18,7 @@ option(ENABLE_LTO OFF)
 option(ASM_OUTPUT OFF)
 
 
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type selected, defaulted to Release")
 	set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -28,7 +28,7 @@ if (${USAN} OR ${ASAN} AND NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif()
 
 # "Release" full optimization , no debug info.
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
 	set(LINK_FLAGS "-nodefaultlibs -s -Wl,--gc-sections")
 	if(ENABLE_LTO)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
@@ -42,7 +42,7 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 
 
 # "Debug" full debug information, no optimization, asserts enabled
-elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	if (${ASAN})
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 	endif()
