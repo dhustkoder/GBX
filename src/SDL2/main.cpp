@@ -281,7 +281,7 @@ bool init_sdl(const bool enable_joystick)
 	window = SDL_CreateWindow("GBX",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		kWinWidth * 4, kWinHeight * 4, SDL_WINDOW_RESIZABLE);
+		kWinWidth * 2, kWinHeight * 2, SDL_WINDOW_RESIZABLE);
 
 	if (window == nullptr) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n",

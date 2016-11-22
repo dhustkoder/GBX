@@ -18,6 +18,7 @@ namespace interrupts {
 	constexpr const Interrupt array[] { vblank, lcd, timer, serial, joypad };
 }
 
+constexpr const int16_t kTimaClockLimits[] { 0x400, 0x10, 0x40, 0x100 };
 
 struct HWState 
 {
