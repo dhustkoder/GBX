@@ -341,7 +341,7 @@ void update_sav_file(const Cart& cart)
 	const size_t ramsize = Cart::info.ram_size;
 	const uint8_t* const ram = &cart.data[Cart::info.rom_size];
 	if (fwrite(ram, 1, ramsize, sav_file) < ramsize)
-		perror("Error while writting sav file");
+		perror("Error while updating sav file");
 }
 
 
