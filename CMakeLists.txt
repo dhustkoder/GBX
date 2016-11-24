@@ -59,8 +59,13 @@ include_directories("${GBX_SRC_DIR}")
 
 # specific platform builds
 if (${TARGET_PLATFORM} STREQUAL "Linux")
+	execute_process(COMMAND sdl2-config --cflags OUTPUT_VARIABLE sdl2cflags
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	execute_process(COMMAND sdl2-config --libs OUTPUT_VARIABLE sdl2library
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${sdl2cflags}")
 	file(GLOB GBX_PLATFORM_SRC_FILES "${GBX_SRC_DIR}/SDL2/*.cpp")
-	set(GBX_LINK_LIBRARIES "-lc -lSDL2")
+	set(GBX_LINK_LIBRARIES "-lc ${sdl2library}")
 else()
 	message(FATAL_ERROR "Add your platform build configuration")
 endif()
