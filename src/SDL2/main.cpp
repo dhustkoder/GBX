@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "SDL.h"
+#include "common.hpp"
 #include "gameboy.hpp"
 
 
@@ -187,11 +188,9 @@ bool setup_joystick()
 		return false;
 	}
 
-	bool success = false;
 	joystick = SDL_JoystickOpen(0);
-	const auto joystick_guard = gbx::finally([&] {
-		if (!success)
-			SDL_JoystickClose(joystick);
+	auto joystick_guard = gbx::finally([] {
+		SDL_JoystickClose(joystick);
 	});
 
 	if (joystick == nullptr) {
@@ -266,7 +265,7 @@ bool setup_joystick()
 		}
 	}
 
-	success = true;
+	joystick_guard.Abort();
 	return true;
 }
 

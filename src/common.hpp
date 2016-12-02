@@ -30,22 +30,49 @@ constexpr T min(const T x, const T y)
 	return x < y ? x : y;
 }
 
+
 template<class F>
-struct Finally {
-	Finally(const Finally&)=delete;
-	Finally& operator=(const Finally&)=delete;
-	constexpr explicit Finally(F&& f) noexcept : m_f(static_cast<F&&>(f)) {}
-	constexpr Finally(Finally&& other) noexcept = default;
-	~Finally() noexcept { m_f(); }
+class Finally {
+public:
+	Finally(const Finally&) = delete;
+	Finally& operator=(const Finally&) = delete;
+	Finally& operator=(Finally&&) = delete;
+
+	constexpr Finally(F&& func) noexcept :
+		m_func(static_cast<F&&>(func))
+	{
+	}
+
+	Finally(Finally&& other) noexcept :
+		m_func(static_cast<F&&>(other.m_func)),
+		m_abort(other.m_abort)
+	{
+		other.Abort();
+	}
+
+	~Finally() noexcept 
+	{
+		if (!m_abort)
+			m_func();
+	}
+
+	void Abort() noexcept
+	{
+		m_abort = true;
+	}
+
 private:
-	const F m_f;
+	F m_func;
+	bool m_abort = false;
 };
+
 
 template<class F> 
 constexpr Finally<F> finally(F&& f) 
 {
 	return Finally<F>(static_cast<F&&>(f));
 }
+
 
 constexpr uint16_t concat_bytes(const uint8_t msb, const uint8_t lsb)
 {

@@ -148,10 +148,8 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 		return nullptr;
 	}
 
-	bool success = false;
-	const auto gb_guard = finally([&success, gb] {
-		if (!success)
-			destroy_gameboy(gb);
+	auto gb_guard = finally([gb] {
+		destroy_gameboy(gb);
 	});
 
 	fseek(rom_file, 0, SEEK_SET);
@@ -186,7 +184,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	       static_cast<unsigned>(Cart::info.system));
 
 	reset(gb);
-	success = true;
+	gb_guard.Abort();
 	return gb;
 }
 
@@ -295,6 +293,10 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 		return false;
 	}
 
+	auto sav_file_path_guard = finally([sav_file_path] {
+		free(sav_file_path);
+	});
+
 	const size_t dot_offset = 
 	[rom_file_path, rom_path_size]()-> size_t {
 		const char* p = &rom_file_path[rom_path_size - 1];
@@ -318,11 +320,11 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 			fprintf(stderr, "Error while loading sav file");
 	} else if (errno != ENOENT) {
 		perror("Couldn't open sav file");
-		free(sav_file_path);
 		return false;
 	}
 
 	Cart::info.sav_file_path = sav_file_path;
+	sav_file_path_guard.Abort();
 	return true;
 }
 
