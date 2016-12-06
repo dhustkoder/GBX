@@ -16,7 +16,7 @@ Cart::Info Cart::info;
 void reset(Gameboy* const gb)
 {
 	memset(gb, 0, sizeof(*gb));
-	memset(Gpu::screen, 0xFF, sizeof(Gpu::screen));
+	memset(&Gpu::screen[0][0], 0xFF, sizeof(Gpu::screen));
 
 	// init the system
 	// up to now only Gameboy (DMG) mode is supported

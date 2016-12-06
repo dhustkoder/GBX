@@ -203,7 +203,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	
 	ScanlineFiller fill_line{&Gpu::screen[ly][0], Pallete{gpu.bgp}};
 
-	if (!scxmod) {
+	if (scxmod == 0) {
 		for (int x = 0; x < 20; ++x)
 			fill_line(0, 8, get_row(x));
 	} else {
@@ -235,7 +235,8 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	const auto get_row = 
 	[map, unsig_data, tile_data] (const int mapx) -> uint16_t {
 		const uint8_t id = map[mapx&31];
-		const int addr = (unsig_data ? id : static_cast<int8_t>(id)) * 16;
+		const int addr =
+		  (unsig_data ? id : static_cast<int8_t>(id)) * 16;
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
