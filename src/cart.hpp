@@ -100,6 +100,12 @@ constexpr const Cart::System kSupportedCartridgeSystems[] {
 	Cart::System::GameboyColorCompat
 };
 
+constexpr const Cart::Type kBatteryCartridgeTypes[] {
+	Cart::Type::RomMBC1RamBattery,
+	Cart::Type::RomMBC2Battery
+};
+
+
 
 
 } // namespace gbx

@@ -159,12 +159,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 		return nullptr;
 	}
 
-	constexpr const Cart::Type battery_cart_types[] {
-		Cart::Type::RomMBC1RamBattery,
-		Cart::Type::RomMBC2Battery
-	};
-	
-	if (is_in_array(battery_cart_types, Cart::info.type)) {
+	if (is_in_array(kBatteryCartridgeTypes, Cart::info.type)) {
 		if (!eval_and_load_sav_file(rom_file_path, &gb->cart))
 			return nullptr;
 	}
@@ -189,7 +184,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 }
 
 
-void destroy_gameboy(const owner<Gameboy*> gb)
+void destroy_gameboy(owner<Gameboy* const> gb)
 {
 	assert(gb != nullptr);
 
