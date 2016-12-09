@@ -1,21 +1,25 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(gbx)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow \
-	-Wstrict-aliasing -fno-exceptions -fno-rtti")
-
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -Werror -fstrict-aliasing \
-	-march=native -fomit-frame-pointer -ffunction-sections \
-	-fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
-
-set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O1 -g3")
 
 # build options
-set(TARGET_PLATFORM "Linux" CACHE STRING "Specifies your target platform for build config")
+set(TARGET_OS "Linux" CACHE STRING "Specifies your target OS for build config")
+set(TARGET_CPU "native" CACHE STRING "Specifies the target CPU architecture for -march option")
+
 option(ASAN OFF)
 option(USAN OFF)
 option(ENABLE_LTO OFF)
 option(ASM_OUTPUT OFF)
+
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow \
+	-Wstrict-aliasing -fno-exceptions -fno-rtti")
+
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -Werror -fstrict-aliasing \
+	-march=${TARGET_CPU} -fomit-frame-pointer -ffunction-sections \
+	-fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
+
+set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O1 -g3")
 
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -58,7 +62,7 @@ set(GBX_SRC_DIR "./src")
 include_directories("${GBX_SRC_DIR}")
 
 # specific platform builds
-if (${TARGET_PLATFORM} STREQUAL "Linux")
+if (${TARGET_OS} STREQUAL "Linux")
 	execute_process(COMMAND sdl2-config --cflags OUTPUT_VARIABLE SDL2_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	execute_process(COMMAND sdl2-config --libs OUTPUT_VARIABLE SDL2_LIBS
@@ -71,7 +75,9 @@ if (${TARGET_PLATFORM} STREQUAL "Linux")
 
 	message(STATUS "SDL2 CFLAGS: ${SDL2_CFLAGS}.")
 	message(STATUS "SDL2 LIBS: ${SDL2_LIBS}.")
+
 	file(GLOB GBX_PLATFORM_SRC_FILES "${GBX_SRC_DIR}/SDL2/*.cpp")
+
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SDL2_CFLAGS}")
 	set(GBX_LINK_LIBRARIES "-lc ${SDL2_LIBS}")
 else()
