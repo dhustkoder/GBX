@@ -119,14 +119,17 @@ void update_interrupts(Gameboy* const gb)
 	}
 }
 
-
-static bool fill_cart_info(FILE* rom_file);
-static bool eval_and_load_sav_file(const char* rom_file_path, Cart* cart);
-static void update_sav_file(const Cart& cart);
+static owner<char*> eval_sav_file_path(const char* rom_file_path);
+static bool load_sav_file(const char* sav_file_path, Cart* cart);
+static void update_sav_file(const Cart& cart, const char* sav_file_path);
 
 owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 {
-	const owner<FILE*> rom_file = fopen(rom_file_path, "rb");
+	using Type = Cart::Type;
+	using ShortType = Cart::ShortType;
+	using System = Cart::System;
+
+	owner<FILE* const> rom_file = fopen(rom_file_path, "rb");
 	if (rom_file == nullptr) {
 		perror("Couldn't open file");
 		return nullptr;
@@ -134,70 +137,13 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	const auto file_guard = finally([rom_file] {
 		fclose(rom_file);
-	});	
-
-	if (!fill_cart_info(rom_file))
-		return nullptr;
-
-	const size_t rom_size = Cart::info.rom_size;
-	const size_t ram_size = Cart::info.ram_size;
-
-	owner<Gameboy* const> gb =
-	  static_cast<Gameboy*>(malloc(sizeof(Gameboy) + rom_size + ram_size));
-
-	if (gb == nullptr) {
-		perror("Couldn't allocate memory");
-		return nullptr;
-	}
-
-	auto gb_guard = finally([gb] {
-		destroy_gameboy(gb);
 	});
-
-	fseek(rom_file, 0, SEEK_SET);
-
-	if (fread(gb->cart.data, 1, rom_size, rom_file) < rom_size) {
-		fprintf(stderr, "Error while reading from file\n");
-		return nullptr;
-	}
-
-	if (is_in_array(kBatteryCartridgeTypes, Cart::info.type)) {
-		if (!eval_and_load_sav_file(rom_file_path, &gb->cart))
-			return nullptr;
-	}
-
-	reset(gb);
-	gb_guard.Abort();
-	return gb;
-}
-
-
-void destroy_gameboy(owner<Gameboy* const> gb)
-{
-	assert(gb != nullptr);
-
-	if (Cart::info.sav_file_path != nullptr) {
-		update_sav_file(gb->cart);
-		free(Cart::info.sav_file_path);
-		Cart::info.sav_file_path = nullptr;
-	}
-
-	free(gb);
-}
-
-
-
-bool fill_cart_info(FILE* const rom_file)
-{
-	using Type = Cart::Type;
-	using ShortType = Cart::ShortType;
-	using System = Cart::System;
 
 	uint8_t header[0x4F];
 	fseek(rom_file, 0x100, SEEK_SET);
 	if (fread(header, 1, 0x4F, rom_file) < 0x4F) {
 		fprintf(stderr, "Error while reading from file\n");
-		return false;
+		return nullptr;
 	}
 
 	const auto system = [&header] ()-> System {
@@ -213,11 +159,11 @@ bool fill_cart_info(FILE* const rom_file)
 	if (!is_in_array(kSupportedCartridgeTypes, type)) {
 		fprintf(stderr, "Cartridge type %u not supported\n",
 		        static_cast<unsigned>(type));
-		return false;
+		return nullptr;
 	} else if (!is_in_array(kSupportedCartridgeSystems, system)) {
 		fprintf(stderr, "Cartridge system %u not supported\n",
 		        static_cast<unsigned>(system));
-		return false;
+		return nullptr;
 	}
 	
 	const auto short_type = [type] ()-> ShortType {
@@ -229,7 +175,7 @@ bool fill_cart_info(FILE* const rom_file)
 			return ShortType::RomOnly;
 	}();
 
-	struct SizeInfo { const int32_t size; const uint8_t banks; };
+	struct SizeInfo { const size_t size; const int banks; };
 
 	constexpr const SizeInfo rom_sizes[7] {
 		{32_Kib, 2}, {64_Kib, 4}, {128_Kib, 8}, {256_Kib, 16},
@@ -244,7 +190,7 @@ bool fill_cart_info(FILE* const rom_file)
 	
 	if (size_codes[0] >= 7 || size_codes[1] >= 4) {
 		fprintf(stderr, "Invalid size codes\n");
-		return false;
+		return nullptr;
 	}
 	
 	const auto rom_size = rom_sizes[size_codes[0]].size;
@@ -255,15 +201,34 @@ bool fill_cart_info(FILE* const rom_file)
 	if (short_type == ShortType::RomOnly &&
 	    (ram_size != 0x00 || rom_size != 32_Kib)) {
 		fprintf(stderr, "Invalid size codes for RomOnly\n");
-		return false;
+		return nullptr;
 	} else if (short_type == ShortType::RomMBC2) {
 		if (rom_size <= 256_Kib && ram_size == 0x00) {
 			ram_size = 512;
 			ram_banks = 1;
 		} else {
 			fprintf(stderr, "Invalid size codes for MBC2\n");
-			return false;
+			return nullptr;
 		}
+	}
+
+	owner<Gameboy* const> gb =
+	  static_cast<Gameboy*>(malloc(sizeof(Gameboy) + rom_size + ram_size));
+	
+	if (gb == nullptr) {
+		perror("Couldn't allocate memory");
+		return nullptr;
+	}
+
+	auto gb_guard = finally([gb] {
+		destroy_gameboy(gb);
+	});
+
+	fseek(rom_file, 0, SEEK_SET);
+
+	if (fread(&gb->cart.data[0], 1, rom_size, rom_file) < rom_size) {
+		fprintf(stderr, "Error while reading from file\n");
+		return nullptr;
 	}
 
 	memcpy(Cart::info.internal_name, &header[0x34], 16);
@@ -275,10 +240,16 @@ bool fill_cart_info(FILE* const rom_file)
 	Cart::info.short_type = short_type;
 	Cart::info.system = system;
 
+	if (is_in_array(kBatteryCartridgeTypes, type)) {
+		Cart::info.sav_file_path = eval_sav_file_path(rom_file_path);
+		if (!load_sav_file(Cart::info.sav_file_path, &gb->cart))
+			return nullptr;
+	}
+
 	printf("CARTRIDGE INFO\n"
 	       "NAME: %s\n"
-	       "ROM SIZE: %d\n"
-	       "RAM SIZE: %d\n"
+	       "ROM SIZE: %zu\n"
+	       "RAM SIZE: %zu\n"
 	       "ROM BANKS: %d\n"
 	       "RAM BANKS: %d\n"
 	       "TYPE CODE: %u\n"
@@ -289,11 +260,27 @@ bool fill_cart_info(FILE* const rom_file)
 	       static_cast<unsigned>(type),
 	       static_cast<unsigned>(system));
 
-	return true;
+	reset(gb);
+	gb_guard.Abort();
+	return gb;
 }
 
 
-bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
+void destroy_gameboy(owner<Gameboy* const> gb)
+{
+	assert(gb != nullptr);
+
+	if (owner<char* const> sav_file_path = Cart::info.sav_file_path) {
+		update_sav_file(gb->cart, sav_file_path);
+		free(sav_file_path);
+		Cart::info.sav_file_path = nullptr;
+	}
+
+	free(gb);
+}
+
+
+owner<char*> eval_sav_file_path(const char* const rom_file_path)
 {
 	const auto rom_path_size = strlen(rom_file_path);
 	const auto sav_path_size = rom_path_size + 5;
@@ -302,7 +289,7 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 
 	if (sav_file_path == nullptr) {
 		perror("Couldn't allocate memory");
-		return false;
+		return nullptr;
 	}
 
 	auto sav_file_path_guard = finally([sav_file_path] {
@@ -320,13 +307,19 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 
 	memcpy(sav_file_path, rom_file_path, sizeof(char) * dot_offset);
 	strcat(sav_file_path, ".sav");
+	sav_file_path_guard.Abort();
+	return sav_file_path;
+}
 
+
+bool load_sav_file(const char* const sav_file_path, Cart* const cart)
+{
 	if (owner<FILE* const> sav_file = fopen(sav_file_path, "rb+")) {
 		const auto sav_file_guard = finally([sav_file] {
 			fclose(sav_file);
 		});
-		const size_t ram_size = Cart::info.ram_size;
-		uint8_t* const ram = &cart->data[Cart::info.rom_size];
+		const size_t ram_size = get_ram_size(*cart);
+		uint8_t* const ram = get_ram(cart);	
 		if (fread(ram, 1, ram_size, sav_file) < ram_size)
 			fprintf(stderr, "Error while loading sav file");
 	} else if (errno != ENOENT) {
@@ -334,15 +327,13 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 		return false;
 	}
 
-	Cart::info.sav_file_path = sav_file_path;
-	sav_file_path_guard.Abort();
 	return true;
 }
 
 
-void update_sav_file(const Cart& cart)
+void update_sav_file(const Cart& cart, const char* const sav_file_path)
 {
-	owner<FILE* const> sav_file = fopen(Cart::info.sav_file_path, "wb");
+	owner<FILE* const> sav_file = fopen(sav_file_path, "wb");
 	if (sav_file == nullptr) {
 		perror("Couldn't open sav file");
 		return;
@@ -352,8 +343,8 @@ void update_sav_file(const Cart& cart)
 		fclose(sav_file);
 	});
 
-	const size_t ram_size = Cart::info.ram_size;
-	const uint8_t* const ram = &cart.data[Cart::info.rom_size];
+	const size_t ram_size = get_ram_size(cart);
+	const uint8_t* const ram = get_ram(cart);
 	if (fwrite(ram, 1, ram_size, sav_file) < ram_size)
 		perror("Error while updating sav file");
 }

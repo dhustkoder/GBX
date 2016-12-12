@@ -4,6 +4,8 @@
 
 namespace gbx {
 
+struct Gameboy;
+
 struct Cart
 {
 	enum class Type : uint8_t {
@@ -29,18 +31,29 @@ struct Cart
 		RamBankingMode
 	};
 
+private:
 	static struct Info {
 		char internal_name[18] { 0 };
 		owner<char*> sav_file_path = nullptr;
-		int32_t rom_size = 0;
-		int32_t ram_size = 0;
-		uint8_t rom_banks = 0;
-		uint8_t ram_banks = 0;
+		size_t rom_size = 0;
+		size_t ram_size = 0;
+		int rom_banks = 0;
+		int ram_banks = 0;
 		Cart::Type type = Type::RomOnly;
 		Cart::ShortType short_type = ShortType::RomOnly;
 		Cart::System system = System::Gameboy;
 	} info;
 
+	friend size_t get_rom_size(const Cart&);
+	friend size_t get_ram_size(const Cart&);
+	friend int get_rom_banks(const Cart&);
+	friend int get_ram_banks(const Cart&);
+	friend Type get_type(const Cart&);
+	friend ShortType get_short_type(const Cart&);
+	friend System get_system(const Cart&);
+	friend owner<Gameboy*> create_gameboy(const char*);
+	friend void destroy_gameboy(owner<Gameboy*>);
+public:
 
 	union {
 		union {
@@ -57,27 +70,6 @@ struct Cart
 		} mbc2;
 	};
 
-	/* rom_bank_offset and ram_bank_offset:
-	 * Both points to their right bank offset at data[]
-	 * minus the memory map address value for that device. 
-	 * That means if the right ROM bank is bank 1 or 0
-	 * (the fixed ROM bank is always offset 0 at data[],
-	 *  rom_bank_offset is used for switchable banks only)
-	 * the rom_bank_offset is equal to 0x4000 - 0x4000
-	 * if the right ROM bank is 2 then rom_bank_offset is 0x8000 - 0x4000
-	 * we do this on the write operation to the MBC then it save us
-	 * from doing the subtraction of 0x4000 on the read operations,
-	 * which is used much more often. 
-	 * The same applies to ram_bank_offset 
-	 * but with a subtraction of - 0xA000, so
-	 * if the right RAM bank is bank 0, the ram_bank_offset is
-	 * equal to the rom_size - 0xA000, because we allocate the
-	 * space for cartridge RAM at the end of data[], after the ROM content.
-	 * Then if the right RAM bank is bank 1
-	 * the ram_bank_offset is equal to ((rom_size + 0x2000) - 0xA000).
-	 * Also if ram_bank_offset equal to 0, that means
-	 * the cartridge RAM is disabled
-	 */
 	int32_t rom_bank_offset;
 	union {
 		int32_t ram_bank_offset;
@@ -107,9 +99,65 @@ constexpr const Cart::Type kBatteryCartridgeTypes[] {
 };
 
 
+
+inline size_t get_rom_size(const Cart&)
+{
+	return Cart::info.rom_size;
+}
+
+inline size_t get_ram_size(const Cart&)
+{
+	return Cart::info.ram_size;
+}
+
+inline int get_rom_banks(const Cart&)
+{
+	return Cart::info.rom_banks;
+}
+
+inline int get_ram_banks(const Cart&)
+{
+	return Cart::info.ram_banks;
+}
+
+inline Cart::Type get_type(const Cart&)
+{
+	return Cart::info.type;
+}
+
+inline Cart::ShortType get_short_type(const Cart&)
+{
+	return Cart::info.short_type;
+}
+
+inline Cart::System get_system(const Cart&)
+{
+	return Cart::info.system;
+}
+
+inline const uint8_t* get_rom(const Cart& cart)
+{
+	return &cart.data[0];
+}
+
+inline const uint8_t* get_ram(const Cart& cart)
+{
+	return &cart.data[get_rom_size(cart)];
+}
+
+inline uint8_t* get_rom(Cart* const cart)
+{
+	return const_cast<uint8_t*>(get_rom(*cart));
+}
+
+inline uint8_t* get_ram(Cart* const cart)
+{
+	return const_cast<uint8_t*>(get_ram(*cart));
+}
+
 inline void enable_cart_ram(Cart* const cart) 
 {
-	cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
+	cart->ram_bank_offset = get_rom_size(*cart) - 0xA000;
 }
 
 inline void disable_cart_ram(Cart* const cart)
