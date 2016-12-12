@@ -120,7 +120,7 @@ void update_interrupts(Gameboy* const gb)
 }
 
 
-static bool eval_header_info(FILE* rom_file);
+static bool fill_cart_info(FILE* rom_file);
 static bool eval_and_load_sav_file(const char* rom_file_path, Cart* cart);
 static void update_sav_file(const Cart& cart);
 
@@ -136,13 +136,15 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 		fclose(rom_file);
 	});	
 
-	if (!eval_header_info(rom_file))
+	if (!fill_cart_info(rom_file))
 		return nullptr;
 
-	owner<Gameboy* const> gb = 
-	  static_cast<Gameboy*>(malloc(sizeof(Gameboy) +
-	                              Cart::info.rom_size + 
-	                              Cart::info.ram_size));
+	const size_t rom_size = Cart::info.rom_size;
+	const size_t ram_size = Cart::info.ram_size;
+
+	owner<Gameboy* const> gb =
+	  static_cast<Gameboy*>(malloc(sizeof(Gameboy) + rom_size + ram_size));
+
 	if (gb == nullptr) {
 		perror("Couldn't allocate memory");
 		return nullptr;
@@ -153,7 +155,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	});
 
 	fseek(rom_file, 0, SEEK_SET);
-	const size_t rom_size = Cart::info.rom_size;
+
 	if (fread(gb->cart.data, 1, rom_size, rom_file) < rom_size) {
 		fprintf(stderr, "Error while reading from file\n");
 		return nullptr;
@@ -166,14 +168,14 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	printf("CARTRIDGE INFO\n"
 	       "NAME: %s\n"
-	       "ROM SIZE: %d\n"
-	       "RAM SIZE: %d\n"
+	       "ROM SIZE: %zu\n"
+	       "RAM SIZE: %zu\n"
 	       "ROM BANKS: %d\n"
 	       "RAM BANKS: %d\n"
 	       "TYPE CODE: %u\n"
 	       "SYSTEM CODE: %u\n",
 	       Cart::info.internal_name,
-	       Cart::info.rom_size, Cart::info.ram_size,
+	       rom_size, ram_size,
 	       Cart::info.rom_banks, Cart::info.ram_banks,
 	       static_cast<unsigned>(Cart::info.type),
 	       static_cast<unsigned>(Cart::info.system));
@@ -199,7 +201,7 @@ void destroy_gameboy(owner<Gameboy* const> gb)
 
 
 
-bool eval_header_info(FILE* const rom_file)
+bool fill_cart_info(FILE* const rom_file)
 {
 	uint8_t header[0x4F];
 	fseek(rom_file, 0x100, SEEK_SET);
