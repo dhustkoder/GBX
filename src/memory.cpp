@@ -35,8 +35,6 @@ static void write_joypad(uint8_t value, Joypad* keys);
 static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
-static void enable_cart_ram(Cart* cart);
-static void disable_cart_ram(Cart* cart);
 
 uint8_t mem_read8(const Gameboy& gb, const uint16_t address)
 {
@@ -453,15 +451,6 @@ int_fast32_t eval_vram_offset(const uint16_t address)
 	return offset;
 }
 
-void enable_cart_ram(Cart* const cart) 
-{
-	cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
-}
-
-void disable_cart_ram(Cart* const cart)
-{
-	cart->ram_bank_offset = 0x00;
-}
 
 
 } // namespace gbx

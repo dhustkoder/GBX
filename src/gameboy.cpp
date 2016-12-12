@@ -325,13 +325,10 @@ bool eval_and_load_sav_file(const char* const rom_file_path, Cart* const cart)
 		const auto sav_file_guard = finally([sav_file] {
 			fclose(sav_file);
 		});
-
 		const size_t ram_size = Cart::info.ram_size;
 		uint8_t* const ram = &cart->data[Cart::info.rom_size];
-
 		if (fread(ram, 1, ram_size, sav_file) < ram_size)
 			fprintf(stderr, "Error while loading sav file");
-
 	} else if (errno != ENOENT) {
 		perror("Couldn't open sav file");
 		return false;

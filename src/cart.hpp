@@ -41,6 +41,7 @@ struct Cart
 		Cart::System system = System::Gameboy;
 	} info;
 
+
 	union {
 		union {
 			uint8_t banks_num : 7;
@@ -106,6 +107,15 @@ constexpr const Cart::Type kBatteryCartridgeTypes[] {
 };
 
 
+inline void enable_cart_ram(Cart* const cart) 
+{
+	cart->ram_bank_offset = Cart::info.rom_size - 0xA000;
+}
+
+inline void disable_cart_ram(Cart* const cart)
+{
+	cart->ram_bank_offset = 0x00;
+}
 
 
 } // namespace gbx
