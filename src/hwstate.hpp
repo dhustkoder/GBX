@@ -9,15 +9,26 @@ struct Interrupt {
 	const uint16_t addr;
 };
 
-namespace interrupts {
-	constexpr const Interrupt vblank  { 0x01, 0x40 };
-	constexpr const Interrupt lcd     { 0x02, 0x48 };
-	constexpr const Interrupt timer   { 0x04, 0x50 };
-	constexpr const Interrupt serial  { 0x08, 0x58 };
-	constexpr const Interrupt joypad  { 0x10, 0x60 };
-	constexpr const Interrupt array[] { vblank, lcd, timer, serial, joypad };
-}
+struct Interrupts {
+	const Interrupt vblank  { 0x01, 0x40 };
+	const Interrupt lcd     { 0x02, 0x48 };
+	const Interrupt timer   { 0x04, 0x50 };
+	const Interrupt serial  { 0x08, 0x58 };
+	const Interrupt joypad  { 0x10, 0x60 };
+	const Interrupt array[5] { vblank, lcd, timer, serial, joypad };
 
+	constexpr const Interrupt* begin() const
+	{
+		return &array[0]; 
+	}
+
+	constexpr const Interrupt* end() const
+	{
+		return begin() + 5;
+	}
+};
+
+constexpr const Interrupts kInterrupts;
 constexpr const int16_t kTimaClockLimits[] { 0x400, 0x10, 0x40, 0x100 };
 
 struct HWState 
@@ -73,7 +84,7 @@ inline void inc_tima(HWState* const hwstate)
 {
 	if (++hwstate->tima == 0x00) {
 		hwstate->tima = hwstate->tma;
-		request_interrupt(interrupts::timer, hwstate);
+		request_interrupt(kInterrupts.timer, hwstate);
 	}
 }
 

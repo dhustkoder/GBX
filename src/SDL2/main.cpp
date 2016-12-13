@@ -5,7 +5,6 @@
 #include "common.hpp"
 #include "gameboy.hpp"
 
-
 namespace {
 
 static bool init_sdl(bool enable_joystick);

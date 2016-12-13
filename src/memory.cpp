@@ -200,10 +200,10 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		const auto new_val = value&0x0F;
 		const auto ram_banks = get_ram_banks(*cart);
 		if (new_val == 0x0A && ram_banks && !cart->ram_enabled) {
-			enable_cart_ram(cart);
+			enable_ram(cart);
 			eval_ram_bank_offset();
 		} else if (new_val != 0x0A && cart->ram_enabled) {
-			disable_cart_ram(cart);
+			disable_ram(cart);
 		}
 	}
 }
@@ -227,9 +227,9 @@ void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
 	} else if (address <= 0x1FFF && !addr_bit) {
 		const auto new_val = value&0x0F;
 		if (new_val == 0x0A && !cart->ram_enabled)
-			enable_cart_ram(cart);
+			enable_ram(cart);
 		else if (new_val != 0x0A && cart->ram_enabled)
-			disable_cart_ram(cart);
+			disable_ram(cart);
 	}
 }
 
@@ -408,9 +408,13 @@ int_fast32_t eval_cart_rom_offset(const Cart& cart, const uint16_t address)
 int_fast32_t eval_cart_ram_offset(const Cart& cart, const uint16_t address)
 {
 	assert(address >= 0xA000 && address <= 0xBFFF);
+
 	const auto offset = cart.ram_bank_offset + address;
+	
 	assert(offset >= 0 &&
-	       offset < (get_rom_size(cart) + get_ram_size(cart)));
+	  static_cast<size_t>(offset) 
+	   < (get_rom_size(cart) + get_ram_size(cart)));
+
 	return offset;
 }
 

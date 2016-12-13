@@ -7,11 +7,9 @@
 
 namespace gbx {
 
-
 extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
-Cart::Info Cart::info;
 
 void reset(Gameboy* const gb)
 {
@@ -108,20 +106,22 @@ void update_interrupts(Gameboy* const gb)
 		return;
 
 	gb->hwstate.flags.ime = 0x00;
-	for (const auto inter : interrupts::array) {
-		if (pendents & inter.mask) {
-			clear_interrupt(inter, &gb->hwstate);
+	for (const auto interrupt : kInterrupts) {
+		if (pendents & interrupt.mask) {
+			clear_interrupt(interrupt, &gb->hwstate);
 			stack_push16(gb->cpu.pc, gb);
-			gb->cpu.pc = inter.addr;
+			gb->cpu.pc = interrupt.addr;
 			gb->cpu.clock += 20;
 			break;
 		}
 	}
 }
 
+
 static owner<char*> eval_sav_file_path(const char* rom_file_path);
 static bool load_sav_file(const char* sav_file_path, Cart* cart);
 static void update_sav_file(const Cart& cart, const char* sav_file_path);
+Cart::Info Cart::info;
 
 owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 {
@@ -242,8 +242,10 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	if (is_in_array(kBatteryCartridgeTypes, type)) {
 		Cart::info.sav_file_path = eval_sav_file_path(rom_file_path);
-		if (!load_sav_file(Cart::info.sav_file_path, &gb->cart))
-			return nullptr;
+		if (Cart::info.sav_file_path == nullptr ||
+		    !load_sav_file(Cart::info.sav_file_path, &gb->cart)) {
+				return nullptr;
+		}
 	}
 
 	printf("CARTRIDGE INFO\n"
@@ -271,9 +273,11 @@ void destroy_gameboy(owner<Gameboy* const> gb)
 	assert(gb != nullptr);
 
 	if (owner<char* const> sav_file_path = Cart::info.sav_file_path) {
+		const auto sav_file_path_guard = finally([sav_file_path] {
+			free(sav_file_path);
+			Cart::info.sav_file_path = nullptr;
+		});
 		update_sav_file(gb->cart, sav_file_path);
-		free(sav_file_path);
-		Cart::info.sav_file_path = nullptr;
 	}
 
 	free(gb);

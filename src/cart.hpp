@@ -155,12 +155,12 @@ inline uint8_t* get_ram(Cart* const cart)
 	return const_cast<uint8_t*>(get_ram(*cart));
 }
 
-inline void enable_cart_ram(Cart* const cart) 
+inline void enable_ram(Cart* const cart) 
 {
 	cart->ram_bank_offset = get_rom_size(*cart) - 0xA000;
 }
 
-inline void disable_cart_ram(Cart* const cart)
+inline void disable_ram(Cart* const cart)
 {
 	cart->ram_bank_offset = 0x00;
 }
