@@ -270,8 +270,6 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 void destroy_gameboy(owner<Gameboy* const> gb)
 {
-	assert(gb != nullptr);
-
 	if (owner<char* const> sav_file_path = Cart::info.sav_file_path) {
 		const auto sav_file_path_guard = finally([sav_file_path] {
 			free(sav_file_path);
