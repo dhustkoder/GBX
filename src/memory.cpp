@@ -399,8 +399,10 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 int_fast32_t eval_cart_rom_offset(const Cart& cart, const uint16_t address)
 {
 	assert(address < 0x8000);
-	const auto offset = address < 0x4000
-		? address : cart.rom_bank_offset + address;
+	
+	const auto offset =
+	  address < 0x4000 ? address : cart.rom_bank_offset + address;
+
 	assert(offset >= 0 && address < get_rom_size(cart));
 	return offset;
 }
@@ -412,8 +414,7 @@ int_fast32_t eval_cart_ram_offset(const Cart& cart, const uint16_t address)
 	const auto offset = cart.ram_bank_offset + address;
 	
 	assert(offset >= 0 &&
-	  static_cast<size_t>(offset) 
-	   < (get_rom_size(cart) + get_ram_size(cart)));
+		offset < (get_rom_size(cart) + get_ram_size(cart)));
 
 	return offset;
 }

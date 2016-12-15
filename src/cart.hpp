@@ -35,17 +35,17 @@ private:
 	static struct Info {
 		char internal_name[18] { 0 };
 		owner<char*> sav_file_path = nullptr;
-		size_t rom_size = 0;
-		size_t ram_size = 0;
+		long rom_size = 0;
+		long ram_size = 0;
 		int rom_banks = 0;
 		int ram_banks = 0;
-		Cart::Type type = Type::RomOnly;
-		Cart::ShortType short_type = ShortType::RomOnly;
-		Cart::System system = System::Gameboy;
+		Type type = Type::RomOnly;
+		ShortType short_type = ShortType::RomOnly;
+		System system = System::Gameboy;
 	} info;
 
-	friend size_t get_rom_size(const Cart&);
-	friend size_t get_ram_size(const Cart&);
+	friend long get_rom_size(const Cart&);
+	friend long get_ram_size(const Cart&);
 	friend int get_rom_banks(const Cart&);
 	friend int get_ram_banks(const Cart&);
 	friend Type get_type(const Cart&);
@@ -100,12 +100,12 @@ constexpr const Cart::Type kBatteryCartridgeTypes[] {
 
 
 
-inline size_t get_rom_size(const Cart&)
+inline long get_rom_size(const Cart&)
 {
 	return Cart::info.rom_size;
 }
 
-inline size_t get_ram_size(const Cart&)
+inline long get_ram_size(const Cart&)
 {
 	return Cart::info.ram_size;
 }

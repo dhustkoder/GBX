@@ -232,8 +232,8 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	}
 
 	memcpy(Cart::info.internal_name, &header[0x34], 16);
-	Cart::info.rom_size = rom_size;
-	Cart::info.ram_size = ram_size;
+	Cart::info.rom_size = static_cast<long>(rom_size);
+	Cart::info.ram_size = static_cast<long>(ram_size);
 	Cart::info.rom_banks = rom_banks;
 	Cart::info.ram_banks = ram_banks;
 	Cart::info.type = type;
@@ -242,10 +242,10 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	if (is_in_array(kBatteryCartridgeTypes, type)) {
 		Cart::info.sav_file_path = eval_sav_file_path(rom_file_path);
-		if (Cart::info.sav_file_path == nullptr ||
-		    !load_sav_file(Cart::info.sav_file_path, &gb->cart)) {
-				return nullptr;
-		}
+		if (Cart::info.sav_file_path == nullptr)
+			return nullptr;
+		else if (!load_sav_file(Cart::info.sav_file_path, &gb->cart))
+			return nullptr;
 	}
 
 	printf("CARTRIDGE INFO\n"
