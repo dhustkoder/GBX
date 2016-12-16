@@ -219,9 +219,13 @@ void destroy_gameboy(owner<Gameboy* const> gb)
 
 bool extract_rom_header(FILE* const rom_file, uint8_t(*const buffer)[0x4F])
 {
-	fseek(rom_file, 0x100, SEEK_SET);
-	if (fread(buffer, 1, 0x4F, rom_file) < 0x4F) {
-		fprintf(stderr, "Error while reading from file\n");
+	errno = 0;
+	if (fseek(rom_file, 0x100, SEEK_SET) != 0 ||
+	     fread(buffer, 1, 0x4F, rom_file) < 0x4F) {
+		if (errno != 0)
+			perror("Error while reading from file");
+		else
+			fprintf(stderr, "Error while reading from file\n");
 		return false;
 	}
 	return true;
@@ -232,9 +236,13 @@ bool extract_rom_data(FILE* const rom_file,
                       const size_t rom_size,
                       Cart* const cart)
 {
-	fseek(rom_file, 0, SEEK_SET);
-	if (fread(cart->data, 1, rom_size, rom_file) < rom_size) {
-		fprintf(stderr, "Error while reading from file\n");
+	errno = 0;
+	if (fseek(rom_file, 0, SEEK_SET) != 0 ||
+	     fread(cart->data, 1, rom_size, rom_file) < rom_size) {
+		if (errno != 0)
+			perror("Error while reading from file");
+		else
+			fprintf(stderr, "Error while reading from file\n");
 		return false;
 	}
 	return true;
