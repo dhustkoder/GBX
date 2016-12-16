@@ -94,11 +94,11 @@ static gbx::owner<SDL_Renderer*> renderer = nullptr;
 
 bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 {
-	using State = gbx::Joypad::KeyState;
+	using KeyState = gbx::KeyState;
 	constexpr const auto escape = SDL_SCANCODE_ESCAPE;
 
 	const auto update_key =
-	[gb] (const State state, const uint32_t keycode) {
+	[gb] (const KeyState state, const uint32_t keycode) {
 		gbx::update_joypad(keycodes, keycode, state,
 		                   &gb->hwstate, &gb->joypad);
 	};
@@ -107,20 +107,20 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 		switch (events->type) {
 		case SDL_KEYDOWN:
 			if (events->key.keysym.scancode != escape) {
-				update_key(State::Down,
+				update_key(KeyState::Down,
 				           events->key.keysym.scancode);
 			} else {
 				return false;
 			}
 			break;
 		case SDL_KEYUP: 
-			update_key(State::Up, events->key.keysym.scancode);
+			update_key(KeyState::Up, events->key.keysym.scancode);
 			break;
 		case SDL_JOYBUTTONDOWN: 
-			update_key(State::Down, events->jbutton.button);
+			update_key(KeyState::Down, events->jbutton.button);
 			break;
 		case SDL_JOYBUTTONUP:
-			update_key(State::Up, events->jbutton.button);
+			update_key(KeyState::Up, events->jbutton.button);
 			break;
 		case SDL_JOYAXISMOTION: {
 			const auto axis_id = events->jaxis.axis;
@@ -131,8 +131,8 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 			if (jaxis.value != axis_value) {
 				const auto state = 
 				  abs(axis_value) > kJoyaxisDeadZone 
-				  ? State::Down : State::Up;
-				const auto value = state == State::Down
+				  ? KeyState::Down : KeyState::Up;
+				const auto value = state == KeyState::Down
 				  ? axis_value : jaxis.value;
 				const auto kcode = value > 0 
 				  ? jaxis.kcode_high : jaxis.kcode_low;

@@ -6,18 +6,19 @@
 namespace gbx {
 
 
+enum class KeyState : uint8_t {
+	Up = 0x01,
+	Down = 0x00
+};
+
+enum class JoypadMode : uint8_t {
+	Both = 0x00,
+	Buttons = 0x01,
+	Directions = 0x02,
+};
+
 struct Joypad 
 {
-	enum KeyState : uint8_t {
-		Up = 0x01,
-		Down = 0x00
-	};
-	enum Mode : uint8_t {
-		Both = 0x00,
-		Buttons = 0x01,
-		Directions = 0x02,
-	};
-
 	union {
 		uint8_t value;
 		struct {
@@ -49,22 +50,23 @@ struct Joypad
 };
 
 
-inline void eval_joypad_keys(Joypad* const pad)
+inline void eval_keys(Joypad* const pad)
 {
 	const auto buttons = pad->buttons.value;
 	const auto directions = pad->directions.value;
-	switch (pad->reg.mode) {
-	case Joypad::Mode::Buttons: pad->reg.keys = buttons; break;
-	case Joypad::Mode::Directions: pad->reg.keys = directions; break;
-	case Joypad::Mode::Both: pad->reg.keys = buttons&directions; break;
+	switch (static_cast<JoypadMode>(pad->reg.mode)) {
+	case JoypadMode::Buttons: pad->reg.keys = buttons; break;
+	case JoypadMode::Directions: pad->reg.keys = directions; break;
+	case JoypadMode::Both: pad->reg.keys = buttons&directions; break;
 	default: pad->reg.keys = 0xF; break;
 	};
 }
 
 
  
-inline void update_joypad(const uint32_t(&keycodes)[8], const uint32_t keycode,
-       const Joypad::KeyState state, HWState* const /*hwstate*/, Joypad* const pad)
+inline void update_joypad(const uint32_t(&keycodes)[8],
+                          const uint32_t keycode, const KeyState key_state,
+			  HWState* const /*hwstate*/, Joypad* const pad)
 {
 	int keycode_index = 0;
 	for (const auto key : keycodes) {
@@ -75,6 +77,7 @@ inline void update_joypad(const uint32_t(&keycodes)[8], const uint32_t keycode,
 		break;
 	}
 
+	const auto state = static_cast<uint8_t>(key_state);
 	switch (keycode_index) {
 	case 0: pad->buttons.a = state; break;
 	case 1: pad->buttons.b = state; break;
@@ -87,7 +90,7 @@ inline void update_joypad(const uint32_t(&keycodes)[8], const uint32_t keycode,
 	default: break;
 	}
 
-	eval_joypad_keys(pad);
+	eval_keys(pad);
 }
 
 

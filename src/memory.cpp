@@ -132,8 +132,8 @@ void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge ROM: write $%X to $%X\n", value, address);
 	switch (get_short_type(*cart)) {
-	case Cart::ShortType::RomMBC1: write_mbc1(address, value, cart); break;
-	case Cart::ShortType::RomMBC2: write_mbc2(address, value, cart); break;
+	case CartShortType::RomMBC1: write_mbc1(address, value, cart); break;
+	case CartShortType::RomMBC2: write_mbc2(address, value, cart); break;
 	default: break;
 	}
 }
@@ -143,13 +143,13 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 	const auto eval_rom_bank_offset = [cart] {
 		const auto mbc1 = cart->mbc1;
 		const auto rom_bank_num = 
-		  (mbc1.banking_mode == Cart::RomBankingMode
+		  (mbc1.banking_mode == kRomBankingMode
 		   ? mbc1.banks_num : mbc1.banks_num_lower_bits)
 		   & (get_rom_banks(*cart) - 1);
 
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
-		} else if (mbc1.banking_mode == Cart::RamBankingMode ||
+		} else if (mbc1.banking_mode == kRamBankingMode ||
 		            (rom_bank_num != 0x20 && 
 			     rom_bank_num != 0x40 && 
 			     rom_bank_num != 0x60)) {
@@ -159,13 +159,13 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		}
 	};
 	const auto eval_ram_bank_offset = [cart] {
-		if (get_type(*cart) < Cart::Type::RomMBC1Ram ||
+		if (get_type(*cart) < CartType::RomMBC1Ram ||
 		     get_ram_banks(*cart) < 2 || !cart->ram_enabled)
 			return;
 		
 		const auto mbc1 = cart->mbc1;
 		auto offset = get_rom_size(*cart) - 0xA000;
-		if (mbc1.banking_mode == Cart::RamBankingMode) {
+		if (mbc1.banking_mode == kRamBankingMode) {
 			const auto bank_num = 
 			  mbc1.banks_num_upper_bits&(get_ram_banks(*cart) - 1);
 			offset += 0x2000 * bank_num;
@@ -185,7 +185,7 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		const uint8_t new_val = value & 0x03;
 		if (mbc1.banks_num_upper_bits != new_val) {
 			mbc1.banks_num_upper_bits = new_val;
-			if (mbc1.banking_mode == Cart::RomBankingMode)
+			if (mbc1.banking_mode == kRomBankingMode)
 				eval_rom_bank_offset();
 			else
 				eval_ram_bank_offset();
@@ -355,7 +355,7 @@ void write_stat(const uint8_t value, Gpu* const gpu)
 void write_joypad(const uint8_t value, Joypad* const pad)
 {
 	pad->reg.value = (pad->reg.value&0xCF) | (value&0x30);
-	eval_joypad_keys(pad);
+	eval_keys(pad);
 }
 
 

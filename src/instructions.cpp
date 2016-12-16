@@ -47,12 +47,12 @@ static uint8_t inc(const uint8_t first, Cpu* const cpu)
 {
 	// flags effect: Z 0 H -
 	const uint8_t result = first + 1;
-	uint8_t flags = get_flags(*cpu, Cpu::Flag_C);
+	uint8_t flags = get_flags(*cpu, kFlagC);
 
 	if (fcheck_z(result))
-		flags |= Cpu::Flag_Z;
+		flags |= kFlagZ;
 	if (fcheck_h_bit3(first, 1))
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 
 	cpu->f = flags;
 	return result;
@@ -63,12 +63,12 @@ static uint8_t dec(const uint8_t first, Cpu* const cpu)
 {
 	// flags effect: Z 1 H -
 	const uint8_t result = first - 1;
-	uint8_t flags = Cpu::Flag_N | get_flags(*cpu, Cpu::Flag_C);
+	uint8_t flags = kFlagN | get_flags(*cpu, kFlagC);
 
 	if (fcheck_z(result))
-		flags |= Cpu::Flag_Z;
+		flags |= kFlagZ;
 	if (fcheck_h_borrow(first, 1))
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 
 	cpu->f = flags;
 	return result;
@@ -83,11 +83,11 @@ static void add_hl_nn(const uint16_t second, Cpu* const cpu)
 	uint8_t hc = 0x00;
 
 	if (fcheck_c_bit15(result))
-		hc = Cpu::Flag_C;
+		hc = kFlagC;
 	if ((result ^ first ^ second) & 0x1000)
-		hc |= Cpu::Flag_H;
+		hc |= kFlagH;
 
-	cpu->f = get_flags(*cpu, Cpu::Flag_Z) | hc;
+	cpu->f = get_flags(*cpu, kFlagZ) | hc;
 	cpu->hl = static_cast<uint16_t>(result);
 }
 
@@ -100,11 +100,11 @@ static void add_a_n(const uint8_t second, Cpu* const cpu)
 	uint8_t flags = 0x00;
 
 	if (fcheck_z(result & 0xff))
-		flags = Cpu::Flag_Z;
+		flags = kFlagZ;
 	if (fcheck_h_bit3(first, second))
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 	if (fcheck_c_bit7(result))
-		flags |= Cpu::Flag_C;
+		flags |= kFlagC;
 
 	cpu->f = flags;
 	cpu->a = static_cast<uint8_t>(result);
@@ -116,14 +116,14 @@ static void sub_a_n(const uint8_t second, Cpu* const cpu)
 	// flags effect: Z 1 H C
 	const uint8_t first = cpu->a;
 	const uint16_t result = first - second;
-	uint8_t flags = Cpu::Flag_N;
+	uint8_t flags = kFlagN;
 
 	if (fcheck_z(result & 0xff))
-		flags |= Cpu::Flag_Z;
+		flags |= kFlagZ;
 	if (fcheck_h_borrow(first, second))
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 	if (fcheck_c_borrow(first, second))
-		flags |= Cpu::Flag_C;
+		flags |= kFlagC;
 
 	cpu->f = flags;
 	cpu->a = static_cast<uint8_t>(result);
@@ -133,17 +133,17 @@ static void sub_a_n(const uint8_t second, Cpu* const cpu)
 static void adc_a_n(const uint8_t second, Cpu* const cpu)
 {
 	// flags effect Z 0 H C
-	const uint8_t carry = get_flags(*cpu, Cpu::Flag_C) ? 1 : 0;
+	const uint8_t carry = get_flags(*cpu, kFlagC) ? 1 : 0;
 	const uint8_t first = cpu->a;
 	const uint16_t result = first + (second + carry);
 	uint8_t flags = 0x00;
 
 	if (fcheck_c_bit7(result))
-		flags = Cpu::Flag_C;
+		flags = kFlagC;
 	if (fcheck_z(result & 0xFF))
-		flags |= Cpu::Flag_Z;
+		flags |= kFlagZ;
 	if (((first & 0xf) + (second & 0xf) + carry) > 0x0f)
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 
 	cpu->f = flags;
 	cpu->a = static_cast<uint8_t>(result);
@@ -154,17 +154,16 @@ static void sbc_a_n(const uint8_t second, Cpu* const cpu)
 {
 	// flags effect: Z 1 H C
 	const uint8_t first = cpu->a;
-	const uint16_t sec_n_carry = get_flags(*cpu, Cpu::Flag_C) ?
-		second + 1 : second;
-	const uint32_t result = first - sec_n_carry;
-	uint8_t flags = Cpu::Flag_N;
+	const uint16_t sbc = get_flags(*cpu, kFlagC) ? second + 1 : second;
+	const uint32_t result = first - sbc;
+	uint8_t flags = kFlagN;
 
-	if (fcheck_c_borrow(first, sec_n_carry))
-		flags |= Cpu::Flag_C;
+	if (fcheck_c_borrow(first, sbc))
+		flags |= kFlagC;
 	if (fcheck_z(result & 0xFF))
-		flags |= Cpu::Flag_Z;
+		flags |= kFlagZ;
 	if (((result ^ second ^ first) & 0x10) == 0x10)
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 
 	cpu->f = flags;
 	cpu->a = static_cast<uint8_t>(result);
@@ -176,7 +175,7 @@ static void and_a_n(const uint8_t second, Cpu* const cpu)
 	// flags effect: Z 0 1 0
 	const uint8_t first = cpu->a;
 	const uint8_t result = first & second;
-	cpu->f = fcheck_z(result) | Cpu::Flag_H;
+	cpu->f = fcheck_z(result) | kFlagH;
 	cpu->a = result;
 }
 
@@ -206,14 +205,14 @@ static void cp_a_n(const uint8_t value, Cpu* const cpu)
 	// flags effect: Z 1 H C
 	const uint8_t first = cpu->a;
 	const uint16_t result = first - value;
-	uint8_t flags = Cpu::Flag_N;
+	uint8_t flags = kFlagN;
 
 	if (fcheck_z(result & 0xff))
-		flags |= Cpu::Flag_Z;
+		flags |= kFlagZ;
 	if (fcheck_h_borrow(first, value))
-		flags |= Cpu::Flag_H;
+		flags |= kFlagH;
 	if (fcheck_c_borrow(first, value))
-		flags |= Cpu::Flag_C;
+		flags |= kFlagC;
 
 	cpu->f = flags;
 }
@@ -367,7 +366,7 @@ void rlca_07(Gameboy* const gb)
 	const uint8_t result = a << 1;
 	if (old_bit7) {
 		gb->cpu.a = result | 0x01;
-		gb->cpu.f = Cpu::Flag_C;
+		gb->cpu.f = kFlagC;
 	} else {
 		gb->cpu.a = result;
 		gb->cpu.f = 0x00;
@@ -445,7 +444,7 @@ void rrca_0F(Gameboy* const gb)
 	const uint8_t result = a >> 1;
 	if (old_bit0) {
 		gb->cpu.a = result | 0x80;
-		gb->cpu.f = Cpu::Flag_C;
+		gb->cpu.f = kFlagC;
 	} else {
 		gb->cpu.a = result;
 		gb->cpu.f = 0x00;
@@ -516,10 +515,10 @@ void rla_17(Gameboy* const gb)
 	// RLA ( 0 0 0 C )
 	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit7 = a & 0x80;
-	const uint8_t old_carry = get_flags(gb->cpu, Cpu::Flag_C);
+	const uint8_t old_carry = get_flags(gb->cpu, kFlagC);
 	const uint8_t result = a << 1;
 	gb->cpu.a = old_carry ? (result | 0x01) : result;
-	gb->cpu.f = old_bit7 ? Cpu::Flag_C : 0x00;
+	gb->cpu.f = old_bit7 ? kFlagC : 0x00;
 }
 
 
@@ -598,10 +597,10 @@ void rra_1F(Gameboy* const gb)
 	// RRA  ( 0 0 0 C )
 	const uint8_t a = gb->cpu.a;
 	const uint8_t old_bit0 = a & 0x01;
-	const uint8_t old_carry = get_flags(gb->cpu, Cpu::Flag_C);
+	const uint8_t old_carry = get_flags(gb->cpu, kFlagC);
 	const uint8_t result = a >> 1;
 	gb->cpu.a = old_carry ? (result | 0x80) : result;
-	gb->cpu.f = old_bit0 ? Cpu::Flag_C : 0x00;
+	gb->cpu.f = old_bit0 ? kFlagC : 0x00;
 }
 
 
@@ -615,7 +614,7 @@ void rra_1F(Gameboy* const gb)
 void jr_20(Gameboy* const gb) 
 {
 	// JR NZ, r8 ( jump if Z flags is reset )
-	jr(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
+	jr(get_flags(gb->cpu, kFlagZ) == 0, gb);
 }
 
 
@@ -677,25 +676,25 @@ void daa_27(Gameboy* const gb)
 { 
 	// DAA  ( Z - H X )
 	const uint8_t flags = gb->cpu.f;
-	uint8_t flags_result = flags & (Cpu::Flag_N | Cpu::Flag_C);
+	uint8_t flags_result = flags & (kFlagN | kFlagC);
 	uint16_t a = gb->cpu.a;
 
-	if (!(flags & Cpu::Flag_N)) {
-		if ((flags & Cpu::Flag_H) || (a & 0xF) > 9)
+	if (!(flags & kFlagN)) {
+		if ((flags & kFlagH) || (a & 0xF) > 9)
 			a += 0x06;
-		if ((flags & Cpu::Flag_C) || (a > 0x9F))
+		if ((flags & kFlagC) || (a > 0x9F))
 			a += 0x60;
 	} else {
-		if (flags & Cpu::Flag_H)
+		if (flags & kFlagH)
 			a = (a - 0x06) & 0xFF;
-		if (flags & Cpu::Flag_C)
+		if (flags & kFlagC)
 			a -= 0x60;
 	}
 
 	if (a & 0xFF00)
-		flags_result |= Cpu::Flag_C;
+		flags_result |= kFlagC;
 	if ((a & 0xFF) == 0x00)
-		flags_result |= Cpu::Flag_Z;
+		flags_result |= kFlagZ;
 
 	gb->cpu.a = static_cast<uint8_t>(a);
 	gb->cpu.f = flags_result;
@@ -709,7 +708,7 @@ void daa_27(Gameboy* const gb)
 void jr_28(Gameboy* const gb) 
 {
 	// JR Z, r8 ( jump if Z flag is set )
-	jr(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
+	jr(get_flags(gb->cpu, kFlagZ) != 0, gb);
 }
 
 
@@ -777,7 +776,7 @@ void cpl_2F(Gameboy* const gb)
 	// CPL ( Complement A register, flip all bits )
 	// flags affected: - 1 1 -
 	gb->cpu.a = ~gb->cpu.a;
-	set_flags(Cpu::Flag_N | Cpu::Flag_H, &gb->cpu);
+	set_flags(kFlagN | kFlagH, &gb->cpu);
 }
 
 
@@ -790,7 +789,7 @@ void cpl_2F(Gameboy* const gb)
 void jr_30(Gameboy* const gb) 
 {
 	// JR NC, r8 ( jump if C flag is reset )
-	jr(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
+	jr(get_flags(gb->cpu, kFlagC) == 0, gb);
 }
 
 
@@ -852,7 +851,7 @@ void ld_36(Gameboy* const gb)
 void scf_37(Gameboy* const gb)
 {
 	// SCF ( - 0 0 1 )
-	gb->cpu.f = (gb->cpu.f & Cpu::Flag_Z) | Cpu::Flag_C;
+	gb->cpu.f = (gb->cpu.f & kFlagZ) | kFlagC;
 }
 
 
@@ -863,7 +862,7 @@ void scf_37(Gameboy* const gb)
 void jr_38(Gameboy* const gb) 
 {
 	// JR C, r8 ( jump if C flag is set )
-	jr(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
+	jr(get_flags(gb->cpu, kFlagC) != 0, gb);
 }
 
 
@@ -925,9 +924,9 @@ void ld_3E(Gameboy* const gb)
 void ccf_3F(Gameboy* const gb)
 {
 	// CCF ( - 0 0 C )
-	const auto old_zero = get_flags(gb->cpu, Cpu::Flag_Z);
-	const auto old_carry = get_flags(gb->cpu, Cpu::Flag_C);
-	gb->cpu.f = old_carry ? old_zero : old_zero | Cpu::Flag_C;
+	const auto old_zero = get_flags(gb->cpu, kFlagZ);
+	const auto old_carry = get_flags(gb->cpu, kFlagC);
+	gb->cpu.f = old_carry ? old_zero : old_zero | kFlagC;
 }
 
 
@@ -1913,7 +1912,7 @@ void cp_BF(Gameboy* const gb)
 void ret_C0(Gameboy* const gb) 
 { 
 	// RET NZ
-	ret(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
+	ret(get_flags(gb->cpu, kFlagZ) == 0, gb);
 }
 
 
@@ -1928,7 +1927,7 @@ void pop_C1(Gameboy* const gb)
 void jp_C2(Gameboy* const gb) 
 {
 	// JP NZ, a16
-	jp(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
+	jp(get_flags(gb->cpu, kFlagZ) == 0, gb);
 }
 
 
@@ -1943,7 +1942,7 @@ void jp_C3(Gameboy* const gb)
 void call_C4(Gameboy* const gb) 
 { 
 	// CALL NZ, a16
-	call(get_flags(gb->cpu, Cpu::Flag_Z) == 0, gb);
+	call(get_flags(gb->cpu, kFlagZ) == 0, gb);
 }
 
 
@@ -1974,7 +1973,7 @@ void rst_C7(Gameboy* const gb)
 void ret_C8(Gameboy* const gb) 
 {
 	// RET Z
-	ret(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
+	ret(get_flags(gb->cpu, kFlagZ) != 0, gb);
 }
 
 
@@ -1992,7 +1991,7 @@ void ret_C9(Gameboy* const gb)
 void jp_CA(Gameboy* const gb) 
 {
 	// JP Z, a16
-	jp(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
+	jp(get_flags(gb->cpu, kFlagZ) != 0, gb);
 }
 
 
@@ -2024,7 +2023,7 @@ void prefix_cb(Gameboy* const gb)
 void call_CC(Gameboy* const gb) 
 {
 	// CALL Z, a16
-	call(get_flags(gb->cpu, Cpu::Flag_Z) != 0, gb);
+	call(get_flags(gb->cpu, kFlagZ) != 0, gb);
 }
 
 
@@ -2060,7 +2059,7 @@ void rst_CF(Gameboy* const gb)
 void ret_D0(Gameboy* const gb) 
 { 
 	// RET NC
-	ret(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
+	ret(get_flags(gb->cpu, kFlagC) == 0, gb);
 }
 
 
@@ -2075,14 +2074,14 @@ void pop_D1(Gameboy* const gb)
 void jp_D2(Gameboy* const gb) 
 { 
 	// JP NC, a16
-	jp(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
+	jp(get_flags(gb->cpu, kFlagC) == 0, gb);
 }
 
 // MISSING D3 ----
 void call_D4(Gameboy* const gb)
 {
 	// CALL NC, a16
-	call(get_flags(gb->cpu, Cpu::Flag_C) == 0, gb);
+	call(get_flags(gb->cpu, kFlagC) == 0, gb);
 }
 
 
@@ -2111,7 +2110,7 @@ void rst_D7(Gameboy* const gb)
 void ret_D8(Gameboy* const gb) 
 { 
 	// RET C
-	ret(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
+	ret(get_flags(gb->cpu, kFlagC) != 0, gb);
 }
 
 
@@ -2129,7 +2128,7 @@ void reti_D9(Gameboy* const gb)
 void jp_DA(Gameboy* const gb)
 {
 	// JP C, a16
-	jp(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
+	jp(get_flags(gb->cpu, kFlagC) != 0, gb);
 }
 
 // MISSING DB -----
@@ -2138,7 +2137,7 @@ void jp_DA(Gameboy* const gb)
 void call_DC(Gameboy* const gb)
 {
 	// CALL C, a16
-	call(get_flags(gb->cpu, Cpu::Flag_C) != 0, gb);
+	call(get_flags(gb->cpu, kFlagC) != 0, gb);
 }
 
 
@@ -2228,9 +2227,9 @@ void add_E8(Gameboy* const gb)
 	uint8_t flags_result = 0x00;
 	
 	if ((result & 0xff) < (sp & 0xff))
-		flags_result = Cpu::Flag_C;
+		flags_result = kFlagC;
 	if ((result & 0xf) < (sp & 0xf))
-		flags_result |= Cpu::Flag_H;
+		flags_result |= kFlagH;
 
 	gb->cpu.f = flags_result;
 	gb->cpu.sp = static_cast<uint16_t>(result);
@@ -2345,9 +2344,9 @@ void ld_F8(Gameboy* const gb)
 	uint8_t flags_result = 0x00;
 
 	if ((check & 0x100) == 0x100)
-		flags_result = Cpu::Flag_C;
+		flags_result = kFlagC;
 	if ((check & 0x10) == 0x10)
-		flags_result |= Cpu::Flag_H;
+		flags_result |= kFlagH;
 
 	gb->cpu.hl = result;
 	gb->cpu.f = flags_result;

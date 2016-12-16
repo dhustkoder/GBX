@@ -9,7 +9,7 @@ static uint8_t rlc(const uint8_t value, Cpu* const cpu)
 	uint8_t result = value << 1;
 	if (value & 0x80) {
 		result |= 0x01;
-		cpu->f = Cpu::Flag_C;
+		cpu->f = kFlagC;
 	} else {
 		cpu->f = fcheck_z(result);
 	}
@@ -24,7 +24,7 @@ static uint8_t rrc(const uint8_t value, Cpu* const cpu)
 	uint8_t result = value >> 1;
 	if (value & 0x01) {
 		result |= 0x80;
-		cpu->f = Cpu::Flag_C;
+		cpu->f = kFlagC;
 	} else {
 		cpu->f = fcheck_z(result);
 	}
@@ -37,7 +37,7 @@ static uint8_t rl(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value << 1;
-	if (get_flags(*cpu, Cpu::Flag_C)) {
+	if (get_flags(*cpu, kFlagC)) {
 		result |= 0x01;
 		cpu->f = 0;
 	} else {
@@ -45,7 +45,7 @@ static uint8_t rl(const uint8_t value, Cpu* const cpu)
 	}
 
 	if (value & 0x80)
-		cpu->f |= Cpu::Flag_C;
+		cpu->f |= kFlagC;
 
 	return result;
 }
@@ -55,7 +55,7 @@ static uint8_t rr(const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 0 C
 	uint8_t result = value >> 1;
-	if (get_flags(*cpu, Cpu::Flag_C)) {
+	if (get_flags(*cpu, kFlagC)) {
 		result |= 0x80;
 		cpu->f = 0;
 	} else {
@@ -63,7 +63,7 @@ static uint8_t rr(const uint8_t value, Cpu* const cpu)
 	}
 
 	if (value & 0x01)
-		cpu->f |= Cpu::Flag_C;
+		cpu->f |= kFlagC;
 
 	return result;
 }
@@ -75,7 +75,7 @@ static uint8_t sla(const uint8_t value, Cpu* const cpu)
 	const uint8_t result = value << 1;
 	cpu->f = fcheck_z(result);
 	if (value & 0x80)
-		cpu->f |= Cpu::Flag_C;
+		cpu->f |= kFlagC;
 
 	return result;
 }
@@ -87,7 +87,7 @@ static uint8_t sra(const uint8_t value, Cpu* const cpu)
 	const uint8_t result = (value & 0x80) | (value >> 1);
 	cpu->f = fcheck_z(result);
 	if (value & 0x01)
-		cpu->f |= Cpu::Flag_C;
+		cpu->f |= kFlagC;
 
 	return result;
 }
@@ -108,7 +108,7 @@ static uint8_t srl(const uint8_t value, Cpu* const cpu)
 	const uint8_t result = value >> 1;
 	cpu->f = fcheck_z(result);
 	if (value & 0x01)
-		cpu->f |= Cpu::Flag_C;
+		cpu->f |= kFlagC;
 
 	return result;
 }
@@ -118,7 +118,7 @@ static void bit_n(const uint8_t bit, const uint8_t value, Cpu* const cpu)
 {
 	// flags effect: Z 0 1 -
 	cpu->f = fcheck_z(value & (0x01 << bit))
-	         | Cpu::Flag_H | get_flags(*cpu, Cpu::Flag_C);
+	         | kFlagH | get_flags(*cpu, kFlagC);
 }
 
 

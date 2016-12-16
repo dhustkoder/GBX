@@ -122,19 +122,19 @@ inline bool extract_rom_data(FILE* rom_file, size_t rom_size, Cart* cart);
 inline bool header_read_name(const uint8_t(&header)[0x4F], char(*buffer)[17]);
 
 inline bool header_read_types(const uint8_t(&header)[0x4F],
-                               Cart::Type* type,
-			       Cart::ShortType* short_type,
-			       Cart::System* system);
+                               CartType* type,
+			       CartShortType* short_type,
+			       CartSystem* system);
 
 inline bool header_read_sizes(const uint8_t(&header)[0x4F],
-                               Cart::ShortType short_type,
+                               CartShortType short_type,
                                long* rom_size, long* ram_size,
 			       int* rom_banks, int* ram_banks);
 
 inline owner<char*> eval_sav_file_path(const char* rom_file_path);
 inline bool load_sav_file(const char* sav_file_path, Cart* cart);
 inline void update_sav_file(const Cart& cart, const char* sav_file_path);
-Cart::Info Cart::info;
+CartInfo cart_info;
 
 
 owner<Gameboy*> create_gameboy(const char* const rom_file_path)
@@ -150,7 +150,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	});
 
 	uint8_t header[0x4F];
-	auto& info = Cart::info;
+	auto& info = cart_info;
 	if (!extract_rom_header(rom_file, &header) ||
 	    !header_read_name(header, &info.internal_name) ||
 	    !header_read_types(header, &info.type,
@@ -205,10 +205,10 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 void destroy_gameboy(owner<Gameboy* const> gb)
 {
-	if (owner<char* const> sav_file_path = Cart::info.sav_file_path) {
+	if (owner<char* const> sav_file_path = cart_info.sav_file_path) {
 		const auto sav_file_path_guard = finally([sav_file_path] {
 			free(sav_file_path);
-			Cart::info.sav_file_path = nullptr;
+			cart_info.sav_file_path = nullptr;
 		});
 		update_sav_file(gb->cart, sav_file_path);
 	}
@@ -254,18 +254,18 @@ bool header_read_name(const uint8_t(&header)[0x4F], char(*const buffer)[17])
 
 
 bool header_read_types(const uint8_t(&header)[0x4F],
-                        Cart::Type* const type,
-                        Cart::ShortType* const short_type,
-                        Cart::System* const system)
+                        CartType* const type,
+                        CartShortType* const short_type,
+                        CartSystem* const system)
 {
-	using Type = Cart::Type;
+	using Type = CartType;
 
-	*type = static_cast<Cart::Type>(header[0x47]);
+	*type = static_cast<CartType>(header[0x47]);
 
 	switch (header[0x43]) {
-	case 0xC0: *system =  Cart::System::GameboyColorOnly; break;
-	case 0x80: *system = Cart::System::GameboyColorCompat; break;
-	default: *system = Cart::System::Gameboy; break;
+	case 0xC0: *system =  CartSystem::GameboyColorOnly; break;
+	case 0x80: *system = CartSystem::GameboyColorCompat; break;
+	default: *system = CartSystem::Gameboy; break;
 	}
 	
 
@@ -280,18 +280,18 @@ bool header_read_types(const uint8_t(&header)[0x4F],
 	}
 
 	if (*type >= Type::RomMBC1 && *type <= Type::RomMBC1RamBattery)
-		*short_type = Cart::ShortType::RomMBC1;
+		*short_type = CartShortType::RomMBC1;
 	else if (*type >= Type::RomMBC2 && *type <= Type::RomMBC2Battery)
-		*short_type = Cart::ShortType::RomMBC2;
+		*short_type = CartShortType::RomMBC2;
 	else
-		*short_type = Cart::ShortType::RomOnly;
+		*short_type = CartShortType::RomOnly;
 
 	return true;
 }
 
 
 bool header_read_sizes(const uint8_t(&header)[0x4F],
-		        const Cart::ShortType short_type,
+		        const CartShortType short_type,
                         long* const rom_size, long* const ram_size,
                         int* const rom_banks, int* const ram_banks)
 {
@@ -315,11 +315,11 @@ bool header_read_sizes(const uint8_t(&header)[0x4F],
 	auto ram_size_tmp = ram_sizes[size_codes[1]].size;
 	auto ram_banks_tmp = ram_sizes[size_codes[1]].banks;
 
-	if (short_type == Cart::ShortType::RomOnly &&
+	if (short_type == CartShortType::RomOnly &&
 	     (ram_size_tmp != 0x00 || rom_size_tmp != 32_Kib)) {
 		fprintf(stderr, "Invalid size codes for RomOnly\n");
 		return false;
-	} else if (short_type == Cart::ShortType::RomMBC2) {
+	} else if (short_type == CartShortType::RomMBC2) {
 		if (rom_size_tmp <= 256_Kib && ram_size_tmp == 0x00) {
 			ram_size_tmp = 512;
 			ram_banks_tmp = 1;
