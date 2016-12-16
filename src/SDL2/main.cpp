@@ -183,7 +183,7 @@ bool setup_joystick()
 		fprintf(stderr, "error: %s\n", SDL_GetError());
 		return false;
 	} else if (num_devices == 0) {
-		fprintf(stderr, "error: no joystick found.\n");
+		fputs("Error: no joystick found\n", stderr);
 		return false;
 	}
 
@@ -283,7 +283,7 @@ bool init_sdl(const bool enable_joystick)
 
 	if (window == nullptr) {
 		fprintf(stderr, "failed to create SDL_Window: %s\n",
-			SDL_GetError());
+		        SDL_GetError());
 		goto free_sdl;
 	}
 
@@ -303,7 +303,8 @@ bool init_sdl(const bool enable_joystick)
 		kWinWidth, kWinHeight);
 
 	if (texture == nullptr) {
-		fprintf(stderr, "failed to create SDL_Texture: %s\n", SDL_GetError());
+		fprintf(stderr, "failed to create SDL_Texture: %s\n",
+		        SDL_GetError());
 		goto free_renderer;
 	}
 

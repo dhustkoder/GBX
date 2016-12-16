@@ -223,9 +223,9 @@ bool extract_rom_header(FILE* const rom_file, uint8_t(*const buffer)[0x4F])
 	if (fseek(rom_file, 0x100, SEEK_SET) != 0 ||
 	     fread(buffer, 1, 0x4F, rom_file) < 0x4F) {
 		if (errno != 0)
-			perror("Error while reading from file");
+			perror("Couldn't read from file");
 		else
-			fprintf(stderr, "Error while reading from file\n");
+			fputs("ROM's size is invalid\n", stderr);
 		return false;
 	}
 	return true;
@@ -240,9 +240,9 @@ bool extract_rom_data(FILE* const rom_file,
 	if (fseek(rom_file, 0, SEEK_SET) != 0 ||
 	     fread(cart->data, 1, rom_size, rom_file) < rom_size) {
 		if (errno != 0)
-			perror("Error while reading from file");
+			perror("Couldn't read from file");
 		else
-			fprintf(stderr, "Error while reading from file\n");
+			fputs("ROM's size is invalid\n", stderr);
 		return false;
 	}
 	return true;
@@ -254,7 +254,7 @@ bool header_read_name(const uint8_t(&header)[0x4F], char(*const buffer)[17])
 	memcpy(buffer, &header[0x34], 16);
 	(*buffer)[16] = '\0';
 	if (strlen(*buffer) == 0) {
-		fprintf(stderr, "The ROM's internal name is invalid.\n");
+		fputs("ROM's internal name is invalid\n", stderr);
 		return false;
 	}
 	return true;
@@ -266,8 +266,6 @@ bool header_read_types(const uint8_t(&header)[0x4F],
                         CartShortType* const short_type,
                         CartSystem* const system)
 {
-	using Type = CartType;
-
 	*type = static_cast<CartType>(header[0x47]);
 
 	switch (header[0x43]) {
@@ -275,7 +273,6 @@ bool header_read_types(const uint8_t(&header)[0x4F],
 	case 0x80: *system = CartSystem::GameboyColorCompat; break;
 	default: *system = CartSystem::Gameboy; break;
 	}
-	
 
 	if (!is_in_array(kSupportedCartridgeTypes, *type)) {
 		fprintf(stderr, "Cartridge type %u not supported\n",
@@ -287,9 +284,9 @@ bool header_read_types(const uint8_t(&header)[0x4F],
 		return false;
 	}
 
-	if (*type >= Type::RomMBC1 && *type <= Type::RomMBC1RamBattery)
+	if (*type >= CartType::RomMBC1 && *type <= CartType::RomMBC1RamBattery)
 		*short_type = CartShortType::RomMBC1;
-	else if (*type >= Type::RomMBC2 && *type <= Type::RomMBC2Battery)
+	else if (*type >= CartType::RomMBC2 && *type <= CartType::RomMBC2Battery)
 		*short_type = CartShortType::RomMBC2;
 	else
 		*short_type = CartShortType::RomOnly;
@@ -314,7 +311,7 @@ bool header_read_sizes(const uint8_t(&header)[0x4F],
 	const uint8_t size_codes[2] { header[0x48], header[0x49] };
 	
 	if (size_codes[0] >= 7 || size_codes[1] >= 4) {
-		fprintf(stderr, "Invalid size codes\n");
+		fputs("Invalid size codes\n", stderr);
 		return false;
 	}
 	
@@ -325,14 +322,14 @@ bool header_read_sizes(const uint8_t(&header)[0x4F],
 
 	if (short_type == CartShortType::RomOnly &&
 	     (ram_size_tmp != 0x00 || rom_size_tmp != 32_Kib)) {
-		fprintf(stderr, "Invalid size codes for RomOnly\n");
+		fputs("Invalid size codes for RomOnly\n", stderr);
 		return false;
 	} else if (short_type == CartShortType::RomMBC2) {
 		if (rom_size_tmp <= 256_Kib && ram_size_tmp == 0x00) {
 			ram_size_tmp = 512;
 			ram_banks_tmp = 1;
 		} else {
-			fprintf(stderr, "Invalid size codes for MBC2\n");
+			fputs("Invalid size codes for MBC2\n", stderr);
 			return false;
 		}
 	}
@@ -386,7 +383,7 @@ bool load_sav_file(const char* const sav_file_path, Cart* const cart)
 		const size_t ram_size = get_ram_size(*cart);
 		uint8_t* const ram = get_ram(cart);	
 		if (fread(ram, 1, ram_size, sav_file) < ram_size)
-			fprintf(stderr, "Error while loading sav file");
+			fputs("Error while reading sav file\n", stderr);
 	} else if (errno != ENOENT) {
 		perror("Couldn't open sav file");
 		return false;
