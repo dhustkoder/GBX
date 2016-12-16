@@ -2009,13 +2009,13 @@ void prefix_cb(Gameboy* const gb)
 	
 	const uint8_t op_low_nibble = cb_opcode & 0x0F;
 	const uint8_t op_high_nibble = (cb_opcode & 0xF0) >> 4;
-	if (op_low_nibble != 0x06 && op_low_nibble != 0x0E) {
+	
+	if (op_low_nibble != 0x06 && op_low_nibble != 0x0E)
 		gb->cpu.clock += 8;
-	} else if (op_high_nibble < 0x04 || op_high_nibble > 0x07) {
+	else if (op_high_nibble < 0x04 || op_high_nibble > 0x07)
 		gb->cpu.clock += 16;
-	} else {
+	else
 		gb->cpu.clock += 12;
-	}
 }
 
 

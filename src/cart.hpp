@@ -33,7 +33,7 @@ struct Cart
 
 private:
 	static struct Info {
-		char internal_name[18] { 0 };
+		char internal_name[17] { 0 };
 		owner<char*> sav_file_path = nullptr;
 		long rom_size = 0;
 		long ram_size = 0;

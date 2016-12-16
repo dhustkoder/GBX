@@ -42,21 +42,20 @@ void reset(Gameboy* const gb)
 void run_for(const int32_t clock_limit, Gameboy* const gb)
 {
 	do {
-		const int32_t before = gb->cpu.clock;
+		const auto before = gb->cpu.clock;
 		update_interrupts(gb);
 
-		int16_t step_cycles;
 		if (!gb->hwstate.flags.cpu_halt) {
 			const uint8_t opcode = mem_read8(*gb, gb->cpu.pc++);
 			main_instructions[opcode](gb);
-			step_cycles = clock_table[opcode];
+			gb->cpu.clock += clock_table[opcode];
 		} else {
-			step_cycles = 4;
+			gb->cpu.clock += 4;
 		}
 
-		const int32_t after = gb->cpu.clock;
-		gb->cpu.clock += step_cycles;
-		step_cycles += static_cast<int16_t>(after - before);
+		const auto step_cycles =
+		  static_cast<int16_t>(gb->cpu.clock - before);
+
 		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
 		update_timers(step_cycles, &gb->hwstate);
 	} while (gb->cpu.clock < clock_limit ||
@@ -120,7 +119,7 @@ void update_interrupts(Gameboy* const gb)
 
 inline bool extract_rom_header(FILE* rom_file, uint8_t(*buffer)[0x4F]);
 inline bool extract_rom_data(FILE* rom_file, size_t rom_size, Cart* cart);
-inline bool header_read_name(const uint8_t(&header)[0x4F], char(*buffer)[18]);
+inline bool header_read_name(const uint8_t(&header)[0x4F], char(*buffer)[17]);
 
 inline bool header_read_types(const uint8_t(&header)[0x4F],
                                Cart::Type* type,
@@ -152,7 +151,6 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	uint8_t header[0x4F];
 	auto& info = Cart::info;
-
 	if (!extract_rom_header(rom_file, &header) ||
 	    !header_read_name(header, &info.internal_name) ||
 	    !header_read_types(header, &info.type,
@@ -165,7 +163,6 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	const auto memsize = sizeof(Gameboy) + info.rom_size + info.ram_size;
 	owner<Gameboy* const> gb = static_cast<Gameboy*>(malloc(memsize));
-	
 	if (gb == nullptr) {
 		perror("Couldn't allocate memory");
 		return nullptr;
@@ -231,12 +228,25 @@ bool extract_rom_header(FILE* const rom_file, uint8_t(*const buffer)[0x4F])
 }
 
 
-bool extract_rom_data(FILE* const rom_file, const size_t rom_size,
+bool extract_rom_data(FILE* const rom_file,
+                      const size_t rom_size,
                       Cart* const cart)
 {
 	fseek(rom_file, 0, SEEK_SET);
 	if (fread(cart->data, 1, rom_size, rom_file) < rom_size) {
 		fprintf(stderr, "Error while reading from file\n");
+		return false;
+	}
+	return true;
+}
+
+
+bool header_read_name(const uint8_t(&header)[0x4F], char(*const buffer)[17])
+{
+	memcpy(buffer, &header[0x34], 16);
+	(*buffer)[16] = '\0';
+	if (strlen(*buffer) == 0) {
+		fprintf(stderr, "The ROM's internal name is invalid.\n");
 		return false;
 	}
 	return true;
@@ -323,18 +333,6 @@ bool header_read_sizes(const uint8_t(&header)[0x4F],
 	*ram_size = static_cast<long>(ram_size_tmp);
 	*rom_banks = rom_banks_tmp;
 	*ram_banks = ram_banks_tmp;
-	return true;
-}
-
-
-bool header_read_name(const uint8_t(&header)[0x4F], char(*const buffer)[18])
-{
-	memcpy(buffer, &header[0x34], 16);
-	(*buffer)[17] = '\0';
-	if (strlen(*buffer) == 0) {
-		fprintf(stderr, "The ROM's internal name is invalid.\n");
-		return false;
-	}
 	return true;
 }
 
