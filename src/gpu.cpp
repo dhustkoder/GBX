@@ -60,10 +60,9 @@ struct ScanlineFiller {
 void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
 inline void mode_hblank(Gpu* gpu, HWState* hwstate);
 inline void mode_vblank(Gpu* gpu, HWState* hwstate);
-inline void mode_oam(Gpu* gpu);
+inline void mode_oam(Gpu* gpu, HWState* hwstate);
 inline void mode_transfer(const Memory& mem, Gpu* gpu, HWState* hwstate);
 inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
-inline void set_gpu_mode(Gpu::Mode mode, Gpu* gpu, HWState* hwstate);
 static void update_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void update_win_scanline(const Gpu& gpu, const Memory& mem);
 static void update_sprite_scanline(const Gpu& gpu, const Memory& mem);
@@ -74,19 +73,22 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 	if (!gpu->lcdc.lcd_on)
 		return;
 
-	constexpr const int16_t limits[] { 204, 456, 80, 172 };
-	const auto mode = gpu->stat.mode;
-	const auto clock_limit = limits[mode];
-	if ((gpu->clock += cycles) < clock_limit)
-		return;
+	const auto mode = get_gpu_mode(*gpu);
+	const auto clock_limit = get_gpu_mode_clock_limit(mode);
+	gpu->clock += cycles;
 
-	gpu->clock -= clock_limit;
-	switch (mode) {
-	case Gpu::Mode::HBlank: mode_hblank(gpu, hwstate); break;
-	case Gpu::Mode::VBlank: mode_vblank(gpu, hwstate); break;
-	case Gpu::Mode::SearchOAM: mode_oam(gpu); break;
-	case Gpu::Mode::Transfer: mode_transfer(mem, gpu, hwstate); break;
-	default: break;
+	if (gpu->clock >= clock_limit) {
+		
+		gpu->clock -= clock_limit;
+
+		switch (mode) {
+		case GpuMode::HBlank: mode_hblank(gpu, hwstate); break;
+		case GpuMode::VBlank: mode_vblank(gpu, hwstate); break;
+		case GpuMode::SearchOAM: mode_oam(gpu, hwstate); break;
+		case GpuMode::Transfer: mode_transfer(mem, gpu, hwstate); break;
+		default: break;
+		}
+
 	}
 }
 
@@ -94,10 +96,10 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 void mode_hblank(Gpu* const gpu, HWState* const hwstate)
 {
 	if (++gpu->ly < 144) {
-		set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
+		set_gpu_mode(GpuMode::SearchOAM, gpu, hwstate);
 	} else {
 		request_interrupt(kInterrupts.vblank, hwstate);
-		set_gpu_mode(Gpu::Mode::VBlank, gpu, hwstate);
+		set_gpu_mode(GpuMode::VBlank, gpu, hwstate);
 	}
 	check_gpu_lyc(gpu, hwstate);
 }
@@ -107,15 +109,15 @@ void mode_vblank(Gpu* const gpu, HWState* const hwstate)
 {
 	if (++gpu->ly > 153) {
 		gpu->ly = 0;
-		set_gpu_mode(Gpu::Mode::SearchOAM, gpu, hwstate);
+		set_gpu_mode(GpuMode::SearchOAM, gpu, hwstate);
 	}
 	check_gpu_lyc(gpu, hwstate);
 }
 
 
-void mode_oam(Gpu* const gpu)
+void mode_oam(Gpu* const gpu, HWState* const hwstate)
 {
-	gpu->stat.mode = Gpu::Mode::Transfer;
+	set_gpu_mode(GpuMode::Transfer, gpu, hwstate);
 }
 
 
@@ -124,27 +126,8 @@ void mode_transfer(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
 	update_bg_scanline(*gpu, mem);
 	update_win_scanline(*gpu, mem);
 	update_sprite_scanline(*gpu, mem);
-	set_gpu_mode(Gpu::Mode::HBlank, gpu, hwstate);
+	set_gpu_mode(GpuMode::HBlank, gpu, hwstate);
 }
-
-
-void set_gpu_mode(const Gpu::Mode mode, Gpu* const gpu, HWState* const hwstate)
-{
-	const auto stat = gpu->stat;
-	uint8_t int_on = 0;
-
-	switch (mode) {
-	case Gpu::Mode::HBlank: int_on = stat.int_on_hblank; break;
-	case Gpu::Mode::VBlank: int_on = stat.int_on_vblank; break;
-	case Gpu::Mode::SearchOAM: int_on = stat.int_on_oam; break;
-	default: break;
-	}
-
-	if (int_on)
-		request_interrupt(kInterrupts.lcd, hwstate);
-
-	gpu->stat.mode = mode;
-};
 
 
 void check_gpu_lyc(Gpu* const gpu, HWState* const hwstate)
@@ -165,7 +148,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const auto lcdc = gpu.lcdc;
 	const auto ly = gpu.ly;
 	if (!lcdc.bg_on) {
-		memset(&Gpu::screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
+		memset(&gpu.screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
 		return;
 	} else if (lcdc.win_on && ly >= gpu.wy && gpu.wx <= 7) {
 		return;
@@ -201,7 +184,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 	
-	ScanlineFiller fill_line{&Gpu::screen[ly][0], Pallete{gpu.bgp}};
+	ScanlineFiller fill_line{&gpu.screen[ly][0], Pallete{gpu.bgp}};
 
 	if (scxmod == 0) {
 		for (int x = 0; x < 20; ++x)
@@ -240,7 +223,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
-	ScanlineFiller fill_line{&Gpu::screen[ly][wx_max], Pallete{gpu.bgp}};
+	ScanlineFiller fill_line{&gpu.screen[ly][wx_max], Pallete{gpu.bgp}};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
@@ -266,7 +249,6 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 	if (!lcdc.obj_on)
 		return;
 
-	auto& screen = Gpu::screen;
 	const Pallete obp0 {gpu.obp0};
 	const Pallete obp1 {gpu.obp1};
 	const Pallete bgp {gpu.bgp};
@@ -317,11 +299,11 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 		uint32_t* line;
 		int pbeg, pend;
 		if (xpos < 0) {
-			line = &screen[ly][0];
+			line = &gpu.screen[ly][0];
 			pbeg = -xpos;
 			pend = 8;
 		} else {
-			line = &screen[ly][xpos];
+			line = &gpu.screen[ly][xpos];
 			pbeg = 0;
 			pend = min(160 - xpos, 8);
 		}

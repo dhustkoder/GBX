@@ -29,7 +29,7 @@ static void write_vram(uint16_t address, uint8_t value, Memory* mem);
 static void write_cart_ram(uint16_t address, uint8_t value, Cart* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
-static void write_lcdc(uint8_t value, Gpu* gpu);
+static void write_lcdc(uint8_t value, Gpu* gpu, HWState* hwstate);
 static void write_stat(uint8_t value, Gpu* gpu);
 static void write_joypad(uint8_t value, Joypad* keys);
 static void write_div(uint8_t value, HWState* hwstate);
@@ -315,7 +315,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
 	case 0xFF0F: gb->hwstate.int_flags = value&0x1F; break;
-	case 0xFF40: write_lcdc(value, &gb->gpu); break;
+	case 0xFF40: write_lcdc(value, &gb->gpu, &gb->hwstate); break;
 	case 0xFF41: write_stat(value, &gb->gpu); break;
 	case 0xFF42: gb->gpu.scy = value; break;
 	case 0xFF43: gb->gpu.scx = value; break;
@@ -332,7 +332,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 }
 
 
-void write_lcdc(const uint8_t value, Gpu* const gpu)
+void write_lcdc(const uint8_t value, Gpu* const gpu, HWState* const hwstate)
 {
 	const auto old_lcd_off = !gpu->lcdc.lcd_on;
 	gpu->lcdc.value = value;
@@ -340,9 +340,9 @@ void write_lcdc(const uint8_t value, Gpu* const gpu)
 	if (new_lcd_off) {
 		gpu->clock = 0;
 		gpu->ly = 0;
-		gpu->stat.mode = Gpu::Mode::HBlank;
+		set_gpu_mode(GpuMode::HBlank, gpu, hwstate);
 	} else if (old_lcd_off) {
-		gpu->stat.mode = Gpu::Mode::SearchOAM;
+		set_gpu_mode(GpuMode::SearchOAM, gpu, hwstate);
 	}
 }
 

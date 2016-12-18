@@ -14,7 +14,6 @@ static void update_interrupts(Gameboy* gb);
 void reset(Gameboy* const gb)
 {
 	memset(gb, 0, sizeof(*gb));
-	memset(&Gpu::screen[0][0], 0xFF, sizeof(Gpu::screen));
 
 	// init the system
 	// up to now only Gameboy (DMG) mode is supported
@@ -154,10 +153,10 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	if (!extract_rom_header(rom_file, &header) ||
 	    !header_read_name(header, &info.internal_name) ||
 	    !header_read_types(header, &info.type,
-	                      &info.short_type, &info.system) ||
+	                       &info.short_type, &info.system) ||
 	    !header_read_sizes(header, info.short_type,
-		                &info.rom_size, &info.ram_size,
-				&info.rom_banks, &info.ram_banks)) {
+		               &info.rom_size, &info.ram_size,
+	                       &info.rom_banks, &info.ram_banks)) {
 		return nullptr;
 	}
 
@@ -177,8 +176,8 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	if (is_in_array(kBatteryCartridgeTypes, info.type)) {
 		info.sav_file_path = eval_sav_file_path(rom_file_path);
 		if (info.sav_file_path == nullptr ||
-		     !load_sav_file(info.sav_file_path, &gb->cart))
-			return nullptr;
+		    !load_sav_file(info.sav_file_path, &gb->cart))
+			    return nullptr;
 	}
 
 	if (!extract_rom_data(rom_file, info.rom_size, &gb->cart))
@@ -203,14 +202,12 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 }
 
 
-void destroy_gameboy(owner<Gameboy* const> gb)
+void destroy_gameboy(owner<Gameboy*> gb)
 {
 	if (owner<char* const> sav_file_path = cart_info.sav_file_path) {
-		const auto sav_file_path_guard = finally([sav_file_path] {
-			free(sav_file_path);
-			cart_info.sav_file_path = nullptr;
-		});
 		update_sav_file(gb->cart, sav_file_path);
+		free(sav_file_path);
+		cart_info.sav_file_path = nullptr;
 	}
 
 	free(gb);
@@ -275,12 +272,12 @@ bool header_read_types(const uint8_t(&header)[0x4F],
 	}
 
 	if (!is_in_array(kSupportedCartridgeTypes, *type)) {
-		fprintf(stderr, "Cartridge type %u not supported\n",
-		        static_cast<unsigned>(*type));
+		fprintf(stderr, "Cartridge %s %u not supported\n",
+			"type", static_cast<unsigned>(*type));
 		return false;
 	} else if (!is_in_array(kSupportedCartridgeSystems, *system)) {
-		fprintf(stderr, "Cartridge system %u not supported\n",
-		        static_cast<unsigned>(*system));
+		fprintf(stderr, "Cartridge %s %u not supported\n",
+			"system", static_cast<unsigned>(*system));
 		return false;
 	}
 
@@ -308,17 +305,20 @@ bool header_read_sizes(const uint8_t(&header)[0x4F],
 	constexpr const SizeInfo ram_sizes[4] { 
 		{0, 0}, {2_Kib, 1}, {8_Kib, 1}, {32_Kib, 4}
 	};
-	const uint8_t size_codes[2] { header[0x48], header[0x49] };
-	
-	if (size_codes[0] >= 7 || size_codes[1] >= 4) {
+
+	const auto rom_code = header[0x48];
+	const auto ram_code = header[0x49];
+
+	if (rom_code >= arr_size(rom_sizes) ||
+	    ram_code >= arr_size(ram_sizes)) {
 		fputs("Invalid size codes\n", stderr);
 		return false;
 	}
 	
-	const auto rom_size_tmp = rom_sizes[size_codes[0]].size;
-	const auto rom_banks_tmp = rom_sizes[size_codes[0]].banks;
-	auto ram_size_tmp = ram_sizes[size_codes[1]].size;
-	auto ram_banks_tmp = ram_sizes[size_codes[1]].banks;
+	const auto rom_size_tmp = rom_sizes[rom_code].size;
+	const auto rom_banks_tmp = rom_sizes[rom_code].banks;
+	auto ram_size_tmp = ram_sizes[ram_code].size;
+	auto ram_banks_tmp = ram_sizes[ram_code].banks;
 
 	if (short_type == CartShortType::RomOnly &&
 	     (ram_size_tmp != 0x00 || rom_size_tmp != 32_Kib)) {

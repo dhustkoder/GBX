@@ -11,7 +11,7 @@ constexpr const int kWinHeight = 144;
 static bool init_sdl();
 static void quit_sdl();
 static bool update_events(SDL_Event* events, gbx::Gameboy* gb);
-static void render_graphics(gbx::Gameboy* gb);
+static void render_graphics(const gbx::Gpu& gpu);
 
 int main(int argc, char** argv)
 {
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
 	while (update_events(&events, gameboy)) {
 		gbx::run_for(70224, gameboy);
-		render_graphics(gameboy);
+		render_graphics(gameboy->gpu);
 		++fps;
 		const auto ticks = SDL_GetTicks();
 		if (ticks >= (last_ticks + 1000)) {
@@ -103,25 +103,23 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 }
 
 
-void render_graphics(gbx::Gameboy* const gb)
+void render_graphics(const gbx::Gpu& gpu)
 {
-	if (gb->gpu.lcdc.lcd_on) {
-		int pitch;
-		void* pixels;
-		if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-			const size_t size = sizeof(gbx::Gpu::screen);
-			memcpy(pixels, &gbx::Gpu::screen[0][0], size);
-			SDL_UnlockTexture(texture);
-			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		} else {
-			const char* const err = SDL_GetError();
-			fprintf(stderr, "failed to lock texture: %s\n", err);
-		}
+	if (!gpu.lcdc.lcd_on)
+		return;
+
+	int pitch;
+	void* pixels;
+	if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
+		constexpr const auto size = sizeof(uint32_t) * 144 * 160;
+		memcpy(pixels, &gpu.screen[0][0], size);
+		SDL_UnlockTexture(texture);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		SDL_RenderPresent(renderer);
 	} else {
-		SDL_RenderClear(renderer);
+		const char* const err = SDL_GetError();
+		fprintf(stderr, "failed to lock texture: %s\n", err);
 	}
-	
-	SDL_RenderPresent(renderer);
 }
 
 

@@ -1,21 +1,20 @@
 #ifndef GBX_GPU_HPP_
 #define GBX_GPU_HPP_
 #include "common.hpp"
-
+#include "hwstate.hpp"
 
 namespace gbx {
 
-struct HWState;
 struct Memory;
+
+enum class GpuMode : uint8_t {
+	HBlank = 0x0, VBlank = 0x1,
+	SearchOAM = 0x2, Transfer = 0x3
+};
 
 
 struct Gpu 
 {
-	enum Mode : uint8_t {
-		HBlank = 0x0, VBlank = 0x1,
-		SearchOAM = 0x2, Transfer = 0x3
-	};
-
 	int16_t clock;
 
 	union {
@@ -58,6 +57,30 @@ struct Gpu
 	static uint32_t screen[144][160];
 };
 
+
+inline GpuMode get_gpu_mode(const Gpu& gpu)
+{
+	return static_cast<GpuMode>(gpu.stat.mode);
+}
+
+inline int16_t get_gpu_mode_clock_limit(const GpuMode mode)
+{
+	constexpr const int16_t limits[] = { 204, 456, 80, 172 };
+	return limits[static_cast<size_t>(mode)];
+}
+
+inline void set_gpu_mode(const GpuMode mode, Gpu* const gpu, HWState* const hwstate)
+{
+	if (get_gpu_mode(*gpu) == mode)
+		return;
+
+	const auto mode_value = static_cast<uint8_t>(mode);
+
+	if (mode_value < 3 && (gpu->stat.value>>(3 + mode_value))&1)
+		request_interrupt(kInterrupts.lcd, hwstate);
+
+	gpu->stat.mode = mode_value;
+}
 
 
 } // namespace gbx

@@ -30,6 +30,11 @@ constexpr T min(const T x, const T y)
 	return x < y ? x : y;
 }
 
+template<class T, size_t N>
+constexpr size_t arr_size(const T(&)[N])
+{
+	return N;
+}
 
 template<class F>
 class Finally {
