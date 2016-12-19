@@ -6,55 +6,12 @@
 
 namespace gbx {
 
-enum Color : uint32_t {
-	Black = 0x00000000,
-	White = 0x00FFFFFF,
-	LightGrey = 0x00909090,
-	DarkGrey = 0x00555555
+struct Scanline {
+	uint32_t* data;
+	const Color(&colors)[4];
 };
 
-constexpr const Color kColors[4] { White, LightGrey, DarkGrey, Black };
 uint32_t Gpu::screen[144][160];
-
-struct Pallete {
-	constexpr explicit Pallete(const uint8_t pal)
-		: colors{kColors[pal&0x03],
-			kColors[(pal&0x0C)>>2],
-			kColors[(pal&0x30)>>4],
-			kColors[(pal&0xC0)>>6]}
-	{
-	}
-
-	Color operator[](const int offset) const
-	{
-		assert(offset >= 0 && offset <= 3);
-		return colors[offset];
-	}
-
-	const Color colors[4];
-};
-
-struct ScanlineFiller {
-	constexpr ScanlineFiller(uint32_t* line, Pallete pal)
-		: scanline(line), 
-		pallete(pal)
-	{
-	}
-
-	void operator()(const int pbeg, const int pend, const uint16_t row) {
-		for (int p = pbeg; p < pend; ++p) {
-			uint8_t colnum = 0;
-			if (row & (0x80 >> p))
-				++colnum;
-			if (row & (0x8000 >> p))
-				colnum += 2;
-			*scanline++ = pallete[colnum];
-		}
-	}
-
-	uint32_t* scanline;
-	const Pallete pallete;
-};
 
 
 void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
@@ -66,6 +23,7 @@ inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
 static void update_bg_scanline(const Gpu& gpu, const Memory& mem);
 static void update_win_scanline(const Gpu& gpu, const Memory& mem);
 static void update_sprite_scanline(const Gpu& gpu, const Memory& mem);
+static void fill_scanline(int pbeg, int pend, uint16_t row, Scanline* scanline);
 
 
 void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
@@ -157,8 +115,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const auto scx = gpu.scx;
 	const auto scy = gpu.scy;
 	const bool unsig_data = lcdc.tile_data != 0;
-	// >> 3 == / 8
-	// & 7 == % 8
+
 	const int lydiv = ly >> 3;
 	const int lymod = ly & 7;
 	const int scxdiv = scx >> 3;
@@ -169,31 +126,31 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	const int ly_scy_divs = lydiv + scydiv;
 	const int data_add = (ly_scy_mods&7) * 2;
 	const int map_add = 
-		((ly_scy_divs + ((ly_scy_mods > 7) ? 1 : 0))&31) * 32;
+	  ((ly_scy_divs + ((ly_scy_mods > 7) ? 1 : 0))&31) * 32;
 
-	const auto tile_data = (unsig_data
-		? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
-	const auto map = (lcdc.bg_map
-		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
+	const uint8_t* const tile_data =
+	  (unsig_data ? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
+	const uint8_t* const map =
+	  (lcdc.bg_map ? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
 	const auto get_row = 
-	[map, scxdiv, unsig_data, tile_data] (const int mapx) -> uint16_t {
+	[map, scxdiv, unsig_data, tile_data](const int mapx)-> uint16_t {
 		const uint8_t id = map[(mapx + scxdiv)&31];
-		const int addr = (unsig_data 
-			? id : static_cast<int8_t>(id)) * 16;
+		const int addr =
+		  (unsig_data ? id : static_cast<int8_t>(id)) * 16;
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 	
-	ScanlineFiller fill_line{&gpu.screen[ly][0], Pallete{gpu.bgp}};
+	Scanline scanline {&gpu.screen[ly][0], gpu.bgp.colors};
 
 	if (scxmod == 0) {
 		for (int x = 0; x < 20; ++x)
-			fill_line(0, 8, get_row(x));
+			fill_scanline(0, 8, get_row(x), &scanline);
 	} else {
-		fill_line(scxmod, 8, get_row(0));
+		fill_scanline(scxmod, 8, get_row(0), &scanline);
 		for (int x = 1; x < 20; ++x)
-			fill_line(0, 8, get_row(x));
-		fill_line(0, scxmod, get_row(20));
+			fill_scanline(0, 8, get_row(x), &scanline);
+		fill_scanline(0, scxmod, get_row(20), &scanline);
 	}
 }
 
@@ -210,10 +167,10 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	const bool unsig_data = lcdc.tile_data != 0;
 	const int data_add = ((ly - wy) & 7) * 2;
 	const int map_add = (((ly - wy) >> 3)&31) * 32;
-	const auto tile_data = (unsig_data
-		? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
-	const auto map = (lcdc.win_map
-		? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
+	const uint8_t* const tile_data = 
+	  (unsig_data ? &mem.vram[0] : &mem.vram[0x1000]) + data_add;
+	const uint8_t* const map =
+	  (lcdc.win_map ? &mem.vram[0x1C00] : &mem.vram[0x1800]) + map_add;
 
 	const auto get_row = 
 	[map, unsig_data, tile_data] (const int mapx) -> uint16_t {
@@ -223,13 +180,13 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
-	ScanlineFiller fill_line{&gpu.screen[ly][wx_max], Pallete{gpu.bgp}};
+	Scanline scanline{&gpu.screen[ly][wx_max], gpu.bgp.colors};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
 	if (wx < 0) {
 		const int abswx = -wx;
-		fill_line(abswx, 8, get_row(0));
+		fill_scanline(abswx, 8, get_row(0), &scanline);
 		++xbeg;
 		to_draw -= (8 - abswx);
 	}
@@ -237,7 +194,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	for (int x = xbeg; to_draw > 0; ++x) {
 		const int pend = min(8, to_draw);
 		to_draw -= pend;
-		fill_line(0, pend, get_row(x));
+		fill_scanline(0, pend, get_row(x), &scanline);
 	}
 }
 
@@ -249,16 +206,16 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 	if (!lcdc.obj_on)
 		return;
 
-	const Pallete obp0 {gpu.obp0};
-	const Pallete obp1 {gpu.obp1};
-	const Pallete bgp {gpu.bgp};
+	const auto& bgp = gpu.bgp.colors;
+	const auto& obp0 = gpu.obp0.colors;
+	const auto& obp1 = gpu.obp1.colors;
 	const int yres = gpu.lcdc.obj_size ? 16 : 8;
 	const auto ly = gpu.ly;
 
 	for (int i = sizeof(mem.oam) - 4; i >= 0; i -= 4) {
 		const int ypos = mem.oam[i] - 16;
 		const int xpos = mem.oam[i + 1] - 8;
-		if (ly < ypos || ly >= (ypos+yres) ||
+		if (ly < ypos || ly >= (ypos + yres) ||
 		    xpos <= -8 || xpos >= 160)
 			continue;
 
@@ -324,6 +281,21 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 			if (color_num != 0 && (!priority || *line == bgp[0]))
 				*line = pal[color_num];
 		}
+	}
+}
+
+void fill_scanline(const int pbeg, const int pend,
+                   const uint16_t row, Scanline* const scanline)
+{
+	auto& data = scanline->data;
+	auto& colors = scanline->colors;
+	for (int p = pbeg; p < pend; ++p) {
+		int colnum = 0;
+		if (row & (0x80 >> p))
+			++colnum;
+		if (row & (0x8000 >> p))
+			colnum += 2;
+		*data++ = colors[colnum];
 	}
 }
 

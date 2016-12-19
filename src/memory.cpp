@@ -158,6 +158,7 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 			cart->rom_bank_offset = 0x4000 * rom_bank_num;
 		}
 	};
+
 	const auto eval_ram_bank_offset = [cart] {
 		if (get_type(*cart) < CartType::RomMBC1Ram ||
 		     get_ram_banks(*cart) < 2 || !cart->ram_enabled)
@@ -173,27 +174,26 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		cart->ram_bank_offset = offset;
 	};
 
-	auto& mbc1 = cart->mbc1;
 	if (address >= 0x6000) {
 		const uint8_t new_mode = value ? 1 : 0;
-		if (mbc1.banking_mode != new_mode) {
-			mbc1.banking_mode = new_mode;
+		if (cart->mbc1.banking_mode != new_mode) {
+			cart->mbc1.banking_mode = new_mode;
 			eval_rom_bank_offset();
 			eval_ram_bank_offset();
 		}
 	} else if (address >= 0x4000) {
 		const uint8_t new_val = value & 0x03;
-		if (mbc1.banks_num_upper_bits != new_val) {
-			mbc1.banks_num_upper_bits = new_val;
-			if (mbc1.banking_mode == kRomBankingMode)
+		if (cart->mbc1.banks_num_upper_bits != new_val) {
+			cart->mbc1.banks_num_upper_bits = new_val;
+			if (cart->mbc1.banking_mode == kRomBankingMode)
 				eval_rom_bank_offset();
 			else
 				eval_ram_bank_offset();
 		}
 	} else if (address >= 0x2000) {
 		const uint8_t new_val = value & 0x1F;
-		if (mbc1.banks_num_lower_bits != new_val) {
-			mbc1.banks_num_lower_bits = new_val;
+		if (cart->mbc1.banks_num_lower_bits != new_val) {
+			cart->mbc1.banks_num_lower_bits = new_val;
 			eval_rom_bank_offset();
 		}
 	} else {
@@ -214,13 +214,12 @@ void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
 		return;
 
 	const auto addr_bit = test_bit(0, get_msb(address));
-	auto& mbc2 = cart->mbc2;
 	if (address >= 0x2000 && addr_bit) {
 		const uint8_t new_val = value & 0x0F;
-		if (mbc2.rom_bank_num != new_val) {
-			mbc2.rom_bank_num = new_val;
+		if (cart->mbc2.rom_bank_num != new_val) {
+			cart->mbc2.rom_bank_num = new_val;
 			const auto mask = get_rom_banks(*cart) - 1;
-			const auto bank_num = mbc2.rom_bank_num & mask;
+			const auto bank_num = cart->mbc2.rom_bank_num & mask;
 			cart->rom_bank_offset = bank_num < 0x02
 			  ? 0x00 : (0x4000 * (bank_num - 1));
 		}
@@ -293,9 +292,9 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF43: return gb.gpu.scx;
 	case 0xFF44: return gb.gpu.ly;
 	case 0xFF45: return gb.gpu.lyc;
-	case 0xFF47: return gb.gpu.bgp;
-	case 0xFF48: return gb.gpu.obp0;
-	case 0xFF49: return gb.gpu.obp1;
+	case 0xFF47: return gb.gpu.bgp.value;
+	case 0xFF48: return gb.gpu.obp0.value;
+	case 0xFF49: return gb.gpu.obp1.value;
 	case 0xFF4A: return gb.gpu.wy;
 	case 0xFF4B: return gb.gpu.wx;
 	default: break;
@@ -322,9 +321,9 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF44: gb->gpu.ly = 0x00; break;
 	case 0xFF45: gb->gpu.lyc = value; break;
 	case 0xFF46: dma_transfer(value, gb); break;
-	case 0xFF47: gb->gpu.bgp = value; break;
-	case 0xFF48: gb->gpu.obp0 = value; break;
-	case 0xFF49: gb->gpu.obp1 = value; break;
+	case 0xFF47: write_pallete(value, &gb->gpu.bgp); break;
+	case 0xFF48: write_pallete(value, &gb->gpu.obp0); break;
+	case 0xFF49: write_pallete(value, &gb->gpu.obp1); break;
 	case 0xFF4A: gb->gpu.wy = value; break;
 	case 0xFF4B: gb->gpu.wx = value; break;
 	default: break;

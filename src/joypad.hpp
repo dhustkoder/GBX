@@ -24,7 +24,6 @@ struct Joypad
 		struct {
 			uint8_t keys  : 4;
 			uint8_t mode  : 2;
-			uint8_t dummy : 2;
 		};
 	} reg;
 

@@ -17,7 +17,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow \
 
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -Werror -fstrict-aliasing \
 	-march=${TARGET_CPU} -fomit-frame-pointer -ffunction-sections \
-	-fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables")
+	-fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables \
+	-ffast-math")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DDEBUG -O1 -g3")
 

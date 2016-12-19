@@ -9,7 +9,7 @@ struct Interrupt {
 	const uint16_t addr;
 };
 
-struct Interrupts {
+constexpr const struct {
 	const Interrupt vblank  { 0x01, 0x40 };
 	const Interrupt lcd     { 0x02, 0x48 };
 	const Interrupt timer   { 0x04, 0x50 };
@@ -26,9 +26,8 @@ struct Interrupts {
 	{
 		return begin() + 5;
 	}
-};
+} kInterrupts;
 
-constexpr const Interrupts kInterrupts;
 constexpr const int16_t kTimaClockLimits[] { 0x400, 0x10, 0x40, 0x100 };
 
 struct HWState 

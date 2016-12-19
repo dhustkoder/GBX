@@ -26,9 +26,9 @@ void reset(Gameboy* const gb)
 
 	gb->gpu.lcdc.value = 0x91;
 	gb->gpu.stat.value = 0x85;
-	gb->gpu.bgp = 0xFC;
-	gb->gpu.obp0 = 0xFF;
-	gb->gpu.obp1 = 0xFF;
+	write_pallete(0xFC, &gb->gpu.bgp);
+	write_pallete(0xFF, &gb->gpu.obp0);
+	write_pallete(0xFF, &gb->gpu.obp1);
 
 	gb->hwstate.tac = 0xF8;
 
@@ -98,10 +98,9 @@ void update_interrupts(Gameboy* const gb)
 	} else if (flags.ime == 0x01) {
 		gb->hwstate.flags.ime = 0x02;
 		return;
-	}
-
-	if (!pendents)
+	} else if (pendents == 0) {
 		return;
+	}
 
 	gb->hwstate.flags.ime = 0x00;
 	for (const auto interrupt : kInterrupts) {

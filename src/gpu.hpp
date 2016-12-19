@@ -7,10 +7,27 @@ namespace gbx {
 
 struct Memory;
 
-enum class GpuMode : uint8_t {
-	HBlank = 0x0, VBlank = 0x1,
-	SearchOAM = 0x2, Transfer = 0x3
+enum Color : uint32_t {
+	kBlack = 0x00000000,
+	kWhite = 0x00FFFFFF,
+	kLightGrey = 0x00909090,
+	kDarkGrey = 0x00555555
 };
+
+enum class GpuMode : uint8_t {
+	HBlank = 0x0,
+	VBlank = 0x1,
+	SearchOAM = 0x2,
+	Transfer = 0x3
+};
+
+struct Pallete {
+	uint8_t value;
+	Color colors[4];
+};
+
+
+constexpr const Color kColors[4] { kWhite, kLightGrey, kDarkGrey, kBlack };
 
 
 struct Gpu 
@@ -40,7 +57,6 @@ struct Gpu
 			uint8_t int_on_vblank      : 1;
 			uint8_t int_on_oam         : 1;
 			uint8_t int_on_coincidence : 1;
-			uint8_t dummy              : 1;
 		};
 	} stat;
 
@@ -50,9 +66,9 @@ struct Gpu
 	uint8_t wx;
 	uint8_t ly;
 	uint8_t lyc;
-	uint8_t bgp;
-	uint8_t obp0;
-	uint8_t obp1;
+	Pallete bgp;
+	Pallete obp0;
+	Pallete obp1;
 
 	static uint32_t screen[144][160];
 };
@@ -81,6 +97,18 @@ inline void set_gpu_mode(const GpuMode mode, Gpu* const gpu, HWState* const hwst
 
 	gpu->stat.mode = mode_value;
 }
+
+inline void write_pallete(const uint8_t val, Pallete* const pal)
+{
+	if (pal->value != val) {
+		pal->value = val;
+		pal->colors[0] = kColors[val&0x03];
+		pal->colors[1] = kColors[(val&0x0C)>>2];
+		pal->colors[2] = kColors[(val&0x30)>>4];
+		pal->colors[3] = kColors[(val&0xC0)>>6];
+	}
+}
+
 
 
 } // namespace gbx
