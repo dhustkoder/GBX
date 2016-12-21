@@ -17,8 +17,7 @@ enum class JoypadMode : uint8_t {
 	Directions = 0x02,
 };
 
-struct Joypad 
-{
+struct Joypad {
 	union {
 		uint8_t value;
 		struct {

@@ -20,9 +20,9 @@ inline void mode_vblank(Gpu* gpu, HWState* hwstate);
 inline void mode_oam(Gpu* gpu, HWState* hwstate);
 inline void mode_transfer(const Memory& mem, Gpu* gpu, HWState* hwstate);
 inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
-static void update_bg_scanline(const Gpu& gpu, const Memory& mem);
-static void update_win_scanline(const Gpu& gpu, const Memory& mem);
-static void update_sprite_scanline(const Gpu& gpu, const Memory& mem);
+static void update_bg_scanline(const Memory& mem, Gpu* gpu);
+static void update_win_scanline(const Memory& mem, Gpu* gpu);
+static void update_sprite_scanline(const Memory& mem, Gpu* gpu);
 static void fill_scanline(int pbeg, int pend, uint16_t row, Scanline* scanline);
 
 
@@ -81,9 +81,9 @@ void mode_oam(Gpu* const gpu, HWState* const hwstate)
 
 void mode_transfer(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
 {
-	update_bg_scanline(*gpu, mem);
-	update_win_scanline(*gpu, mem);
-	update_sprite_scanline(*gpu, mem);
+	update_bg_scanline(mem, gpu);
+	update_win_scanline(mem, gpu);
+	update_sprite_scanline(mem, gpu);
 	set_gpu_mode(GpuMode::HBlank, gpu, hwstate);
 }
 
@@ -101,19 +101,19 @@ void check_gpu_lyc(Gpu* const gpu, HWState* const hwstate)
 }
 
 
-void update_bg_scanline(const Gpu& gpu, const Memory& mem)
+void update_bg_scanline(const Memory& mem, Gpu* const gpu)
 {
-	const auto lcdc = gpu.lcdc;
-	const auto ly = gpu.ly;
+	const auto lcdc = gpu->lcdc;
+	const auto ly = gpu->ly;
 	if (!lcdc.bg_on) {
-		memset(&gpu.screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
+		memset(get_screen(gpu, ly, 0), 0xFF, sizeof(uint32_t) * 160);
 		return;
-	} else if (lcdc.win_on && ly >= gpu.wy && gpu.wx <= 7) {
+	} else if (lcdc.win_on && ly >= gpu->wy && gpu->wx <= 7) {
 		return;
 	}
 
-	const auto scx = gpu.scx;
-	const auto scy = gpu.scy;
+	const auto scx = gpu->scx;
+	const auto scy = gpu->scy;
 	const bool unsig_data = lcdc.tile_data != 0;
 
 	const int lydiv = ly >> 3;
@@ -141,7 +141,7 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 	
-	Scanline scanline {&gpu.screen[ly][0], gpu.bgp.colors};
+	Scanline scanline {get_screen(gpu, ly, 0), gpu->bgp.colors};
 
 	if (scxmod == 0) {
 		for (int x = 0; x < 20; ++x)
@@ -154,12 +154,12 @@ void update_bg_scanline(const Gpu& gpu, const Memory& mem)
 	}
 }
 
-void update_win_scanline(const Gpu& gpu, const Memory& mem)
+void update_win_scanline(const Memory& mem, Gpu* const gpu)
 {
-	const auto ly = gpu.ly;
-	const auto lcdc = gpu.lcdc;
-	const int wy = gpu.wy;
-	const int wx = gpu.wx - 7;
+	const auto ly = gpu->ly;
+	const auto lcdc = gpu->lcdc;
+	const int wy = gpu->wy;
+	const int wx = gpu->wx - 7;
 	if (!lcdc.win_on || ly < wy || wx >= 160)
 		return;
 
@@ -180,7 +180,7 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
-	Scanline scanline{&gpu.screen[ly][wx_max], gpu.bgp.colors};
+	Scanline scanline{get_screen(gpu, ly, wx_max), gpu->bgp.colors};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
@@ -198,19 +198,19 @@ void update_win_scanline(const Gpu& gpu, const Memory& mem)
 	}
 }
 
-void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
+void update_sprite_scanline(const Memory& mem, Gpu* const gpu)
 {
 	static_assert((sizeof(mem.oam) % 4) == 0, "");
-	const auto lcdc = gpu.lcdc;
+	const auto lcdc = gpu->lcdc;
 
 	if (!lcdc.obj_on)
 		return;
 
-	const auto& bgp = gpu.bgp.colors;
-	const auto& obp0 = gpu.obp0.colors;
-	const auto& obp1 = gpu.obp1.colors;
-	const int yres = gpu.lcdc.obj_size ? 16 : 8;
-	const auto ly = gpu.ly;
+	const auto& bgp = gpu->bgp.colors;
+	const auto& obp0 = gpu->obp0.colors;
+	const auto& obp1 = gpu->obp1.colors;
+	const auto ly = gpu->ly;
+	const int yres = lcdc.obj_size ? 16 : 8;
 
 	for (int i = sizeof(mem.oam) - 4; i >= 0; i -= 4) {
 		const int ypos = mem.oam[i] - 16;
@@ -256,11 +256,11 @@ void update_sprite_scanline(const Gpu& gpu, const Memory& mem)
 		uint32_t* line;
 		int pbeg, pend;
 		if (xpos < 0) {
-			line = &gpu.screen[ly][0];
+			line = get_screen(gpu, ly, 0);
 			pbeg = -xpos;
 			pend = 8;
 		} else {
-			line = &gpu.screen[ly][xpos];
+			line = get_screen(gpu, ly, xpos);
 			pbeg = 0;
 			pend = min(160 - xpos, 8);
 		}

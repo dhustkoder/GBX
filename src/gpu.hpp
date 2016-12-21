@@ -5,8 +5,6 @@
 
 namespace gbx {
 
-struct Memory;
-
 enum Color : uint32_t {
 	kBlack = 0x00000000,
 	kWhite = 0x00FFFFFF,
@@ -26,12 +24,9 @@ struct Pallete {
 	Color colors[4];
 };
 
-
 constexpr const Color kColors[4] { kWhite, kLightGrey, kDarkGrey, kBlack };
 
-
-struct Gpu 
-{
+struct Gpu {
 	int16_t clock;
 
 	union {
@@ -70,6 +65,9 @@ struct Gpu
 	Pallete obp0;
 	Pallete obp1;
 
+private:
+	friend const uint32_t* get_screen(const Gpu&, int, int);
+	friend uint32_t* get_screen(Gpu*, int, int);
 	static uint32_t screen[144][160];
 };
 
@@ -109,6 +107,16 @@ inline void write_pallete(const uint8_t val, Pallete* const pal)
 	}
 }
 
+
+inline const uint32_t* get_screen(const Gpu& gpu, const int y = 0, const int x = 0)
+{
+	return &gpu.screen[y][x];
+}
+
+inline uint32_t* get_screen(Gpu* const gpu, const int y = 0, const int x = 0)
+{
+	return &gpu->screen[y][x];
+}
 
 
 } // namespace gbx

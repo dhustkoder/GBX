@@ -1345,7 +1345,7 @@ void ld_75(Gameboy* const gb)
 void halt_76(Gameboy* const gb)
 {
 	if (!get_pendent_interrupts(gb->hwstate))
-		gb->hwstate.flags.cpu_halt = 0x01;
+		gb->hwstate.flags.cpu_halt = true;
 	else
 		gb->cpu.clock += 4;
 }
@@ -2002,16 +2002,16 @@ void prefix_cb(Gameboy* const gb)
 {
 	// prefix_cb calls the cb_table -
 	// and adds the clock cycles for it
-	const uint8_t cb_opcode = get_d8(gb);
+	const uint8_t cb_op = get_d8(gb);
+	
+	cb_instructions[cb_op](gb);
+	
+	const uint8_t op_low = cb_op&0x0F;
+	const uint8_t op_high = (cb_op&0xF0)>>4;
 
-	cb_instructions[cb_opcode](gb);
-	
-	const uint8_t op_low_nibble = cb_opcode & 0x0F;
-	const uint8_t op_high_nibble = (cb_opcode & 0xF0) >> 4;
-	
-	if (op_low_nibble != 0x06 && op_low_nibble != 0x0E)
+	if (op_low != 0x06 && op_low != 0x0E)
 		gb->cpu.clock += 8;
-	else if (op_high_nibble < 0x04 || op_high_nibble > 0x07)
+	else if (op_high < 0x04 || op_high > 0x07)
 		gb->cpu.clock += 16;
 	else
 		gb->cpu.clock += 12;

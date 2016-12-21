@@ -10,8 +10,7 @@ enum CpuFlags : uint8_t {
 	kFlagH = 0x20, kFlagC = 0x10
 };
 
-struct Cpu 
-{
+struct Cpu {
 	int32_t clock;
 	uint16_t pc;
 	uint16_t sp;

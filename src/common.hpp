@@ -75,7 +75,7 @@ private:
 template<class F> 
 constexpr Finally<F> finally(F&& f) 
 {
-	return Finally<F>(static_cast<F&&>(f));
+	return {static_cast<F&&>(f)};
 }
 
 

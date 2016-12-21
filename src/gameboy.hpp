@@ -9,8 +9,7 @@
 
 namespace gbx {
 
-struct Gameboy
-{
+struct Gameboy {
 	Gameboy()=delete;
 	Gameboy(Gameboy&)=delete;
 	Gameboy(Gameboy&&)=delete;

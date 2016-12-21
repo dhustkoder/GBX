@@ -89,14 +89,14 @@ void update_interrupts(Gameboy* const gb)
 	const uint8_t pendents = get_pendent_interrupts(gb->hwstate);
 	const auto flags = gb->hwstate.flags;
 	if (pendents && flags.cpu_halt) {
-		gb->hwstate.flags.cpu_halt = 0x00;
+		gb->hwstate.flags.cpu_halt = false;
 		gb->cpu.clock += 4;
 	}
 
-	if (flags.ime == 0x00) {
+	if (flags.ime == 0) {
 		return;
-	} else if (flags.ime == 0x01) {
-		gb->hwstate.flags.ime = 0x02;
+	} else if (flags.ime == 1) {
+		gb->hwstate.flags.ime = 2;
 		return;
 	} else if (pendents == 0) {
 		return;

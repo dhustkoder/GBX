@@ -112,7 +112,7 @@ void render_graphics(const gbx::Gpu& gpu)
 	void* pixels;
 	if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
 		constexpr const auto size = sizeof(uint32_t) * 144 * 160;
-		memcpy(pixels, &gpu.screen[0][0], size);
+		memcpy(pixels, get_screen(gpu), size);
 		SDL_UnlockTexture(texture);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);

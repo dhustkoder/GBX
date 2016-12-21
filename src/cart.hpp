@@ -32,8 +32,7 @@ enum CartBankingMode : uint8_t {
 	kRamBankingMode
 };
 
-struct Cart
-{
+struct Cart {
 	union {
 		union {
 			uint8_t banks_num : 7;

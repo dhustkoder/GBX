@@ -28,17 +28,16 @@ constexpr const struct {
 	}
 } kInterrupts;
 
-constexpr const int16_t kTimaClockLimits[] { 0x400, 0x10, 0x40, 0x100 };
+constexpr const int16_t kTimaClockLimits[] { 1024, 16, 64, 256 };
 
-struct HWState 
-{
+struct HWState {
 	int16_t tima_clock;
 	int16_t tima_clock_limit;
 	int16_t div_clock;
 	
 	struct {
 		uint8_t ime : 2;
-		uint8_t cpu_halt : 1;
+		bool cpu_halt : 1;
 	} flags;
 
 	uint8_t div;
