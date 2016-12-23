@@ -2120,7 +2120,7 @@ void reti_D9(Gameboy* const gb)
 	// RETI
 	// return and enable interrupts
 	gb->cpu.pc = stack_pop16(gb);
-	gb->hwstate.flags.ime = 0x02;
+	gb->hwstate.flags.ime = 2;
 }
 
 
@@ -2303,7 +2303,7 @@ void di_F3(Gameboy* const gb)
 {
 	// DI
 	// disable interrupts
-	gb->hwstate.flags.ime = 0x00;
+	gb->hwstate.flags.ime = 0;
 }
 
 
@@ -2375,7 +2375,7 @@ void ld_FA(Gameboy* const gb)
 void ei_FB(Gameboy* const gb)
 { 
 	// EI ( enable interrupts )
-	gb->hwstate.flags.ime = 0x01;
+	gb->hwstate.flags.ime = 1;
 }
 
 

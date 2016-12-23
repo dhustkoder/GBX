@@ -374,8 +374,8 @@ void write_tac(const uint8_t value, HWState* const hwstate)
 
 void write_div(const uint8_t /*value*/, HWState* const hwstate)
 {
-	hwstate->div = 0x00;
-	hwstate->div_clock = 0x00;
+	hwstate->div = 0;
+	hwstate->div_clock = 0;
 }
 
 

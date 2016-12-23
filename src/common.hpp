@@ -85,20 +85,20 @@ constexpr uint16_t concat_bytes(const uint8_t msb, const uint8_t lsb)
 }
 
 template<class T>
-constexpr bool test_bit(const uint8_t bit, const T value) 
+constexpr bool test_bit(const int bit, const T value) 
 {
 	return (value & (static_cast<T>(0x01) << bit)) != 0;
 }
 
 
 template<class T>
-constexpr T set_bit(const uint8_t bit, const T value) 
+constexpr T set_bit(const int bit, const T value) 
 {
 	return (value | (static_cast<T>(0x01) << bit));
 }
 
 template<class T>
-constexpr T res_bit(const uint8_t bit, const T value) 
+constexpr T res_bit(const int bit, const T value) 
 {
 	return (value & ~(static_cast<T>(0x01) << bit));
 }

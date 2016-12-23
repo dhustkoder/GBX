@@ -80,7 +80,7 @@ inline void clear_interrupt(const Interrupt inter, HWState* const hwstate)
 
 inline void inc_tima(HWState* const hwstate)
 {
-	if (++hwstate->tima == 0x00) {
+	if (++hwstate->tima == 0) {
 		hwstate->tima = hwstate->tma;
 		request_interrupt(kInterrupts.timer, hwstate);
 	}

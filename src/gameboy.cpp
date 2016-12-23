@@ -66,9 +66,9 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 void update_timers(const int16_t cycles, HWState* const hwstate)
 {
 	hwstate->div_clock += cycles;
-	if (hwstate->div_clock >= 0x100) {
+	if (hwstate->div_clock >= 256) {
 		++hwstate->div;
-		hwstate->div_clock -= 0x100;
+		hwstate->div_clock -= 256;
 	}
 
 	const auto tac = hwstate->tac;
@@ -101,7 +101,7 @@ void update_interrupts(Gameboy* const gb)
 		return;
 	}
 
-	gb->hwstate.flags.ime = 0x00;
+	gb->hwstate.flags.ime = 0;
 	for (const auto interrupt : kInterrupts) {
 		if (pendents & interrupt.mask) {
 			clear_interrupt(interrupt, &gb->hwstate);
@@ -183,17 +183,17 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 
 	printf("CARTRIDGE INFO\n"
 	       "NAME: %s\n"
-	       "ROM SIZE: %zu\n"
-	       "RAM SIZE: %zu\n"
+	       "ROM SIZE: %ld\n"
+	       "RAM SIZE: %ld\n"
 	       "ROM BANKS: %d\n"
 	       "RAM BANKS: %d\n"
-	       "TYPE CODE: %u\n"
-	       "SYSTEM CODE: %u\n",
+	       "TYPE CODE: %d\n"
+	       "SYSTEM CODE: %d\n",
 	       info.internal_name,
 	       info.rom_size, info.ram_size,
 	       info.rom_banks, info.ram_banks,
-	       static_cast<unsigned>(info.type),
-	       static_cast<unsigned>(info.system));
+	       static_cast<int>(info.type),
+	       static_cast<int>(info.system));
 
 	gb_guard.Abort();
 	return gb;

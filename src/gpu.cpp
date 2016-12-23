@@ -36,9 +36,7 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 	gpu->clock += cycles;
 
 	if (gpu->clock >= clock_limit) {
-		
 		gpu->clock -= clock_limit;
-
 		switch (mode) {
 		case GpuMode::HBlank: mode_hblank(gpu, hwstate); break;
 		case GpuMode::VBlank: mode_vblank(gpu, hwstate); break;
@@ -46,7 +44,6 @@ void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate,
 		case GpuMode::Transfer: mode_transfer(mem, gpu, hwstate); break;
 		default: break;
 		}
-
 	}
 }
 

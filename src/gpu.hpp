@@ -108,14 +108,14 @@ inline void write_pallete(const uint8_t val, Pallete* const pal)
 }
 
 
-inline const uint32_t* get_screen(const Gpu& gpu, const int y = 0, const int x = 0)
+inline const uint32_t* get_screen(const Gpu& /*gpu*/, const int y = 0, const int x = 0)
 {
-	return &gpu.screen[y][x];
+	return &Gpu::screen[y][x];
 }
 
-inline uint32_t* get_screen(Gpu* const gpu, const int y = 0, const int x = 0)
+inline uint32_t* get_screen(Gpu* const /*gpu*/, const int y = 0, const int x = 0)
 {
-	return &gpu->screen[y][x];
+	return &Gpu::screen[y][x];
 }
 
 
