@@ -27,68 +27,28 @@ struct Joypad {
 	} reg;
 
 	union {
-		uint8_t value : 4;
+		uint8_t both : 8;
 		struct {
-			uint8_t a      : 1;
-			uint8_t b      : 1;
-			uint8_t select : 1;
-			uint8_t start  : 1;
+			uint8_t buttons : 4;
+			uint8_t directions : 4;
 		};
-	} buttons;
-
-	union {
-		uint8_t value : 4;
-		struct {
-			uint8_t right : 1;
-			uint8_t left  : 1;
-			uint8_t up    : 1;
-			uint8_t down  : 1;
-		};
-	} directions;
+	} keys;
 };
-
-
-inline void eval_keys(Joypad* const pad)
-{
-	const auto buttons = pad->buttons.value;
-	const auto directions = pad->directions.value;
-	switch (static_cast<JoypadMode>(pad->reg.mode)) {
-	case JoypadMode::Buttons: pad->reg.keys = buttons; break;
-	case JoypadMode::Directions: pad->reg.keys = directions; break;
-	case JoypadMode::Both: pad->reg.keys = buttons&directions; break;
-	default: pad->reg.keys = 0xF; break;
-	};
-}
-
 
  
 inline void update_joypad(const uint32_t(&keycodes)[8],
-                          const uint32_t keycode, const KeyState key_state,
+                          const uint32_t keycode, const KeyState state,
 			  HWState* const /*hwstate*/, Joypad* const pad)
 {
-	int keycode_index = 0;
-	for (const auto key : keycodes) {
-		if (key != keycode) {
-			++keycode_index;
-			continue;
+	for (int i = 0; i < 8; ++i) {
+		if (keycodes[i] == keycode) {
+			if (state == KeyState::Up)
+				pad->keys.both = set_bit(i, pad->keys.both);
+			else
+				pad->keys.both = res_bit(i, pad->keys.both);
+			break;
 		}
-		break;
 	}
-
-	const auto state = static_cast<uint8_t>(key_state);
-	switch (keycode_index) {
-	case 0: pad->buttons.a = state; break;
-	case 1: pad->buttons.b = state; break;
-	case 2: pad->buttons.select = state; break;
-	case 3: pad->buttons.start = state; break;
-	case 4: pad->directions.right = state; break;
-	case 5: pad->directions.left = state; break;
-	case 6: pad->directions.up = state; break;
-	case 7: pad->directions.down = state; break;
-	default: break;
-	}
-
-	eval_keys(pad);
 }
 
 

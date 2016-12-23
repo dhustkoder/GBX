@@ -33,8 +33,7 @@ void reset(Gameboy* const gb)
 	gb->hwstate.tac = 0xF8;
 
 	gb->joypad.reg.value = 0xFF;
-	gb->joypad.buttons.value = 0xF;
-	gb->joypad.directions.value = 0xF;
+	gb->joypad.keys.both = 0xFF;
 }
 
 
