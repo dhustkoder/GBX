@@ -300,7 +300,7 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	default: break;
 	}
 
-	return 0;
+	return 0xFF;
 }
 
 
