@@ -286,6 +286,43 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF06: return gb.hwstate.tma;
 	case 0xFF07: return gb.hwstate.tac;
 	case 0xFF0F: return gb.hwstate.int_flags;
+	case 0xFF10: return gb.apu.channel1.nr10.value;
+	case 0xFF11: return gb.apu.channel1.nr11.value;
+	case 0xFF12: return gb.apu.channel1.nr12.value;
+	case 0xFF13: return gb.apu.channel1.nr13.value;
+	case 0xFF14: return gb.apu.channel1.nr14.value;
+	case 0xFF16: return gb.apu.channel2.nr21.value;
+	case 0xFF17: return gb.apu.channel2.nr22.value;
+	case 0xFF18: return gb.apu.channel2.nr23.value;
+	case 0xFF19: return gb.apu.channel2.nr24.value;
+	case 0xFF1A: return gb.apu.channel3.nr30.value;
+	case 0xFF1B: return gb.apu.channel3.nr31.value;
+	case 0xFF1C: return gb.apu.channel3.nr32.value;
+	case 0xFF1D: return gb.apu.channel3.nr33.value;
+	case 0xFF1E: return gb.apu.channel3.nr34.value;
+	case 0xFF20: return gb.apu.channel4.nr41.value;
+	case 0xFF21: return gb.apu.channel4.nr42.value;
+	case 0xFF22: return gb.apu.channel4.nr43.value;
+	case 0xFF23: return gb.apu.channel4.nr44.value;
+	case 0xFF24: return gb.apu.nr50.value;
+	case 0xFF25: return gb.apu.nr51.value;
+	case 0xFF26: return gb.apu.nr52.value;
+	case 0xFF30: // [[fallthrough]]
+	case 0xFF31: // [[fallthrough]]
+	case 0xFF32: // [[fallthrough]]
+	case 0xFF33: // [[fallthrough]]
+	case 0xFF34: // [[fallthrough]]
+	case 0xFF35: // [[fallthrough]]
+	case 0xFF36: // [[fallthrough]]
+	case 0xFF37: // [[fallthrough]]
+	case 0xFF38: // [[fallthrough]]
+	case 0xFF39: // [[fallthrough]]
+	case 0xFF3A: // [[fallthrough]]
+	case 0xFF3B: // [[fallthrough]]
+	case 0xFF3C: // [[fallthrough]]
+	case 0xFF3D: // [[fallthrough]]
+	case 0xFF3E: // [[fallthrough]]
+	case 0xFF3F: return gb.apu.wave_pattern_ram[address - 0xFF30];
 	case 0xFF40: return gb.gpu.lcdc.value;
 	case 0xFF41: return gb.gpu.stat.value;
 	case 0xFF42: return gb.gpu.scy;
@@ -314,6 +351,43 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
 	case 0xFF0F: gb->hwstate.int_flags = value&0x1F; break;
+	case 0xFF10: gb->apu.channel1.nr10.value = value; break;
+	case 0xFF11: gb->apu.channel1.nr11.value = value; break;
+	case 0xFF12: gb->apu.channel1.nr12.value = value; break;
+	case 0xFF13: gb->apu.channel1.nr13.value = value; break;
+	case 0xFF14: gb->apu.channel1.nr14.value = value; break;
+	case 0xFF16: gb->apu.channel2.nr21.value = value; break;
+	case 0xFF17: gb->apu.channel2.nr22.value = value; break;
+	case 0xFF18: gb->apu.channel2.nr23.value = value; break;
+	case 0xFF19: gb->apu.channel2.nr24.value = value; break;
+	case 0xFF1A: gb->apu.channel3.nr30.value = value; break;
+	case 0xFF1B: gb->apu.channel3.nr31.value = value; break;
+	case 0xFF1C: gb->apu.channel3.nr32.value = value; break;
+	case 0xFF1D: gb->apu.channel3.nr33.value = value; break;
+	case 0xFF1E: gb->apu.channel3.nr34.value = value; break;
+	case 0xFF20: gb->apu.channel4.nr41.value = value; break;
+	case 0xFF21: gb->apu.channel4.nr42.value = value; break;
+	case 0xFF22: gb->apu.channel4.nr43.value = value; break;
+	case 0xFF23: gb->apu.channel4.nr44.value = value; break;
+	case 0xFF24: gb->apu.nr50.value = value; break;
+	case 0xFF25: gb->apu.nr51.value = value; break;
+	case 0xFF26: gb->apu.nr52.value = value; break;
+	case 0xFF30: // [[fallthrough]]
+	case 0xFF31: // [[fallthrough]]
+	case 0xFF32: // [[fallthrough]]
+	case 0xFF33: // [[fallthrough]]
+	case 0xFF34: // [[fallthrough]]
+	case 0xFF35: // [[fallthrough]]
+	case 0xFF36: // [[fallthrough]]
+	case 0xFF37: // [[fallthrough]]
+	case 0xFF38: // [[fallthrough]]
+	case 0xFF39: // [[fallthrough]]
+	case 0xFF3A: // [[fallthrough]]
+	case 0xFF3B: // [[fallthrough]]
+	case 0xFF3C: // [[fallthrough]]
+	case 0xFF3D: // [[fallthrough]]
+	case 0xFF3E: // [[fallthrough]]
+	case 0xFF3F: gb->apu.wave_pattern_ram[address - 0xFF30] = value; break;
 	case 0xFF40: write_lcdc(value, &gb->gpu, &gb->hwstate); break;
 	case 0xFF41: write_stat(value, &gb->gpu); break;
 	case 0xFF42: gb->gpu.scy = value; break;

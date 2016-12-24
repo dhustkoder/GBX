@@ -2,6 +2,7 @@
 #define GBX_GAMEBOY_HPP_
 #include "cpu.hpp"
 #include "gpu.hpp"
+#include "apu.hpp"
 #include "cart.hpp"
 #include "joypad.hpp"
 #include "hwstate.hpp"
@@ -20,6 +21,7 @@ struct Gameboy {
 	Joypad joypad;
 	HWState hwstate;
 	Gpu gpu;
+	Apu apu;
 	Cpu cpu;
 	Memory memory;
 	Cart cart;
