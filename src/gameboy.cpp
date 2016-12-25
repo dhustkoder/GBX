@@ -30,21 +30,21 @@ void reset(Gameboy* const gb)
 	write_pallete(0xFF, &gb->gpu.obp0);
 	write_pallete(0xFF, &gb->gpu.obp1);
 
-	gb->apu.channel1.nr10.value = 0x80;
-	gb->apu.channel1.nr11.value = 0xBF;
-	gb->apu.channel1.nr12.value = 0xF3;
-	gb->apu.channel1.nr14.value = 0xBF;
-	gb->apu.channel2.nr21.value = 0x3F;
-	gb->apu.channel2.nr24.value = 0xBF;
-	gb->apu.channel3.nr30.value = 0x7F;
-	gb->apu.channel3.nr31.value = 0xFF;
-	gb->apu.channel3.nr32.value = 0x9F;
-	gb->apu.channel3.nr33.value = 0xBF;
-	gb->apu.channel4.nr41.value = 0xFF;
-	gb->apu.channel4.nr44.value = 0xBF;
-	gb->apu.nr50.value = 0x77;
-	gb->apu.nr51.value = 0xF3;
-	gb->apu.nr52.value = 0xF1;
+	gb->apu.ch1.nr10.value = 0x80;
+	gb->apu.ch1.nr11.value = 0xBF;
+	gb->apu.ch1.nr12.value = 0xF3;
+	gb->apu.ch1.nr14.value = 0xBF;
+	gb->apu.ch2.nr21.value = 0x3F;
+	gb->apu.ch2.nr24.value = 0xBF;
+	gb->apu.ch3.nr30.value = 0x7F;
+	gb->apu.ch3.nr31.value = 0xFF;
+	gb->apu.ch3.nr32.value = 0x9F;
+	gb->apu.ch3.nr33.value = 0xBF;
+	gb->apu.ch4.nr41.value = 0xFF;
+	gb->apu.ch4.nr44.value = 0xBF;
+	gb->apu.ctl.nr50.value = 0x77;
+	gb->apu.ctl.nr51.value = 0xF3;
+	gb->apu.ctl.nr52.value = 0xF1;
 
 
 	gb->hwstate.tac = 0xF8;

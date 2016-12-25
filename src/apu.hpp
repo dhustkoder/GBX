@@ -162,13 +162,8 @@ struct SoundChannel4 {
 	} nr44;
 };
 
-struct Apu {
-	
-	SoundChannel1 channel1;
-	SoundChannel2 channel2;
-	SoundChannel3 channel3;
-	SoundChannel4 channel4;
 
+struct SoundControl {
 	union {
 		uint8_t value;
 		struct {
@@ -206,9 +201,15 @@ struct Apu {
 			uint8_t all       : 1;
 		};
 	} nr52;
+};
 
+struct Apu {
+	SoundChannel1 ch1;
+	SoundChannel2 ch2;
+	SoundChannel3 ch3;
+	SoundChannel4 ch4;
+	SoundControl ctl;
 	uint8_t wave_pattern_ram[16];
-
 };
 
 
