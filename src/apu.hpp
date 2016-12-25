@@ -209,7 +209,7 @@ struct Apu {
 	SoundChannel3 ch3;
 	SoundChannel4 ch4;
 	SoundControl ctl;
-	uint8_t wave_pattern_ram[16];
+	uint8_t wave_ram[16];
 };
 
 
