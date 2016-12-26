@@ -28,13 +28,14 @@ static void write_wram(uint16_t address, uint8_t value, Memory* mem);
 static void write_vram(uint16_t address, uint8_t value, Memory* mem);
 static void write_cart_ram(uint16_t address, uint8_t value, Cart* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
+static void write_apu(uint16_t addr, uint8_t value, Apu* apu);
+static void write_nr52(const uint8_t value, Apu* const apu);
 
 static void write_lcdc(uint8_t value, Gpu* gpu, HWState* hwstate);
 static void write_stat(uint8_t value, Gpu* gpu);
 static void write_joypad(uint8_t value, Joypad* keys);
 static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
-static void write_apu(uint16_t addr, uint8_t value, Apu* apu);
 static void dma_transfer(uint8_t value, Gameboy* gb);
 
 uint8_t mem_read8(const Gameboy& gb, const uint16_t address)
@@ -375,6 +376,59 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 }
 
 
+void write_apu(const uint16_t addr, const uint8_t value, Apu* const apu)
+{
+	assert(addr >= 0xFF10 && addr <= 0xFF30);
+
+	if (addr > 0xFF25) {
+		if (addr == 0xFF26)
+			write_nr52(value, apu);
+		else if (addr >= 0xFF30)
+			apu->wave_ram[addr - 0xFF30] = value;
+		return;
+	} else if (apu->ctl.nr52.master == 0) {
+		return;
+	}
+
+	switch (addr) {
+	case 0xFF10: apu->ch1.nr10.value = value; break;
+	case 0xFF11: write_nr11(value, apu); break;
+	case 0xFF12: apu->ch1.nr12.value = value; break;
+	case 0xFF13: apu->ch1.nr13.value = value; break;
+	case 0xFF14: apu->ch1.nr14.value = value; break;
+	case 0xFF16: write_nr21(value, apu); break;
+	case 0xFF17: apu->ch2.nr22.value = value; break;
+	case 0xFF18: apu->ch2.nr23.value = value; break;
+	case 0xFF19: apu->ch2.nr24.value = value; break;
+	case 0xFF1A: apu->ch3.nr30.value = value; break;
+	case 0xFF1B: write_nr31(value, apu); break;
+	case 0xFF1C: apu->ch3.nr32.value = value; break;
+	case 0xFF1D: apu->ch3.nr33.value = value; break;
+	case 0xFF1E: apu->ch3.nr34.value = value; break;
+	case 0xFF20: write_nr41(value, apu); break;
+	case 0xFF21: apu->ch4.nr42.value = value; break;
+	case 0xFF22: apu->ch4.nr43.value = value; break;
+	case 0xFF23: apu->ch4.nr44.value = value; break;
+	case 0xFF24: apu->ctl.nr50.value = value; break;
+	case 0xFF25: apu->ctl.nr51.value = value; break;
+	default: break;
+	}
+}
+
+void write_nr52(const uint8_t value, Apu* const apu)
+{
+	if ((value&0x80) == 0) {
+		memset(&apu->ch1, 0, sizeof(apu->ch1));
+		memset(&apu->ch2, 0, sizeof(apu->ch2));
+		memset(&apu->ch3, 0, sizeof(apu->ch3));
+		memset(&apu->ch4, 0, sizeof(apu->ch4));
+		memset(&apu->ctl, 0, sizeof(apu->ctl));
+	} else {
+		apu->ctl.nr52.master = 1;
+	}
+}
+
+
 void write_lcdc(const uint8_t value, Gpu* const gpu, HWState* const hwstate)
 {
 	const auto old_lcd_off = !gpu->lcdc.lcd_on;
@@ -420,51 +474,6 @@ void write_div(const uint8_t /*value*/, HWState* const hwstate)
 {
 	hwstate->div = 0;
 	hwstate->div_clock = 0;
-}
-
-
-void write_apu(const uint16_t addr, const uint8_t value, Apu* const apu)
-{
-	static_assert(sizeof(*apu) > 16, "");
-	assert(addr >= 0xFF10 && addr <= 0xFF30);
-
-	if (addr > 0xFF25) {
-		if (addr == 0xFF26) {
-			if ((value&0x80) == 0)
-				memset(apu, 0, sizeof(*apu) - 16);
-			else
-				apu->ctl.nr52.value |= 0x80;
-		} else if (addr >= 0xFF30) {
-			apu->wave_ram[addr - 0xFF30] = value;
-		}
-		return;
-	} else if (apu->ctl.nr52.all == 0) {
-		return;
-	}
-
-	switch (addr) {
-	case 0xFF10: apu->ch1.nr10.value = value; break;
-	case 0xFF11: apu->ch1.nr11.value = value; break;
-	case 0xFF12: apu->ch1.nr12.value = value; break;
-	case 0xFF13: apu->ch1.nr13.value = value; break;
-	case 0xFF14: apu->ch1.nr14.value = value; break;
-	case 0xFF16: apu->ch2.nr21.value = value; break;
-	case 0xFF17: apu->ch2.nr22.value = value; break;
-	case 0xFF18: apu->ch2.nr23.value = value; break;
-	case 0xFF19: apu->ch2.nr24.value = value; break;
-	case 0xFF1A: apu->ch3.nr30.value = value; break;
-	case 0xFF1B: apu->ch3.nr31.value = value; break;
-	case 0xFF1C: apu->ch3.nr32.value = value; break;
-	case 0xFF1D: apu->ch3.nr33.value = value; break;
-	case 0xFF1E: apu->ch3.nr34.value = value; break;
-	case 0xFF20: apu->ch4.nr41.value = value; break;
-	case 0xFF21: apu->ch4.nr42.value = value; break;
-	case 0xFF22: apu->ch4.nr43.value = value; break;
-	case 0xFF23: apu->ch4.nr44.value = value; break;
-	case 0xFF24: apu->ctl.nr50.value = value; break;
-	case 0xFF25: apu->ctl.nr51.value = value; break;
-	default: break;
-	}
 }
 
 

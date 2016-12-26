@@ -1,6 +1,7 @@
 #ifndef GBX_APU_HPP_
 #define GBX_APU_HPP_
 #include <stdint.h>
+#include <string.h>
 
 namespace gbx {
 
@@ -47,6 +48,8 @@ struct SoundChannel1 {
 			uint8_t initial    : 1;
 		};
 	} nr14;
+
+	int16_t timer;
 };
 
 
@@ -84,6 +87,7 @@ struct SoundChannel2 {
 		};
 	} nr24;
 
+	int16_t timer;
 };
 
 struct SoundChannel3 {
@@ -122,6 +126,8 @@ struct SoundChannel3 {
 			uint8_t initial    : 1;
 		};
 	} nr34;
+
+	int16_t timer;
 };
 
 
@@ -160,6 +166,8 @@ struct SoundChannel4 {
 			uint8_t initial : 1;
 		};
 	} nr44;
+
+	int16_t timer;
 };
 
 
@@ -193,12 +201,12 @@ struct SoundControl {
 	union {
 		uint8_t value;
 		struct {
-			uint8_t sound1_on : 1;
-			uint8_t sound2_on : 1;
-			uint8_t sound3_on : 1;
-			uint8_t sound4_on : 1;
-			uint8_t dummy     : 3;
-			uint8_t all       : 1;
+			uint8_t ch1_on : 1;
+			uint8_t ch2_on : 1;
+			uint8_t ch3_on : 1;
+			uint8_t ch4_on : 1;
+			uint8_t dummy  : 3;
+			uint8_t master : 1;
 		};
 	} nr52;
 };
@@ -212,6 +220,54 @@ struct Apu {
 	uint8_t wave_ram[16];
 };
 
+
+inline void write_nr11(const uint8_t value, Apu* const apu)
+{
+	auto& ch = apu->ch1;
+	ch.nr11.value = value;
+	if (ch.nr11.length != 0) {
+		ch.nr11.length = 64 - ch.nr11.length;
+		apu->ctl.nr52.ch1_on = 1;
+	} else {
+		apu->ctl.nr52.ch1_on = 0;
+	}
+}
+
+inline void write_nr21(const uint8_t value, Apu* const apu)
+{
+	auto& ch = apu->ch2;
+	ch.nr21.value = value;
+	if (ch.nr21.length != 0) {
+		ch.nr21.length = 64 - ch.nr21.length;
+		apu->ctl.nr52.ch2_on = 1;
+	} else {
+		apu->ctl.nr52.ch2_on = 0;
+	}
+}
+
+inline void write_nr31(const uint8_t value, Apu* const apu)
+{
+	auto& ch = apu->ch3;
+	ch.nr31.value = value;
+	if (ch.nr31.length != 0) {
+		ch.nr31.length = 256 - ch.nr31.length;
+		apu->ctl.nr52.ch3_on = 1;
+	} else {
+		apu->ctl.nr52.ch3_on = 0;
+	}
+}
+
+inline void write_nr41(const uint8_t value, Apu* const apu)
+{
+	auto& ch = apu->ch4;
+	ch.nr41.value = value;
+	if (ch.nr41.length != 0) {
+		ch.nr41.length = 64 - ch.nr41.length;
+		apu->ctl.nr52.ch4_on = 1;
+	} else {
+		apu->ctl.nr52.ch4_on = 0;
+	}
+}
 
 
 } // namespace gbx

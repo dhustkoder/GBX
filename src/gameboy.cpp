@@ -8,6 +8,7 @@
 namespace gbx {
 
 extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+static void update_apu(int16_t cycles, HWState* hwstate, Apu* apu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 
@@ -31,21 +32,20 @@ void reset(Gameboy* const gb)
 	write_pallete(0xFF, &gb->gpu.obp1);
 
 	gb->apu.ch1.nr10.value = 0x80;
-	gb->apu.ch1.nr11.value = 0xBF;
+	write_nr11(0xBF, &gb->apu);
 	gb->apu.ch1.nr12.value = 0xF3;
 	gb->apu.ch1.nr14.value = 0xBF;
-	gb->apu.ch2.nr21.value = 0x3F;
+	write_nr21(0x3F, &gb->apu);
 	gb->apu.ch2.nr24.value = 0xBF;
 	gb->apu.ch3.nr30.value = 0x7F;
-	gb->apu.ch3.nr31.value = 0xFF;
+	write_nr31(0xFF, &gb->apu);
 	gb->apu.ch3.nr32.value = 0x9F;
 	gb->apu.ch3.nr33.value = 0xBF;
-	gb->apu.ch4.nr41.value = 0xFF;
+	write_nr41(0xFF, &gb->apu);
 	gb->apu.ch4.nr44.value = 0xBF;
 	gb->apu.ctl.nr50.value = 0x77;
 	gb->apu.ctl.nr51.value = 0xF3;
 	gb->apu.ctl.nr52.value = 0xF1;
-
 
 	gb->hwstate.tac = 0xF8;
 
@@ -72,6 +72,7 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 		  static_cast<int16_t>(gb->cpu.clock - before);
 
 		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
+		update_apu(step_cycles, &gb->hwstate, &gb->apu);
 		update_timers(step_cycles, &gb->hwstate);
 	} while (gb->cpu.clock < clock_limit ||
 	         (gb->gpu.ly > 0 && gb->gpu.ly < 144));
@@ -99,6 +100,34 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 	}
 }
 
+
+void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu)
+{
+//	if (apu->ctl.nr52.master == 0)
+//		return;
+
+	constexpr const int16_t timer_limit = 16384;
+
+	const auto update_timer =
+	[timer_limit, cycles] (int16_t* const timer, uint8_t* const length) {
+		if (*length != 0 && ((*timer += cycles) >= timer_limit)) {
+			*length -= 1;
+			*timer -= timer_limit;
+			if (*length == 0)
+				return true;
+		}
+		return false;
+	};
+
+	if (update_timer(&apu->ch1.timer, &apu->ch1.nr11.value))
+		apu->ctl.nr52.ch1_on = 0;
+	if (update_timer(&apu->ch2.timer, &apu->ch2.nr21.value))
+		apu->ctl.nr52.ch2_on = 0;
+	if (update_timer(&apu->ch3.timer, &apu->ch3.nr31.value))
+		apu->ctl.nr52.ch3_on = 0;
+	if (update_timer(&apu->ch4.timer, &apu->ch4.nr41.value))
+		apu->ctl.nr52.ch4_on = 0;
+}
 
 void update_interrupts(Gameboy* const gb)
 {
