@@ -109,7 +109,7 @@ void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu
 	constexpr const int16_t timer_limit = 16384;
 
 	const auto update_timer =
-	[timer_limit, cycles] (int16_t* const timer, const int length) {
+	[timer_limit, cycles] (const int length, int16_t* const timer) {
 		if (length != 0 && (*timer += cycles) >= timer_limit) {
 			*timer -= timer_limit;
 			return true;
@@ -117,22 +117,22 @@ void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu
 		return false;
 	};
 
-	if (update_timer(&apu->ch1.timer, apu->ch1.nr11.length)) {
+	if (update_timer(apu->ch1.nr11.length, &apu->ch1.timer)) {
 		if (--apu->ch1.nr11.length == 0)
 			apu->ctl.nr52.ch1_on = 0;
 	}
 
-	if (update_timer(&apu->ch2.timer, apu->ch2.nr21.length)) {
+	if (update_timer(apu->ch2.nr21.length, &apu->ch2.timer)) {
 		if (--apu->ch2.nr21.length == 0)
 			apu->ctl.nr52.ch2_on = 0;
 	}
 
-	if (update_timer(&apu->ch3.timer, apu->ch3.nr31.length)) {
+	if (update_timer(apu->ch3.nr31.length, &apu->ch3.timer)) {
 		if (--apu->ch3.nr31.length == 0)
 			apu->ctl.nr52.ch3_on = 0;
 	}
 
-	if (update_timer(&apu->ch4.timer, apu->ch4.nr41.length)) {
+	if (update_timer(apu->ch4.nr41.length, &apu->ch4.timer)) {
 		if (--apu->ch4.nr41.length == 0)
 			apu->ctl.nr52.ch4_on = 0;
 	}
