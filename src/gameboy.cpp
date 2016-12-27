@@ -103,30 +103,39 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 
 void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu)
 {
-//	if (apu->ctl.nr52.master == 0)
-//		return;
+	if (apu->ctl.nr52.master == 0)
+		return;
 
 	constexpr const int16_t timer_limit = 16384;
 
 	const auto update_timer =
-	[timer_limit, cycles] (int16_t* const timer, uint8_t* const length) {
-		if (*length != 0 && ((*timer += cycles) >= timer_limit)) {
-			*length -= 1;
+	[timer_limit, cycles] (int16_t* const timer, const int length) {
+		if (length != 0 && (*timer += cycles) >= timer_limit) {
 			*timer -= timer_limit;
-			if (*length == 0)
-				return true;
+			return true;
 		}
 		return false;
 	};
 
-	if (update_timer(&apu->ch1.timer, &apu->ch1.nr11.value))
-		apu->ctl.nr52.ch1_on = 0;
-	if (update_timer(&apu->ch2.timer, &apu->ch2.nr21.value))
-		apu->ctl.nr52.ch2_on = 0;
-	if (update_timer(&apu->ch3.timer, &apu->ch3.nr31.value))
-		apu->ctl.nr52.ch3_on = 0;
-	if (update_timer(&apu->ch4.timer, &apu->ch4.nr41.value))
-		apu->ctl.nr52.ch4_on = 0;
+	if (update_timer(&apu->ch1.timer, apu->ch1.nr11.length)) {
+		if (--apu->ch1.nr11.length == 0)
+			apu->ctl.nr52.ch1_on = 0;
+	}
+
+	if (update_timer(&apu->ch2.timer, apu->ch2.nr21.length)) {
+		if (--apu->ch2.nr21.length == 0)
+			apu->ctl.nr52.ch2_on = 0;
+	}
+
+	if (update_timer(&apu->ch3.timer, apu->ch3.nr31.length)) {
+		if (--apu->ch3.nr31.length == 0)
+			apu->ctl.nr52.ch3_on = 0;
+	}
+
+	if (update_timer(&apu->ch4.timer, apu->ch4.nr41.length)) {
+		if (--apu->ch4.nr41.length == 0)
+			apu->ctl.nr52.ch4_on = 0;
+	}
 }
 
 void update_interrupts(Gameboy* const gb)

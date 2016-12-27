@@ -225,48 +225,36 @@ inline void write_nr11(const uint8_t value, Apu* const apu)
 {
 	auto& ch = apu->ch1;
 	ch.nr11.value = value;
-	if (ch.nr11.length != 0) {
-		ch.nr11.length = 64 - ch.nr11.length;
-		apu->ctl.nr52.ch1_on = 1;
-	} else {
-		apu->ctl.nr52.ch1_on = 0;
-	}
+	const auto length = ch.nr11.length;
+	ch.nr11.length = length != 0 ? 64 - length : 63;
+	apu->ctl.nr52.ch1_on = 1;
 }
 
 inline void write_nr21(const uint8_t value, Apu* const apu)
 {
 	auto& ch = apu->ch2;
 	ch.nr21.value = value;
-	if (ch.nr21.length != 0) {
-		ch.nr21.length = 64 - ch.nr21.length;
-		apu->ctl.nr52.ch2_on = 1;
-	} else {
-		apu->ctl.nr52.ch2_on = 0;
-	}
+	const auto length = ch.nr21.length;
+	ch.nr21.length = length != 0 ? 64 - length : 63;
+	apu->ctl.nr52.ch2_on = 1;
 }
 
 inline void write_nr31(const uint8_t value, Apu* const apu)
 {
 	auto& ch = apu->ch3;
 	ch.nr31.value = value;
-	if (ch.nr31.length != 0) {
-		ch.nr31.length = 256 - ch.nr31.length;
-		apu->ctl.nr52.ch3_on = 1;
-	} else {
-		apu->ctl.nr52.ch3_on = 0;
-	}
+	const auto length = ch.nr31.length;
+	ch.nr31.length = length != 0 ? 256 - length : 255;
+	apu->ctl.nr52.ch3_on = 1;
 }
 
 inline void write_nr41(const uint8_t value, Apu* const apu)
 {
 	auto& ch = apu->ch4;
 	ch.nr41.value = value;
-	if (ch.nr41.length != 0) {
-		ch.nr41.length = 64 - ch.nr41.length;
-		apu->ctl.nr52.ch4_on = 1;
-	} else {
-		apu->ctl.nr52.ch4_on = 0;
-	}
+	const auto length = ch.nr41.length;
+	ch.nr41.length = length != 0 ? 64 - length : 63;
+	apu->ctl.nr52.ch4_on = 1;
 }
 
 
