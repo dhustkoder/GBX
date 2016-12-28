@@ -244,7 +244,8 @@ inline void write_nr31(const uint8_t value, Apu* const apu)
 	auto& ch = apu->ch3;
 	ch.nr31.value = value;
 	const auto length = ch.nr31.length;
-	ch.nr31.length = length != 0 ? 256 - length : 255;
+	ch.nr31.length = 
+	  length != 0 ? static_cast<uint8_t>(256 - length) : 255;
 	apu->ctl.nr52.ch3_on = 1;
 }
 

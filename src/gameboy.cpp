@@ -108,7 +108,7 @@ void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu
 
 	constexpr const int16_t timer_limit = 16384;
 
-	const auto update_timer =
+	const auto steptimer = 
 	[timer_limit, cycles] (const int length, int16_t* const timer) {
 		if (length != 0 && (*timer += cycles) >= timer_limit) {
 			*timer -= timer_limit;
@@ -117,22 +117,22 @@ void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu
 		return false;
 	};
 
-	if (update_timer(apu->ch1.nr11.length, &apu->ch1.timer)) {
+	if (steptimer(apu->ch1.nr11.length, &apu->ch1.timer)) {
 		if (--apu->ch1.nr11.length == 0)
 			apu->ctl.nr52.ch1_on = 0;
 	}
 
-	if (update_timer(apu->ch2.nr21.length, &apu->ch2.timer)) {
+	if (steptimer(apu->ch2.nr21.length, &apu->ch2.timer)) {
 		if (--apu->ch2.nr21.length == 0)
 			apu->ctl.nr52.ch2_on = 0;
 	}
 
-	if (update_timer(apu->ch3.nr31.length, &apu->ch3.timer)) {
+	if (steptimer(apu->ch3.nr31.length, &apu->ch3.timer)) {
 		if (--apu->ch3.nr31.length == 0)
 			apu->ctl.nr52.ch3_on = 0;
 	}
 
-	if (update_timer(apu->ch4.nr41.length, &apu->ch4.timer)) {
+	if (steptimer(apu->ch4.nr41.length, &apu->ch4.timer)) {
 		if (--apu->ch4.nr41.length == 0)
 			apu->ctl.nr52.ch4_on = 0;
 	}
@@ -303,6 +303,7 @@ bool header_read_name(const uint8_t(&header)[0x4F], char(*const buffer)[17])
 {
 	memcpy(buffer, &header[0x34], 16);
 	(*buffer)[16] = '\0';
+//	deactivated for sound tests roms
 //	if (strlen(*buffer) == 0) {
 //		fputs("ROM's internal name is invalid\n", stderr);
 //		return false;
