@@ -434,8 +434,8 @@ bool load_sav_file(const char* const sav_file_path, Cart* const cart)
 		const auto sav_file_guard = finally([sav_file] {
 			fclose(sav_file);
 		});
-		const size_t ram_size = get_ram_size(*cart);
-		uint8_t* const ram = get_ram(cart);	
+		const size_t ram_size = cart_info.ram_size;
+		uint8_t* const ram = get_ram(cart);
 		if (fread(ram, 1, ram_size, sav_file) < ram_size)
 			fputs("Error while reading sav file\n", stderr);
 	} else if (errno != ENOENT) {
@@ -459,7 +459,7 @@ void update_sav_file(const Cart& cart, const char* const sav_file_path)
 		fclose(sav_file);
 	});
 
-	const size_t ram_size = get_ram_size(cart);
+	const size_t ram_size = cart_info.ram_size;
 	const uint8_t* const ram = get_ram(cart);
 	if (fwrite(ram, 1, ram_size, sav_file) < ram_size)
 		perror("Error while updating sav file");

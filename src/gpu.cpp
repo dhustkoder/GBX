@@ -103,7 +103,7 @@ void update_bg_scanline(const Memory& mem, Gpu* const gpu)
 	const auto lcdc = gpu->lcdc;
 	const auto ly = gpu->ly;
 	if (!lcdc.bg_on) {
-		memset(get_screen(gpu, ly, 0), 0xFF, sizeof(uint32_t) * 160);
+		memset(&gpu->screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
 		return;
 	} else if (lcdc.win_on && ly >= gpu->wy && gpu->wx <= 7) {
 		return;
@@ -138,7 +138,7 @@ void update_bg_scanline(const Memory& mem, Gpu* const gpu)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 	
-	Scanline scanline {get_screen(gpu, ly, 0), gpu->bgp.colors};
+	Scanline scanline {&gpu->screen[ly][0], gpu->bgp.colors};
 
 	if (scxmod == 0) {
 		for (int x = 0; x < 20; ++x)
@@ -177,7 +177,7 @@ void update_win_scanline(const Memory& mem, Gpu* const gpu)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
-	Scanline scanline{get_screen(gpu, ly, wx_max), gpu->bgp.colors};
+	Scanline scanline{&gpu->screen[ly][wx_max], gpu->bgp.colors};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
@@ -253,11 +253,11 @@ void update_sprite_scanline(const Memory& mem, Gpu* const gpu)
 		uint32_t* line;
 		int pbeg, pend;
 		if (xpos < 0) {
-			line = get_screen(gpu, ly, 0);
+			line = &gpu->screen[ly][0];
 			pbeg = -xpos;
 			pend = 8;
 		} else {
-			line = get_screen(gpu, ly, xpos);
+			line = &gpu->screen[ly][xpos];
 			pbeg = 0;
 			pend = min(160 - xpos, 8);
 		}
