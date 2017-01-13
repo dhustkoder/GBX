@@ -133,7 +133,7 @@ uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge ROM: write $%X to $%X\n", value, address);
-	switch (cart_info.short_type) {
+	switch (Cart::short_type) {
 	case CartShortType::RomMBC1: write_mbc1(address, value, cart); break;
 	case CartShortType::RomMBC2: write_mbc2(address, value, cart); break;
 	default: break;
@@ -147,7 +147,7 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		const auto rom_bank_num = 
 		  (mbc1.banking_mode == kRomBankingMode
 		   ? mbc1.banks_num : mbc1.banks_num_lower_bits)
-		   & (cart_info.rom_banks - 1);
+		   & (Cart::rom_banks - 1);
 
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
@@ -162,15 +162,14 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 	};
 
 	const auto eval_ram_bank_offset = [cart] {
-		if (cart_info.type < CartType::RomMBC1Ram ||
-		     cart_info.ram_banks < 2 || !cart->ram_enabled)
+		if (Cart::type < CartType::RomMBC1Ram ||
+		     Cart::ram_banks < 2 || !cart->ram_enabled)
 			return;
 		
 		const auto mbc1 = cart->mbc1;
-		auto offset = cart_info.rom_size - 0xA000;
+		auto offset = Cart::rom_size - 0xA000;
 		if (mbc1.banking_mode == kRamBankingMode) {
-			const auto bank_num = 
-			  mbc1.banks_num_upper_bits&(cart_info.ram_banks - 1);
+			const auto bank_num = mbc1.banks_num_upper_bits&(Cart::ram_banks - 1);
 			offset += 0x2000 * bank_num;
 		}
 		cart->ram_bank_offset = offset;
@@ -200,7 +199,7 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		}
 	} else {
 		const auto new_val = value&0x0F;
-		const auto ram_banks = cart_info.ram_banks;
+		const auto ram_banks = Cart::ram_banks;
 		if (new_val == 0x0A && ram_banks && !cart->ram_enabled) {
 			enable_ram(cart);
 			eval_ram_bank_offset();
@@ -220,7 +219,7 @@ void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
 		const uint8_t new_val = value & 0x0F;
 		if (cart->mbc2.rom_bank_num != new_val) {
 			cart->mbc2.rom_bank_num = new_val;
-			const auto mask = cart_info.rom_banks - 1;
+			const auto mask = Cart::rom_banks - 1;
 			const auto bank_num = cart->mbc2.rom_bank_num & mask;
 			cart->rom_bank_offset = bank_num < 0x02
 			  ? 0x00 : (0x4000 * (bank_num - 1));
