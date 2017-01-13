@@ -9,48 +9,6 @@ static void update_apu(int16_t cycles, HWState* hwstate, Apu* apu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 
-void reset(Gameboy* const gb)
-{
-	memset(gb, 0, sizeof(*gb));
-
-	// init the system
-	// up to now only Gameboy (DMG) mode is supported
-	gb->cpu.pc = 0x0100;
-	gb->cpu.sp = 0xFFFE;
-	gb->cpu.af = 0x01B0;
-	gb->cpu.bc = 0x0013;
-	gb->cpu.de = 0x00D8;
-	gb->cpu.hl = 0x014D;
-
-	gb->gpu.lcdc.value = 0x91;
-	gb->gpu.stat.value = 0x85;
-	write_pallete(0xFC, &gb->gpu.bgp);
-	write_pallete(0xFF, &gb->gpu.obp0);
-	write_pallete(0xFF, &gb->gpu.obp1);
-
-	gb->apu.ch1.nr10.value = 0x80;
-	write_nr11(0xBF, &gb->apu);
-	gb->apu.ch1.nr12.value = 0xF3;
-	gb->apu.ch1.nr14.value = 0xBF;
-	write_nr21(0x3F, &gb->apu);
-	gb->apu.ch2.nr24.value = 0xBF;
-	gb->apu.ch3.nr30.value = 0x7F;
-	write_nr31(0xFF, &gb->apu);
-	gb->apu.ch3.nr32.value = 0x9F;
-	gb->apu.ch3.nr33.value = 0xBF;
-	write_nr41(0xFF, &gb->apu);
-	gb->apu.ch4.nr44.value = 0xBF;
-	gb->apu.ctl.nr50.value = 0x77;
-	gb->apu.ctl.nr51.value = 0xF3;
-	gb->apu.ctl.nr52.value = 0xF1;
-
-	gb->hwstate.tac = 0xF8;
-
-	gb->joypad.reg.value = 0xFF;
-	gb->joypad.keys.both = 0xFF;
-}
-
-
 void run_for(const int32_t clock_limit, Gameboy* const gb)
 {
 	do {
