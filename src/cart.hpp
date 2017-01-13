@@ -5,6 +5,8 @@
 
 namespace gbx {
 
+struct Gameboy;
+
 enum class CartType : uint8_t {
 	RomOnly = 0x00,
 	RomMBC1 = 0x01,
@@ -51,16 +53,6 @@ constexpr const CartType kBatteryCartridgeTypes[]{
 };
 
 struct Cart {
-	static char internal_name[17];
-	static owner<char*> sav_file_path;
-	static long rom_size;
-	static long ram_size;
-	static int rom_banks;
-	static int ram_banks;
-	static CartType type;
-	static CartShortType short_type;
-	static CartSystem system;
-
 	union {
 		union {
 			uint8_t banks_num : 7;
@@ -86,10 +78,41 @@ struct Cart {
 };
 
 
+extern class CartInfo {
+public:
+	const char* internal_name() const { return m_internal_name; }
+	uint32_t rom_size() const { return m_rom_size; }
+	uint32_t ram_size() const { return m_ram_size; }
+	uint8_t rom_banks() const { return m_rom_banks; }
+	uint8_t ram_banks() const { return m_ram_banks; }
+	CartType type()     const { return m_type; }
+	CartShortType short_type() const { return m_short_type; }
+	CartSystem system()        const { return m_system; }
+
+private:
+	friend owner<Gameboy*> create_gameboy(const char*);
+	friend void destroy_gameboy(owner<Gameboy*>);
+
+	char m_internal_name[17] { 0 };
+	owner<char*> m_sav_file_path = nullptr;
+
+	uint32_t m_rom_size = 0;
+	uint32_t m_ram_size = 0;
+	uint8_t m_rom_banks = 0;
+	uint8_t m_ram_banks = 0;
+
+	CartType m_type = CartType::RomOnly;
+	CartShortType m_short_type = CartShortType::RomOnly;
+	CartSystem m_system = CartSystem::Gameboy;
+
+} g_cart_info;
+
+
 inline void enable_ram(Cart* const cart) 
 {
-	cart->ram_bank_offset = cart->rom_size - 0xA000;
+	cart->ram_bank_offset = g_cart_info.rom_size() - 0xA000;
 }
+
 
 inline void disable_ram(Cart* const cart)
 {
