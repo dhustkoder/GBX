@@ -5,7 +5,6 @@
 namespace gbx {
 
 extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
-static void update_apu(int16_t cycles, HWState* hwstate, Apu* apu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 
@@ -27,7 +26,6 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 		  static_cast<int16_t>(gb->cpu.clock - before);
 
 		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
-		update_apu(step_cycles, &gb->hwstate, &gb->apu);
 		update_timers(step_cycles, &gb->hwstate);
 	} while (gb->cpu.clock < clock_limit ||
 	         (gb->gpu.ly > 0 && gb->gpu.ly < 144));
@@ -44,7 +42,7 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 		hwstate->div_clock -= 256;
 	}
 
-	const auto tac = hwstate->tac;
+	const uint8_t tac = hwstate->tac;
 	if (test_bit(2, tac)) {
 		hwstate->tima_clock += cycles;
 		while (hwstate->tima_clock >= hwstate->tima_clock_limit) {
@@ -56,47 +54,11 @@ void update_timers(const int16_t cycles, HWState* const hwstate)
 }
 
 
-void update_apu(const int16_t cycles, HWState* const /*hwstate*/, Apu* const apu)
-{
-	if (apu->ctl.nr52.master == 0)
-		return;
-
-	constexpr const int16_t timer_limit = 16384;
-
-	const auto steptimer = 
-	[timer_limit, cycles] (const int length, int16_t* const timer) {
-		if (length != 0 && (*timer += cycles) >= timer_limit) {
-			*timer -= timer_limit;
-			return true;
-		}
-		return false;
-	};
-
-	if (steptimer(apu->ch1.nr11.length, &apu->ch1.timer)) {
-		if (--apu->ch1.nr11.length == 0)
-			apu->ctl.nr52.ch1_on = 0;
-	}
-
-	if (steptimer(apu->ch2.nr21.length, &apu->ch2.timer)) {
-		if (--apu->ch2.nr21.length == 0)
-			apu->ctl.nr52.ch2_on = 0;
-	}
-
-	if (steptimer(apu->ch3.nr31.length, &apu->ch3.timer)) {
-		if (--apu->ch3.nr31.length == 0)
-			apu->ctl.nr52.ch3_on = 0;
-	}
-
-	if (steptimer(apu->ch4.nr41.length, &apu->ch4.timer)) {
-		if (--apu->ch4.nr41.length == 0)
-			apu->ctl.nr52.ch4_on = 0;
-	}
-}
-
 void update_interrupts(Gameboy* const gb)
 {
 	const uint8_t pendents = get_pendent_interrupts(gb->hwstate);
 	const auto flags = gb->hwstate.flags;
+
 	if (pendents && flags.cpu_halt) {
 		gb->hwstate.flags.cpu_halt = false;
 		gb->cpu.clock += 4;

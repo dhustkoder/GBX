@@ -5,9 +5,6 @@
 
 namespace gbx {
 
-template<class T>
-using owner = T;
-
 constexpr size_t operator"" _Kib(unsigned long long kibs)
 {
 	return static_cast<size_t>(kibs * 1024);

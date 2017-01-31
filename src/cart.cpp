@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include "gameboy.hpp"
 
@@ -20,14 +21,14 @@ inline bool extract_rom_header_info(FILE* rom_file,
                                     uint8_t* ram_banks);
 
 inline bool extract_rom_data(FILE* rom_file, Cart* cart);
-inline owner<char*> eval_sav_file_path(const char* rom_file_path);
+inline char* eval_sav_file_path(const char* rom_file_path);
 inline bool load_sav_file(const char* sav_file_path, Cart* cart);
 inline void update_sav_file(const Cart& cart, const char* sav_file_path);
 
 
-owner<Gameboy*> create_gameboy(const char* const rom_file_path)
+Gameboy* create_gameboy(const char* const rom_file_path)
 {
-	owner<FILE* const> rom_file = fopen(rom_file_path, "rb");
+	FILE* const rom_file = fopen(rom_file_path, "rb");
 
 	if (rom_file == nullptr) {
 		perror("Couldn't open file");
@@ -40,25 +41,23 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 	});
 
 
-	const bool success = extract_rom_header_info
-	                   (
-	                       rom_file,
-	                       &g_cart_info.m_internal_name,
-	                       &g_cart_info.m_type,
-	                       &g_cart_info.m_short_type,
-	                       &g_cart_info.m_system,
-	                       &g_cart_info.m_rom_size,
-	                       &g_cart_info.m_ram_size,
-	                       &g_cart_info.m_rom_banks,
-	                       &g_cart_info.m_ram_banks
-	                    );
+	const bool success =
+	  extract_rom_header_info(rom_file,
+	                          &g_cart_info.m_internal_name,
+	                          &g_cart_info.m_type,
+	                          &g_cart_info.m_short_type,
+	                          &g_cart_info.m_system,
+	                          &g_cart_info.m_rom_size,
+	                          &g_cart_info.m_ram_size,
+	                          &g_cart_info.m_rom_banks,
+	                          &g_cart_info.m_ram_banks);
 
 	if (!success)
 		return nullptr;
 
 
-	const auto memsize = sizeof(Gameboy) + g_cart_info.m_rom_size + g_cart_info.m_ram_size;
-	owner<Gameboy* const> gb = static_cast<Gameboy*>(malloc(memsize));
+	const size_t memsize = sizeof(Gameboy) + g_cart_info.m_rom_size + g_cart_info.m_ram_size;
+	Gameboy* const gb = (Gameboy*) malloc(memsize);
 	if (gb == nullptr) {
 		perror("Couldn't allocate memory");
 		return nullptr;
@@ -99,7 +98,7 @@ owner<Gameboy*> create_gameboy(const char* const rom_file_path)
 }
 
 
-void destroy_gameboy(owner<Gameboy*> gb)
+void destroy_gameboy(Gameboy* gb)
 {
 	if (g_cart_info.m_sav_file_path != nullptr) {
 		update_sav_file(gb->cart, g_cart_info.m_sav_file_path);
@@ -130,24 +129,7 @@ void reset(Gameboy* const gb)
 	write_pallete(0xFF, &gb->gpu.obp0);
 	write_pallete(0xFF, &gb->gpu.obp1);
 
-	gb->apu.ch1.nr10.value = 0x80;
-	write_nr11(0xBF, &gb->apu);
-	gb->apu.ch1.nr12.value = 0xF3;
-	gb->apu.ch1.nr14.value = 0xBF;
-	write_nr21(0x3F, &gb->apu);
-	gb->apu.ch2.nr24.value = 0xBF;
-	gb->apu.ch3.nr30.value = 0x7F;
-	write_nr31(0xFF, &gb->apu);
-	gb->apu.ch3.nr32.value = 0x9F;
-	gb->apu.ch3.nr33.value = 0xBF;
-	write_nr41(0xFF, &gb->apu);
-	gb->apu.ch4.nr44.value = 0xBF;
-	gb->apu.ctl.nr50.value = 0x77;
-	gb->apu.ctl.nr51.value = 0xF3;
-	gb->apu.ctl.nr52.value = 0xF1;
-
 	gb->hwstate.tac = 0xF8;
-
 	gb->joypad.reg.value = 0xFF;
 	gb->joypad.keys.both = 0xFF;
 }
@@ -170,13 +152,12 @@ bool extract_rom_data(FILE* const rom_file, Cart* const cart)
 }
 
 
-owner<char*> eval_sav_file_path(const char* const rom_file_path)
+char* eval_sav_file_path(const char* const rom_file_path)
 {
 	const auto rom_path_size = strlen(rom_file_path);
 	const auto sav_path_size = rom_path_size + 5;
 
-	owner<char* const> sav_file_path = 
-	  static_cast<char*>(calloc(sav_path_size, sizeof(char)));
+	char* const sav_file_path = (char*) calloc(sav_path_size, sizeof(char));
 
 	if (sav_file_path == nullptr) {
 		perror("Couldn't allocate memory");
@@ -205,11 +186,9 @@ owner<char*> eval_sav_file_path(const char* const rom_file_path)
 
 bool load_sav_file(const char* const sav_file_path, Cart* const cart)
 {
-	if (owner<FILE* const> sav_file = fopen(sav_file_path, "rb+")) {
-		const auto sav_file_guard = finally([sav_file] {
-			fclose(sav_file);
-		});
-		
+	if (FILE* const sav_file = fopen(sav_file_path, "rb+")) {
+		const auto sav_file_guard = finally([sav_file] { fclose(sav_file); });
+
 		const size_t ram_size = g_cart_info.ram_size();
 		uint8_t* const ram = &cart->data[g_cart_info.rom_size()];
 		if (fread(ram, 1, ram_size, sav_file) < ram_size)
@@ -226,7 +205,8 @@ bool load_sav_file(const char* const sav_file_path, Cart* const cart)
 
 void update_sav_file(const Cart& cart, const char* const sav_file_path)
 {
-	owner<FILE* const> sav_file = fopen(sav_file_path, "wb");
+	FILE* const sav_file = fopen(sav_file_path, "wb");
+
 	if (sav_file == nullptr) {
 		perror("Couldn't open sav file");
 		return;
@@ -255,6 +235,7 @@ inline bool header_read_types_and_sizes(const uint8_t(&header)[0x4F],
                                         uint32_t* ram_size,
                                         uint8_t* rom_banks,
                                         uint8_t* ram_banks);
+
 
 bool extract_rom_header_info(FILE* const rom_file,
                              char(* const namebuffer)[17],
@@ -333,19 +314,20 @@ bool header_read_types_and_sizes(const uint8_t(&header)[0x4F],
 
 
 	struct SizeInfo { const uint32_t size; const uint8_t banks; };
-	constexpr const SizeInfo rom_sizes[7]{
+
+	constexpr const SizeInfo rom_sizes[7] {
 		{ 32_Kib, 2 },{ 64_Kib, 4 },{ 128_Kib, 8 },{ 256_Kib, 16 },
 		{ 512_Kib, 32 },{ 1_Mib, 64 },{ 2_Mib, 128 }
 	};
-	constexpr const SizeInfo ram_sizes[4]{
+
+	constexpr const SizeInfo ram_sizes[4] {
 		{ 0, 0 },{ 2_Kib, 1 },{ 8_Kib, 1 },{ 32_Kib, 4 }
 	};
 
-	const auto rom_code = header[0x48];
-	const auto ram_code = header[0x49];
+	const uint8_t rom_code = header[0x48];
+	const uint8_t ram_code = header[0x49];
 
-	if (rom_code >= arr_size(rom_sizes) ||
-		ram_code >= arr_size(ram_sizes)) {
+	if (rom_code >= arr_size(rom_sizes) || ram_code >= arr_size(ram_sizes)) {
 		fputs("Invalid size codes\n", stderr);
 		return false;
 	}

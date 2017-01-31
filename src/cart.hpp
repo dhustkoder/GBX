@@ -90,11 +90,11 @@ public:
 	CartSystem system()        const { return m_system; }
 
 private:
-	friend owner<Gameboy*> create_gameboy(const char*);
-	friend void destroy_gameboy(owner<Gameboy*>);
+	friend Gameboy* create_gameboy(const char*);
+	friend void destroy_gameboy(Gameboy*);
 
 	char m_internal_name[17] { 0 };
-	owner<char*> m_sav_file_path = nullptr;
+	char* m_sav_file_path = nullptr;
 
 	uint32_t m_rom_size = 0;
 	uint32_t m_ram_size = 0;

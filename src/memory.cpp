@@ -28,8 +28,6 @@ static void write_wram(uint16_t address, uint8_t value, Memory* mem);
 static void write_vram(uint16_t address, uint8_t value, Memory* mem);
 static void write_cart_ram(uint16_t address, uint8_t value, Cart* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
-static void write_apu(uint16_t addr, uint8_t value, Apu* apu);
-static void write_nr52(const uint8_t value, Apu* const apu);
 
 static void write_lcdc(uint8_t value, Gpu* gpu, HWState* hwstate);
 static void write_stat(uint8_t value, Gpu* gpu);
@@ -289,43 +287,6 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF06: return gb.hwstate.tma;
 	case 0xFF07: return gb.hwstate.tac;
 	case 0xFF0F: return gb.hwstate.int_flags;
-	case 0xFF10: return gb.apu.ch1.nr10.value|0x80;
-	case 0xFF11: return gb.apu.ch1.nr11.value|0x3F;
-	case 0xFF12: return gb.apu.ch1.nr12.value;
-	case 0xFF13: return gb.apu.ch1.nr13.value|0xFF;
-	case 0xFF14: return gb.apu.ch1.nr14.value|0xBF;
-	case 0xFF16: return gb.apu.ch2.nr21.value|0x3F;
-	case 0xFF17: return gb.apu.ch2.nr22.value;
-	case 0xFF18: return gb.apu.ch2.nr23.value|0xFF;
-	case 0xFF19: return gb.apu.ch2.nr24.value|0xBF;
-	case 0xFF1A: return gb.apu.ch3.nr30.value|0x7F;
-	case 0xFF1B: return gb.apu.ch3.nr31.value|0xFF;
-	case 0xFF1C: return gb.apu.ch3.nr32.value|0x9F;
-	case 0xFF1D: return gb.apu.ch3.nr33.value|0xFF;
-	case 0xFF1E: return gb.apu.ch3.nr34.value|0xBF;
-	case 0xFF20: return gb.apu.ch4.nr41.value|0xFF;
-	case 0xFF21: return gb.apu.ch4.nr42.value;
-	case 0xFF22: return gb.apu.ch4.nr43.value;
-	case 0xFF23: return gb.apu.ch4.nr44.value|0xBF;
-	case 0xFF24: return gb.apu.ctl.nr50.value;
-	case 0xFF25: return gb.apu.ctl.nr51.value;
-	case 0xFF26: return gb.apu.ctl.nr52.value|0x70;
-	case 0xFF30: // [[fallthrough]]
-	case 0xFF31: // [[fallthrough]]
-	case 0xFF32: // [[fallthrough]]
-	case 0xFF33: // [[fallthrough]]
-	case 0xFF34: // [[fallthrough]]
-	case 0xFF35: // [[fallthrough]]
-	case 0xFF36: // [[fallthrough]]
-	case 0xFF37: // [[fallthrough]]
-	case 0xFF38: // [[fallthrough]]
-	case 0xFF39: // [[fallthrough]]
-	case 0xFF3A: // [[fallthrough]]
-	case 0xFF3B: // [[fallthrough]]
-	case 0xFF3C: // [[fallthrough]]
-	case 0xFF3D: // [[fallthrough]]
-	case 0xFF3E: // [[fallthrough]]
-	case 0xFF3F: return gb.apu.wave_ram[address - 0xFF30];
 	case 0xFF40: return gb.gpu.lcdc.value;
 	case 0xFF41: return gb.gpu.stat.value;
 	case 0xFF42: return gb.gpu.scy;
@@ -347,11 +308,6 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	debug_printf("Hardware I/O: write $%X to $%X\n", value, address);
-
-	if (address >= 0xFF10 && address <= 0xFF3F) {
-		write_apu(address, value, &gb->apu);
-		return;
-	}
 
 	switch (address) {
 	case 0xFF00: write_joypad(value, &gb->joypad); break;
@@ -376,58 +332,6 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	}
 }
 
-
-void write_apu(const uint16_t addr, const uint8_t value, Apu* const apu)
-{
-	assert(addr >= 0xFF10 && addr <= 0xFF3F);
-
-	if (addr > 0xFF25) {
-		if (addr == 0xFF26)
-			write_nr52(value, apu);
-		else if (addr >= 0xFF30)
-			apu->wave_ram[addr - 0xFF30] = value;
-		return;
-	} else if (apu->ctl.nr52.master == 0) {
-		return;
-	}
-
-	switch (addr) {
-	case 0xFF10: apu->ch1.nr10.value = value; break;
-	case 0xFF11: write_nr11(value, apu); break;
-	case 0xFF12: apu->ch1.nr12.value = value; break;
-	case 0xFF13: apu->ch1.nr13.value = value; break;
-	case 0xFF14: apu->ch1.nr14.value = value; break;
-	case 0xFF16: write_nr21(value, apu); break;
-	case 0xFF17: apu->ch2.nr22.value = value; break;
-	case 0xFF18: apu->ch2.nr23.value = value; break;
-	case 0xFF19: apu->ch2.nr24.value = value; break;
-	case 0xFF1A: apu->ch3.nr30.value = value; break;
-	case 0xFF1B: write_nr31(value, apu); break;
-	case 0xFF1C: apu->ch3.nr32.value = value; break;
-	case 0xFF1D: apu->ch3.nr33.value = value; break;
-	case 0xFF1E: apu->ch3.nr34.value = value; break;
-	case 0xFF20: write_nr41(value, apu); break;
-	case 0xFF21: apu->ch4.nr42.value = value; break;
-	case 0xFF22: apu->ch4.nr43.value = value; break;
-	case 0xFF23: apu->ch4.nr44.value = value; break;
-	case 0xFF24: apu->ctl.nr50.value = value; break;
-	case 0xFF25: apu->ctl.nr51.value = value; break;
-	default: break;
-	}
-}
-
-void write_nr52(const uint8_t value, Apu* const apu)
-{
-	if ((value&0x80) == 0) {
-		memset(&apu->ch1, 0, sizeof(apu->ch1));
-		memset(&apu->ch2, 0, sizeof(apu->ch2));
-		memset(&apu->ch3, 0, sizeof(apu->ch3));
-		memset(&apu->ch4, 0, sizeof(apu->ch4));
-		memset(&apu->ctl, 0, sizeof(apu->ctl));
-	} else {
-		apu->ctl.nr52.master = 1;
-	}
-}
 
 
 void write_lcdc(const uint8_t value, Gpu* const gpu, HWState* const hwstate)
@@ -455,6 +359,7 @@ void write_joypad(const uint8_t value, Joypad* const pad)
 	pad->reg.value = (pad->reg.value&0xCF) | (value&0x30);
 	const auto buttons = pad->keys.buttons;
 	const auto directions = pad->keys.directions;
+
 	switch (static_cast<JoypadMode>(pad->reg.mode)) {
 	case JoypadMode::Buttons: pad->reg.keys = buttons; break;
 	case JoypadMode::Directions: pad->reg.keys = directions; break;
@@ -516,9 +421,9 @@ int_fast32_t eval_cart_ram_offset(const Cart& cart, const uint16_t address)
 {
 	assert(address >= 0xA000 && address <= 0xBFFF);
 
-	const auto offset = cart.ram_bank_offset + address;
+	const int_fast32_t offset = cart.ram_bank_offset + address;
 	
-	assert(offset >= 0 && offset < (g_cart_info.rom_size() + g_cart_info.ram_size()));
+	assert(offset >= 0 && static_cast<uint_fast32_t>(offset) < (g_cart_info.rom_size() + g_cart_info.ram_size()));
 
 	return offset;
 }
