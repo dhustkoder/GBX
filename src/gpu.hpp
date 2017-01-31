@@ -65,9 +65,6 @@ struct Gpu {
 	Pallete obp0;
 	Pallete obp1;
 
-private:
-	friend const uint32_t* get_screen(const Gpu&, int, int);
-	friend uint32_t* get_screen(Gpu*, int, int);
 	static uint32_t screen[144][160];
 };
 
@@ -105,17 +102,6 @@ inline void write_pallete(const uint8_t val, Pallete* const pal)
 		pal->colors[2] = kColors[(val&0x30)>>4];
 		pal->colors[3] = kColors[(val&0xC0)>>6];
 	}
-}
-
-
-inline const uint32_t* get_screen(const Gpu& /*gpu*/, const int y = 0, const int x = 0)
-{
-	return &Gpu::screen[y][x];
-}
-
-inline uint32_t* get_screen(Gpu* const /*gpu*/, const int y = 0, const int x = 0)
-{
-	return &Gpu::screen[y][x];
 }
 
 

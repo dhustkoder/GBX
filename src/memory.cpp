@@ -131,11 +131,12 @@ uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
 {
 	debug_printf("Cartridge ROM: write $%X to $%X\n", value, address);
-	switch (get_short_type(*cart)) {
+	switch (g_cart_info.short_type()) {
 	case CartShortType::RomMBC1: write_mbc1(address, value, cart); break;
 	case CartShortType::RomMBC2: write_mbc2(address, value, cart); break;
 	default: break;
 	}
+
 }
 
 void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
@@ -145,7 +146,7 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		const auto rom_bank_num = 
 		  (mbc1.banking_mode == kRomBankingMode
 		   ? mbc1.banks_num : mbc1.banks_num_lower_bits)
-		   & (get_rom_banks(*cart) - 1);
+		   & (g_cart_info.rom_banks() - 1);
 
 		if (rom_bank_num < 0x02) {
 			cart->rom_bank_offset = 0x00;
@@ -160,15 +161,17 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 	};
 
 	const auto eval_ram_bank_offset = [cart] {
-		if (get_type(*cart) < CartType::RomMBC1Ram ||
-		     get_ram_banks(*cart) < 2 || !cart->ram_enabled)
+		if (g_cart_info.type() < CartType::RomMBC1Ram ||
+		    g_cart_info.ram_banks() < 2 || !cart->ram_enabled)
 			return;
 		
 		const auto mbc1 = cart->mbc1;
-		auto offset = get_rom_size(*cart) - 0xA000;
+		auto offset = g_cart_info.rom_size() - 0xA000;
+
 		if (mbc1.banking_mode == kRamBankingMode) {
-			const auto bank_num = 
-			  mbc1.banks_num_upper_bits&(get_ram_banks(*cart) - 1);
+			const auto bank_num =
+			  mbc1.banks_num_upper_bits&(g_cart_info.ram_banks() - 1);
+
 			offset += 0x2000 * bank_num;
 		}
 		cart->ram_bank_offset = offset;
@@ -198,8 +201,7 @@ void write_mbc1(const uint16_t address, const uint8_t value, Cart* const cart)
 		}
 	} else {
 		const auto new_val = value&0x0F;
-		const auto ram_banks = get_ram_banks(*cart);
-		if (new_val == 0x0A && ram_banks && !cart->ram_enabled) {
+		if (new_val == 0x0A && g_cart_info.ram_banks() && !cart->ram_enabled) {
 			enable_ram(cart);
 			eval_ram_bank_offset();
 		} else if (new_val != 0x0A && cart->ram_enabled) {
@@ -218,10 +220,9 @@ void write_mbc2(const uint16_t address, const uint8_t value, Cart* const cart)
 		const uint8_t new_val = value & 0x0F;
 		if (cart->mbc2.rom_bank_num != new_val) {
 			cart->mbc2.rom_bank_num = new_val;
-			const auto mask = get_rom_banks(*cart) - 1;
+			const auto mask = g_cart_info.rom_banks() - 1;
 			const auto bank_num = cart->mbc2.rom_bank_num & mask;
-			cart->rom_bank_offset = bank_num < 0x02
-			  ? 0x00 : (0x4000 * (bank_num - 1));
+			cart->rom_bank_offset = bank_num < 0x02 ? 0x00 : (0x4000 * (bank_num - 1));
 		}
 	} else if (address <= 0x1FFF && !addr_bit) {
 		const auto new_val = value&0x0F;
@@ -307,6 +308,7 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 {
 	debug_printf("Hardware I/O: write $%X to $%X\n", value, address);
+
 	switch (address) {
 	case 0xFF00: write_joypad(value, &gb->joypad); break;
 	case 0xFF04: write_div(value, &gb->hwstate); break;
@@ -329,6 +331,7 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	default: break;
 	}
 }
+
 
 
 void write_lcdc(const uint8_t value, Gpu* const gpu, HWState* const hwstate)
@@ -356,6 +359,7 @@ void write_joypad(const uint8_t value, Joypad* const pad)
 	pad->reg.value = (pad->reg.value&0xCF) | (value&0x30);
 	const auto buttons = pad->keys.buttons;
 	const auto directions = pad->keys.directions;
+
 	switch (static_cast<JoypadMode>(pad->reg.mode)) {
 	case JoypadMode::Buttons: pad->reg.keys = buttons; break;
 	case JoypadMode::Directions: pad->reg.keys = directions; break;
@@ -377,6 +381,7 @@ void write_div(const uint8_t /*value*/, HWState* const hwstate)
 	hwstate->div = 0;
 	hwstate->div_clock = 0;
 }
+
 
 
 void dma_transfer(const uint8_t value, Gameboy* const gb)
@@ -406,10 +411,9 @@ int_fast32_t eval_cart_rom_offset(const Cart& cart, const uint16_t address)
 {
 	assert(address < 0x8000);
 	
-	const auto offset =
-	  address < 0x4000 ? address : cart.rom_bank_offset + address;
+	const auto offset = address < 0x4000 ? address : cart.rom_bank_offset + address;
 
-	assert(offset >= 0 && address < get_rom_size(cart));
+	assert(offset >= 0 && address < g_cart_info.rom_size());
 	return offset;
 }
 
@@ -417,10 +421,9 @@ int_fast32_t eval_cart_ram_offset(const Cart& cart, const uint16_t address)
 {
 	assert(address >= 0xA000 && address <= 0xBFFF);
 
-	const auto offset = cart.ram_bank_offset + address;
+	const int_fast32_t offset = cart.ram_bank_offset + address;
 	
-	assert(offset >= 0 &&
-		offset < (get_rom_size(cart) + get_ram_size(cart)));
+	assert(offset >= 0 && static_cast<uint_fast32_t>(offset) < (g_cart_info.rom_size() + g_cart_info.ram_size()));
 
 	return offset;
 }
@@ -430,8 +433,7 @@ int_fast32_t eval_hram_offset(const uint16_t address)
 {
 	assert(address >= 0xFF80 && address <= 0xFFFE);
 	const auto offset = address - 0xFF80;
-	assert(offset >= 0 && 
-	       static_cast<size_t>(offset) < sizeof(Memory::hram));
+	assert(offset >= 0 && static_cast<size_t>(offset) < sizeof(Memory::hram));
 	return offset;
 }
 

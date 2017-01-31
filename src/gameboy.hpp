@@ -25,9 +25,8 @@ struct Gameboy {
 	Cart cart;
 };
 
-extern owner<Gameboy*> create_gameboy(const char* rom_file_path);
-extern void destroy_gameboy(owner<Gameboy*> gb);
-extern void reset(Gameboy* gb);
+extern Gameboy* create_gameboy(const char* rom_file_path);
+extern void destroy_gameboy(Gameboy* gb);
 extern void run_for(int32_t clock_limit, Gameboy* gb);
 
 inline void stack_push8(const uint8_t value, Gameboy* const gb)

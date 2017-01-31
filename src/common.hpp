@@ -5,9 +5,6 @@
 
 namespace gbx {
 
-template<class T>
-using owner = T;
-
 constexpr size_t operator"" _Kib(unsigned long long kibs)
 {
 	return static_cast<size_t>(kibs * 1024);
@@ -52,7 +49,7 @@ public:
 		m_func(static_cast<F&&>(other.m_func)),
 		m_abort(other.m_abort)
 	{
-		other.Abort();
+		other.abort();
 	}
 
 	~Finally() noexcept 
@@ -61,7 +58,7 @@ public:
 			m_func();
 	}
 
-	void Abort() noexcept
+	void abort() noexcept
 	{
 		m_abort = true;
 	}

@@ -1,5 +1,6 @@
 #ifndef GBX_CART_HPP_
 #define GBX_CART_HPP_
+#include <stdio.h>
 #include "common.hpp"
 
 namespace gbx {
@@ -32,6 +33,25 @@ enum CartBankingMode : uint8_t {
 	kRamBankingMode
 };
 
+constexpr const CartType kSupportedCartridgeTypes[]{
+	CartType::RomOnly,
+	CartType::RomMBC1,
+	CartType::RomMBC1Ram,
+	CartType::RomMBC1RamBattery,
+	CartType::RomMBC2,
+	CartType::RomMBC2Battery
+};
+
+constexpr const CartSystem kSupportedCartridgeSystems[]{
+	CartSystem::Gameboy,
+	CartSystem::GameboyColorCompat
+};
+
+constexpr const CartType kBatteryCartridgeTypes[]{
+	CartType::RomMBC1RamBattery,
+	CartType::RomMBC2Battery
+};
+
 struct Cart {
 	union {
 		union {
@@ -59,107 +79,40 @@ struct Cart {
 
 
 extern class CartInfo {
-	friend long get_rom_size(const Cart&);
-	friend long get_ram_size(const Cart&);
-	friend int get_rom_banks(const Cart&);
-	friend int get_ram_banks(const Cart&);
-	friend CartType get_type(const Cart&);
-	friend CartShortType get_short_type(const Cart&);
-	friend CartSystem get_system(const Cart&);
-	friend owner<Gameboy*> create_gameboy(const char*);
-	friend void destroy_gameboy(owner<Gameboy*>);
+public:
+	const char* internal_name() const { return m_internal_name; }
+	uint32_t rom_size() const { return m_rom_size; }
+	uint32_t ram_size() const { return m_ram_size; }
+	uint8_t rom_banks() const { return m_rom_banks; }
+	uint8_t ram_banks() const { return m_ram_banks; }
+	CartType type()     const { return m_type; }
+	CartShortType short_type() const { return m_short_type; }
+	CartSystem system()        const { return m_system; }
 
-	char internal_name[17] { 0 };
-	owner<char*> sav_file_path = nullptr;
-	long rom_size = 0;
-	long ram_size = 0;
-	int rom_banks = 0;
-	int ram_banks = 0;
-	CartType type = CartType::RomOnly;
-	CartShortType short_type = CartShortType::RomOnly;
-	CartSystem system = CartSystem::Gameboy;
-} cart_info;
+private:
+	friend Gameboy* create_gameboy(const char*);
+	friend void destroy_gameboy(Gameboy*);
 
-constexpr const CartType kSupportedCartridgeTypes[] {
-	CartType::RomOnly,
-	CartType::RomMBC1,
-	CartType::RomMBC1Ram,
-	CartType::RomMBC1RamBattery,
-	CartType::RomMBC2,
-	CartType::RomMBC2Battery
-};
+	char m_internal_name[17] { 0 };
+	char* m_sav_file_path = nullptr;
 
-constexpr const CartSystem kSupportedCartridgeSystems[] {
-	CartSystem::Gameboy,
-	CartSystem::GameboyColorCompat
-};
+	uint32_t m_rom_size = 0;
+	uint32_t m_ram_size = 0;
+	uint8_t m_rom_banks = 0;
+	uint8_t m_ram_banks = 0;
 
-constexpr const CartType kBatteryCartridgeTypes[] {
-	CartType::RomMBC1RamBattery,
-	CartType::RomMBC2Battery
-};
+	CartType m_type = CartType::RomOnly;
+	CartShortType m_short_type = CartShortType::RomOnly;
+	CartSystem m_system = CartSystem::Gameboy;
 
+} g_cart_info;
 
-
-inline long get_rom_size(const Cart&)
-{
-	return cart_info.rom_size;
-}
-
-inline long get_ram_size(const Cart&)
-{
-	return cart_info.ram_size;
-}
-
-inline int get_rom_banks(const Cart&)
-{
-	return cart_info.rom_banks;
-}
-
-inline int get_ram_banks(const Cart&)
-{
-	return cart_info.ram_banks;
-}
-
-inline CartType get_type(const Cart&)
-{
-	return cart_info.type;
-}
-
-inline CartShortType get_short_type(const Cart&)
-{
-	return cart_info.short_type;
-}
-
-inline CartSystem get_system(const Cart&)
-{
-	return cart_info.system;
-}
-
-inline const uint8_t* get_rom(const Cart& cart)
-{
-	return &cart.data[0];
-}
-
-inline const uint8_t* get_ram(const Cart& cart)
-{
-	return &cart.data[get_rom_size(cart)];
-}
-
-inline uint8_t* get_rom(Cart* const cart)
-{
-	return const_cast<uint8_t*>(get_rom(*cart));
-}
-
-inline uint8_t* get_ram(Cart* const cart)
-{
-	return const_cast<uint8_t*>(get_ram(*cart));
-}
 
 inline void enable_ram(Cart* const cart) 
 {
-	cart->ram_bank_offset = get_rom_size(*cart) - 0xA000;
+	cart->ram_bank_offset = g_cart_info.rom_size() - 0xA000;
 }
+
 
 inline void disable_ram(Cart* const cart)
 {

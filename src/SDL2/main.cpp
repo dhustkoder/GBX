@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	gbx::owner<gbx::Gameboy* const> gameboy = gbx::create_gameboy(argv[1]);
+	gbx::Gameboy* const gameboy = gbx::create_gameboy(argv[1]);
 	
 	if (gameboy == nullptr)
 		return EXIT_FAILURE;
@@ -71,31 +71,31 @@ constexpr const uint32_t keycodes[8] {
 	SDL_SCANCODE_UP, SDL_SCANCODE_DOWN
 };
 
-static gbx::owner<SDL_Window*> window = nullptr;
-static gbx::owner<SDL_Texture*> texture = nullptr;
-static gbx::owner<SDL_Renderer*> renderer = nullptr;
+
+static SDL_Window* window = nullptr;
+static SDL_Texture* texture = nullptr;
+static SDL_Renderer* renderer = nullptr;
 
 
 bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 {
-	const auto update_key =
-	[gb] (const gbx::KeyState state, const uint32_t keycode) {
-		gbx::update_joypad(keycodes, keycode, state,
-		                   &gb->hwstate, &gb->joypad);
-	};
-	const auto key_up = [&update_key] (const uint32_t keycode) {
-		update_key(gbx::KeyState::Up, keycode);
-	};
-	const auto key_down = [&update_key] (const uint32_t keycode) {
-		update_key(gbx::KeyState::Down, keycode);
+	const auto update_key = [gb] (const gbx::KeyState state, const uint32_t keycode) {
+		gbx::update_joypad(keycodes, keycode, state, &gb->hwstate, &gb->joypad);
 	};
 
 	while (SDL_PollEvent(events)) {
 		switch (events->type) {
-		case SDL_KEYDOWN: key_down(events->key.keysym.scancode); break;
-		case SDL_KEYUP: key_up(events->key.keysym.scancode); break;
-		case SDL_QUIT: return false;
-		default: break;
+		case SDL_KEYDOWN:
+			update_key(gbx::KeyState::Down, events->key.keysym.scancode);
+			break;
+		case SDL_KEYUP:
+			update_key(gbx::KeyState::Up, events->key.keysym.scancode);
+			break;
+
+		case SDL_QUIT:
+			return false;
+		default:
+			break;
 		}
 	}
 
@@ -112,7 +112,7 @@ void render_graphics(const gbx::Gpu& gpu)
 	void* pixels;
 	if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
 		constexpr const auto size = sizeof(uint32_t) * 144 * 160;
-		memcpy(pixels, get_screen(gpu), size);
+		memcpy(pixels, &gpu.screen[0][0], size);
 		SDL_UnlockTexture(texture);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);

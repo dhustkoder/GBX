@@ -26,10 +26,10 @@
     <ClInclude Include="..\..\src\cart.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu.hpp">
+    <ClInclude Include="..\..\src\common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common.hpp">
+    <ClInclude Include="..\..\src\cpu.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\debug.hpp">
@@ -55,6 +55,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\cart.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\cbinstructions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

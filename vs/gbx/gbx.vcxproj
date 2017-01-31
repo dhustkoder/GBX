@@ -34,6 +34,7 @@
     <ClInclude Include="..\..\src\memory.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\cart.cpp" />
     <ClCompile Include="..\..\src\cbinstructions.cpp" />
     <ClCompile Include="..\..\src\gameboy.cpp" />
     <ClCompile Include="..\..\src\gpu.cpp" />
