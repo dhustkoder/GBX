@@ -87,7 +87,6 @@ constexpr bool test_bit(const int bit, const T value)
 	return (value & (static_cast<T>(0x01) << bit)) != 0;
 }
 
-
 template<class T>
 constexpr T set_bit(const int bit, const T value) 
 {
@@ -99,7 +98,6 @@ constexpr T res_bit(const int bit, const T value)
 {
 	return (value & ~(static_cast<T>(0x01) << bit));
 }
-
 
 template<class T>
 constexpr uint8_t get_lsb(const T value) 

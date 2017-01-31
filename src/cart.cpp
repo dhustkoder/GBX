@@ -71,9 +71,8 @@ Gameboy* create_gameboy(const char* const rom_file_path)
 
 	if (is_in_array(kBatteryCartridgeTypes, g_cart_info.m_type)) {
 		g_cart_info.m_sav_file_path = eval_sav_file_path(rom_file_path);
-		if (g_cart_info.m_sav_file_path == nullptr ||
-		    !load_sav_file(g_cart_info.m_sav_file_path, &gb->cart))
-			    return nullptr;
+		if (g_cart_info.m_sav_file_path == nullptr || !load_sav_file(g_cart_info.m_sav_file_path, &gb->cart))
+			return nullptr;
 	}
 
 	if (!extract_rom_data(rom_file, &gb->cart))
@@ -152,11 +151,10 @@ bool extract_rom_data(FILE* const rom_file, Cart* const cart)
 }
 
 
-char* eval_sav_file_path(const char* const rom_file_path)
+char* eval_sav_file_path(const char* const rom_path)
 {
-	const auto rom_path_size = strlen(rom_file_path);
-	const auto sav_path_size = rom_path_size + 5;
-
+	const int rom_path_size = static_cast<int>(strlen(rom_path));
+	const int sav_path_size = rom_path_size + 5;
 	char* const sav_file_path = (char*) calloc(sav_path_size, sizeof(char));
 
 	if (sav_file_path == nullptr) {
@@ -168,15 +166,16 @@ char* eval_sav_file_path(const char* const rom_file_path)
 		free(sav_file_path);
 	});
 
-	const size_t dot_offset = [rom_file_path, rom_path_size]()-> size_t {
-		const char* p = &rom_file_path[rom_path_size - 1];
-		while (*p != '.' && p != &rom_file_path[0])
-			--p;
-		return (*p == '.')
-			? p - &rom_file_path[0] : rom_path_size - 1;
-	}();
+	// find the last dot ('.') in the rom file name
+	int dot_offset = rom_path_size - 1;
+	for (int offset = rom_path_size - 1; offset > 1; --offset) {
+		if (rom_path[offset] == '.') {
+			dot_offset = offset;
+			break;
+		}
+	}
 
-	memcpy(sav_file_path, rom_file_path, sizeof(char) * dot_offset);
+	memcpy(sav_file_path, rom_path, sizeof(char) * dot_offset);
 	strcat(sav_file_path, ".sav");
 
 	sav_file_path_guard.abort();
@@ -186,18 +185,23 @@ char* eval_sav_file_path(const char* const rom_file_path)
 
 bool load_sav_file(const char* const sav_file_path, Cart* const cart)
 {
-	if (FILE* const sav_file = fopen(sav_file_path, "rb+")) {
-		const auto sav_file_guard = finally([sav_file] { fclose(sav_file); });
+	errno = 0;
+	FILE* const sav_file = fopen(sav_file_path, "rb+");
 
-		const size_t ram_size = g_cart_info.ram_size();
-		uint8_t* const ram = &cart->data[g_cart_info.rom_size()];
-		if (fread(ram, 1, ram_size, sav_file) < ram_size)
-			fputs("Error while reading sav file\n", stderr);
-
-	} else if (errno != ENOENT) {
-		perror("Couldn't open sav file");
-		return false;
+	if (sav_file == nullptr) {
+		if (errno != ENOENT) {
+			perror("Couldn't open sav file");
+			return false;
+		}
+		return true;
 	}
+
+	const auto sav_file_guard = finally([sav_file] { fclose(sav_file); });
+
+	const size_t ram_size = g_cart_info.ram_size();
+	uint8_t* const ram = &cart->data[g_cart_info.rom_size()];
+	if (fread(ram, 1, ram_size, sav_file) < ram_size)
+		fputs("Error while reading sav file\n", stderr);
 
 	return true;
 }
@@ -287,13 +291,12 @@ bool header_read_types_and_sizes(const uint8_t(&header)[0x4F],
                                  uint8_t* const ram_banks)
 {
 	*type = static_cast<CartType>(header[0x47]);
-	*system = [&] {
-		switch (header[0x43]) {
-		case 0xC0: return CartSystem::GameboyColorOnly; break;
-		case 0x80: return CartSystem::GameboyColorCompat; break;
-		default: return CartSystem::Gameboy; break;
-		}
-	}();
+
+	switch (header[0x43]) {
+	case 0xC0: *system = CartSystem::GameboyColorOnly; break;
+	case 0x80: *system = CartSystem::GameboyColorCompat; break;
+	default: *system = CartSystem::Gameboy; break;
+	}
 
 	if (!is_in_array(kSupportedCartridgeTypes, *type)) {
 		fprintf(stderr, "Cartridge %s %u not supported\n",

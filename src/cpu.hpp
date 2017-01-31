@@ -42,7 +42,6 @@ struct Cpu {
 		};
 		uint16_t hl;
 	};
-	
 };
 
 

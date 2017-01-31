@@ -74,7 +74,7 @@ void update_interrupts(Gameboy* const gb)
 	}
 
 	gb->hwstate.flags.ime = 0;
-	for (const auto interrupt : kInterrupts) {
+	for (const Interrupt interrupt : kInterrupts) {
 		if (pendents & interrupt.mask) {
 			clear_interrupt(interrupt, &gb->hwstate);
 			stack_push16(gb->cpu.pc, gb);

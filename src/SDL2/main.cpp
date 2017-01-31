@@ -8,10 +8,12 @@
 constexpr const int kWinWidth = 160;
 constexpr const int kWinHeight = 144;
 
+
 static bool init_sdl();
 static void quit_sdl();
 static bool update_events(SDL_Event* events, gbx::Gameboy* gb);
 static void render_graphics(const gbx::Gpu& gpu);
+
 
 int main(int argc, char** argv)
 {
@@ -111,7 +113,7 @@ void render_graphics(const gbx::Gpu& gpu)
 	int pitch;
 	void* pixels;
 	if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
-		constexpr const auto size = sizeof(uint32_t) * 144 * 160;
+		constexpr const size_t size = sizeof(uint32_t) * 144 * 160;
 		memcpy(pixels, &gpu.screen[0][0], size);
 		SDL_UnlockTexture(texture);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);

@@ -52,6 +52,7 @@ constexpr const CartType kBatteryCartridgeTypes[]{
 	CartType::RomMBC2Battery
 };
 
+
 struct Cart {
 	union {
 		union {

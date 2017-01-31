@@ -4,10 +4,12 @@
 
 namespace gbx {
 
+	
 struct Interrupt {
 	const uint8_t mask;
 	const uint16_t addr;
 };
+
 
 constexpr const struct {
 	const Interrupt vblank  { 0x01, 0x40 };
@@ -28,7 +30,9 @@ constexpr const struct {
 	}
 } kInterrupts;
 
+
 constexpr const int16_t kTimaClockLimits[] { 1024, 16, 64, 256 };
+
 
 struct HWState {
 	int16_t tima_clock;

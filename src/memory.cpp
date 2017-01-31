@@ -36,6 +36,7 @@ static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
 static void dma_transfer(uint8_t value, Gameboy* gb);
 
+
 uint8_t mem_read8(const Gameboy& gb, const uint16_t address)
 {
 	if (address < 0x8000)
