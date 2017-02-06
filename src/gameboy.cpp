@@ -8,11 +8,11 @@ extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu*
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 
+
 void run_for(const int32_t clock_limit, Gameboy* const gb)
 {
 	do {
-		const auto before = gb->cpu.clock;
-		update_interrupts(gb);
+		const int32_t before = gb->cpu.clock;
 
 		if (!gb->hwstate.flags.cpu_halt) {
 			const uint8_t opcode = mem_read8(*gb, gb->cpu.pc++);
@@ -22,13 +22,13 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 			gb->cpu.clock += 4;
 		}
 
-		const auto step_cycles =
-		  static_cast<int16_t>(gb->cpu.clock - before);
+		const auto step_cycles = static_cast<int16_t>(gb->cpu.clock - before);
 
 		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
 		update_timers(step_cycles, &gb->hwstate);
-	} while (gb->cpu.clock < clock_limit ||
-	         (gb->gpu.ly > 0 && gb->gpu.ly < 144));
+		update_interrupts(gb);
+		
+	} while (gb->cpu.clock < clock_limit || (gb->gpu.ly > 0 && gb->gpu.ly < 144));
 
 	gb->cpu.clock -= clock_limit;
 }

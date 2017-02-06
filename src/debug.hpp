@@ -1,5 +1,7 @@
 #ifndef GBX_DEBUG_HPP_
 #define GBX_DEBUG_HPP_
+
+
 #if defined(_DEBUG) || defined(DEBUG)
 #include <stdio.h>
 #include <stdarg.h>
@@ -16,9 +18,12 @@
 #error "Could not define GBX_DEBUG_BREAK"
 #endif
 
+
 #else
+
 #define GBX_DEBUG_BREAK()
 #define assert(...)
+
 #endif
 
 namespace gbx {
