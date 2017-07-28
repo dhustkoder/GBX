@@ -1,7 +1,7 @@
 #ifndef GBX_GAMEBOY_HPP_
 #define GBX_GAMEBOY_HPP_
 #include "cpu.hpp"
-#include "gpu.hpp"
+#include "ppu.hpp"
 #include "cart.hpp"
 #include "joypad.hpp"
 #include "hwstate.hpp"
@@ -19,7 +19,7 @@ struct Gameboy {
 
 	Joypad joypad;
 	HWState hwstate;
-	Gpu gpu;
+	Ppu ppu;
 	Cpu cpu;
 	Memory memory;
 	Cart cart;

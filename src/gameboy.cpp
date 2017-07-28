@@ -4,7 +4,7 @@
 
 namespace gbx {
 
-extern void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
+extern void update_ppu(int16_t cycles, const Memory& mem, HWState* hwstate, Ppu* ppu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 
@@ -24,11 +24,11 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 
 		const auto step_cycles = static_cast<int16_t>(gb->cpu.clock - before);
 
-		update_gpu(step_cycles, gb->memory, &gb->hwstate, &gb->gpu);
+		update_ppu(step_cycles, gb->memory, &gb->hwstate, &gb->ppu);
 		update_timers(step_cycles, &gb->hwstate);
 		update_interrupts(gb);
 		
-	} while (gb->cpu.clock < clock_limit || (gb->gpu.ly > 0 && gb->gpu.ly < 144));
+	} while (gb->cpu.clock < clock_limit || (gb->ppu.ly > 0 && gb->ppu.ly < 144));
 
 	gb->cpu.clock -= clock_limit;
 }

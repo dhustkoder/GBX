@@ -1,5 +1,5 @@
-#ifndef GBX_GPU_HPP_
-#define GBX_GPU_HPP_
+#ifndef GBX_PPU_HPP_
+#define GBX_PPU_HPP_
 #include "common.hpp"
 #include "hwstate.hpp"
 
@@ -12,7 +12,7 @@ enum Color : uint32_t {
 	kDarkGrey = 0x00555555
 };
 
-enum class GpuMode : uint8_t {
+enum class PpuMode : uint8_t {
 	HBlank = 0x0,
 	VBlank = 0x1,
 	SearchOAM = 0x2,
@@ -26,7 +26,7 @@ struct Pallete {
 
 constexpr const Color kColors[4] { kWhite, kLightGrey, kDarkGrey, kBlack };
 
-struct Gpu {
+struct Ppu {
 	int16_t clock;
 
 	union {
@@ -69,28 +69,28 @@ struct Gpu {
 };
 
 
-inline GpuMode get_gpu_mode(const Gpu& gpu)
+inline PpuMode get_ppu_mode(const Ppu& ppu)
 {
-	return static_cast<GpuMode>(gpu.stat.mode);
+	return static_cast<PpuMode>(ppu.stat.mode);
 }
 
-inline int16_t get_gpu_mode_clock_limit(const GpuMode mode)
+inline int16_t get_ppu_mode_clock_limit(const PpuMode mode)
 {
 	constexpr const int16_t limits[] = { 204, 456, 80, 172 };
 	return limits[static_cast<size_t>(mode)];
 }
 
-inline void set_gpu_mode(const GpuMode mode, Gpu* const gpu, HWState* const hwstate)
+inline void set_ppu_mode(const PpuMode mode, Ppu* const ppu, HWState* const hwstate)
 {
-	if (get_gpu_mode(*gpu) == mode)
+	if (get_ppu_mode(*ppu) == mode)
 		return;
 
 	const auto mode_value = static_cast<uint8_t>(mode);
 
-	if (mode_value < 3 && (gpu->stat.value>>(3 + mode_value))&1)
+	if (mode_value < 3 && (ppu->stat.value>>(3 + mode_value))&1)
 		request_interrupt(kInterrupts.lcd, hwstate);
 
-	gpu->stat.mode = mode_value;
+	ppu->stat.mode = mode_value;
 }
 
 inline void write_pallete(const uint8_t val, Pallete* const pal)

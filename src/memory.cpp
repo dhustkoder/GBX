@@ -29,8 +29,8 @@ static void write_vram(uint16_t address, uint8_t value, Memory* mem);
 static void write_cart_ram(uint16_t address, uint8_t value, Cart* cart);
 static void write_io(uint16_t address, uint8_t value, Gameboy* gb);
 
-static void write_lcdc(uint8_t value, Gpu* gpu, HWState* hwstate);
-static void write_stat(uint8_t value, Gpu* gpu);
+static void write_lcdc(uint8_t value, Ppu* ppu, HWState* hwstate);
+static void write_stat(uint8_t value, Ppu* ppu);
 static void write_joypad(uint8_t value, Joypad* keys);
 static void write_div(uint8_t value, HWState* hwstate);
 static void write_tac(uint8_t value, HWState* hwstate);
@@ -288,17 +288,17 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF06: return gb.hwstate.tma;
 	case 0xFF07: return gb.hwstate.tac;
 	case 0xFF0F: return gb.hwstate.int_flags;
-	case 0xFF40: return gb.gpu.lcdc.value;
-	case 0xFF41: return gb.gpu.stat.value;
-	case 0xFF42: return gb.gpu.scy;
-	case 0xFF43: return gb.gpu.scx;
-	case 0xFF44: return gb.gpu.ly;
-	case 0xFF45: return gb.gpu.lyc;
-	case 0xFF47: return gb.gpu.bgp.value;
-	case 0xFF48: return gb.gpu.obp0.value;
-	case 0xFF49: return gb.gpu.obp1.value;
-	case 0xFF4A: return gb.gpu.wy;
-	case 0xFF4B: return gb.gpu.wx;
+	case 0xFF40: return gb.ppu.lcdc.value;
+	case 0xFF41: return gb.ppu.stat.value;
+	case 0xFF42: return gb.ppu.scy;
+	case 0xFF43: return gb.ppu.scx;
+	case 0xFF44: return gb.ppu.ly;
+	case 0xFF45: return gb.ppu.lyc;
+	case 0xFF47: return gb.ppu.bgp.value;
+	case 0xFF48: return gb.ppu.obp0.value;
+	case 0xFF49: return gb.ppu.obp1.value;
+	case 0xFF4A: return gb.ppu.wy;
+	case 0xFF4B: return gb.ppu.wx;
 	default: break;
 	}
 
@@ -317,41 +317,41 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
 	case 0xFF0F: gb->hwstate.int_flags = value&0x1F; break;
-	case 0xFF40: write_lcdc(value, &gb->gpu, &gb->hwstate); break;
-	case 0xFF41: write_stat(value, &gb->gpu); break;
-	case 0xFF42: gb->gpu.scy = value; break;
-	case 0xFF43: gb->gpu.scx = value; break;
-	case 0xFF44: gb->gpu.ly = 0x00; break;
-	case 0xFF45: gb->gpu.lyc = value; break;
+	case 0xFF40: write_lcdc(value, &gb->ppu, &gb->hwstate); break;
+	case 0xFF41: write_stat(value, &gb->ppu); break;
+	case 0xFF42: gb->ppu.scy = value; break;
+	case 0xFF43: gb->ppu.scx = value; break;
+	case 0xFF44: gb->ppu.ly = 0x00; break;
+	case 0xFF45: gb->ppu.lyc = value; break;
 	case 0xFF46: dma_transfer(value, gb); break;
-	case 0xFF47: write_pallete(value, &gb->gpu.bgp); break;
-	case 0xFF48: write_pallete(value, &gb->gpu.obp0); break;
-	case 0xFF49: write_pallete(value, &gb->gpu.obp1); break;
-	case 0xFF4A: gb->gpu.wy = value; break;
-	case 0xFF4B: gb->gpu.wx = value; break;
+	case 0xFF47: write_pallete(value, &gb->ppu.bgp); break;
+	case 0xFF48: write_pallete(value, &gb->ppu.obp0); break;
+	case 0xFF49: write_pallete(value, &gb->ppu.obp1); break;
+	case 0xFF4A: gb->ppu.wy = value; break;
+	case 0xFF4B: gb->ppu.wx = value; break;
 	default: break;
 	}
 }
 
 
 
-void write_lcdc(const uint8_t value, Gpu* const gpu, HWState* const hwstate)
+void write_lcdc(const uint8_t value, Ppu* const ppu, HWState* const hwstate)
 {
-	const auto old_lcd_off = !gpu->lcdc.lcd_on;
-	gpu->lcdc.value = value;
-	const auto new_lcd_off = !gpu->lcdc.lcd_on;
+	const auto old_lcd_off = !ppu->lcdc.lcd_on;
+	ppu->lcdc.value = value;
+	const auto new_lcd_off = !ppu->lcdc.lcd_on;
 	if (new_lcd_off) {
-		gpu->clock = 0;
-		gpu->ly = 0;
-		set_gpu_mode(GpuMode::HBlank, gpu, hwstate);
+		ppu->clock = 0;
+		ppu->ly = 0;
+		set_ppu_mode(PpuMode::HBlank, ppu, hwstate);
 	} else if (old_lcd_off) {
-		set_gpu_mode(GpuMode::SearchOAM, gpu, hwstate);
+		set_ppu_mode(PpuMode::SearchOAM, ppu, hwstate);
 	}
 }
 
-void write_stat(const uint8_t value, Gpu* const gpu)
+void write_stat(const uint8_t value, Ppu* const ppu)
 {
-	gpu->stat.value = (value&0xF8) | (gpu->stat.value&0x87);
+	ppu->stat.value = (value&0xF8) | (ppu->stat.value&0x87);
 }
 
 

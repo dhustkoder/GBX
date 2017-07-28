@@ -11,106 +11,106 @@ struct Scanline {
 	const Color(&colors)[4];
 };
 
-uint32_t Gpu::screen[144][160];
+uint32_t Ppu::screen[144][160];
 
 
-void update_gpu(int16_t cycles, const Memory& mem, HWState* hwstate, Gpu* gpu);
-inline void mode_hblank(Gpu* gpu, HWState* hwstate);
-inline void mode_vblank(Gpu* gpu, HWState* hwstate);
-inline void mode_oam(Gpu* gpu, HWState* hwstate);
-inline void mode_transfer(const Memory& mem, Gpu* gpu, HWState* hwstate);
-inline void check_gpu_lyc(Gpu* gpu, HWState* hwstate);
-static void update_bg_scanline(const Memory& mem, Gpu* gpu);
-static void update_win_scanline(const Memory& mem, Gpu* gpu);
-static void update_sprite_scanline(const Memory& mem, Gpu* gpu);
+void update_ppu(int16_t cycles, const Memory& mem, HWState* hwstate, Ppu* ppu);
+inline void mode_hblank(Ppu* ppu, HWState* hwstate);
+inline void mode_vblank(Ppu* ppu, HWState* hwstate);
+inline void mode_oam(Ppu* ppu, HWState* hwstate);
+inline void mode_transfer(const Memory& mem, Ppu* ppu, HWState* hwstate);
+inline void check_ppu_lyc(Ppu* ppu, HWState* hwstate);
+static void update_bg_scanline(const Memory& mem, Ppu* ppu);
+static void update_win_scanline(const Memory& mem, Ppu* ppu);
+static void update_sprite_scanline(const Memory& mem, Ppu* ppu);
 static void fill_scanline(int pbeg, int pend, uint16_t row, Scanline* scanline);
 
 
-void update_gpu(const int16_t cycles, const Memory& mem, HWState* const hwstate, Gpu* const gpu)
+void update_ppu(const int16_t cycles, const Memory& mem, HWState* const hwstate, Ppu* const ppu)
 {
-	if (!gpu->lcdc.lcd_on)
+	if (!ppu->lcdc.lcd_on)
 		return;
 
-	const auto mode = get_gpu_mode(*gpu);
-	const auto clock_limit = get_gpu_mode_clock_limit(mode);
-	gpu->clock += cycles;
+	const auto mode = get_ppu_mode(*ppu);
+	const auto clock_limit = get_ppu_mode_clock_limit(mode);
+	ppu->clock += cycles;
 
-	if (gpu->clock >= clock_limit) {
-		gpu->clock -= clock_limit;
+	if (ppu->clock >= clock_limit) {
+		ppu->clock -= clock_limit;
 		switch (mode) {
-		case GpuMode::HBlank: mode_hblank(gpu, hwstate); break;
-		case GpuMode::VBlank: mode_vblank(gpu, hwstate); break;
-		case GpuMode::SearchOAM: mode_oam(gpu, hwstate); break;
-		case GpuMode::Transfer: mode_transfer(mem, gpu, hwstate); break;
+		case PpuMode::HBlank: mode_hblank(ppu, hwstate); break;
+		case PpuMode::VBlank: mode_vblank(ppu, hwstate); break;
+		case PpuMode::SearchOAM: mode_oam(ppu, hwstate); break;
+		case PpuMode::Transfer: mode_transfer(mem, ppu, hwstate); break;
 		default: break;
 		}
 	}
 }
 
 
-void mode_hblank(Gpu* const gpu, HWState* const hwstate)
+void mode_hblank(Ppu* const ppu, HWState* const hwstate)
 {
-	if (++gpu->ly < 144) {
-		set_gpu_mode(GpuMode::SearchOAM, gpu, hwstate);
+	if (++ppu->ly < 144) {
+		set_ppu_mode(PpuMode::SearchOAM, ppu, hwstate);
 	} else {
 		request_interrupt(kInterrupts.vblank, hwstate);
-		set_gpu_mode(GpuMode::VBlank, gpu, hwstate);
+		set_ppu_mode(PpuMode::VBlank, ppu, hwstate);
 	}
-	check_gpu_lyc(gpu, hwstate);
+	check_ppu_lyc(ppu, hwstate);
 }
 
 
-void mode_vblank(Gpu* const gpu, HWState* const hwstate)
+void mode_vblank(Ppu* const ppu, HWState* const hwstate)
 {
-	if (++gpu->ly > 153) {
-		gpu->ly = 0;
-		set_gpu_mode(GpuMode::SearchOAM, gpu, hwstate);
+	if (++ppu->ly > 153) {
+		ppu->ly = 0;
+		set_ppu_mode(PpuMode::SearchOAM, ppu, hwstate);
 	}
-	check_gpu_lyc(gpu, hwstate);
+	check_ppu_lyc(ppu, hwstate);
 }
 
 
-void mode_oam(Gpu* const gpu, HWState* const hwstate)
+void mode_oam(Ppu* const ppu, HWState* const hwstate)
 {
-	set_gpu_mode(GpuMode::Transfer, gpu, hwstate);
+	set_ppu_mode(PpuMode::Transfer, ppu, hwstate);
 }
 
 
-void mode_transfer(const Memory& mem, Gpu* const gpu, HWState* const hwstate)
+void mode_transfer(const Memory& mem, Ppu* const ppu, HWState* const hwstate)
 {
-	update_bg_scanline(mem, gpu);
-	update_win_scanline(mem, gpu);
-	update_sprite_scanline(mem, gpu);
-	set_gpu_mode(GpuMode::HBlank, gpu, hwstate);
+	update_bg_scanline(mem, ppu);
+	update_win_scanline(mem, ppu);
+	update_sprite_scanline(mem, ppu);
+	set_ppu_mode(PpuMode::HBlank, ppu, hwstate);
 }
 
 
-void check_gpu_lyc(Gpu* const gpu, HWState* const hwstate)
+void check_ppu_lyc(Ppu* const ppu, HWState* const hwstate)
 {
-	if (gpu->ly != gpu->lyc) {
-		if (gpu->stat.coincidence_flag)
-			gpu->stat.coincidence_flag = 0;
+	if (ppu->ly != ppu->lyc) {
+		if (ppu->stat.coincidence_flag)
+			ppu->stat.coincidence_flag = 0;
 	} else {
-		gpu->stat.coincidence_flag = 1;
-		if (gpu->stat.int_on_coincidence)
+		ppu->stat.coincidence_flag = 1;
+		if (ppu->stat.int_on_coincidence)
 			request_interrupt(kInterrupts.lcd, hwstate);
 	}
 }
 
 
-void update_bg_scanline(const Memory& mem, Gpu* const gpu)
+void update_bg_scanline(const Memory& mem, Ppu* const ppu)
 {
-	const auto lcdc = gpu->lcdc;
-	const auto ly = gpu->ly;
+	const auto lcdc = ppu->lcdc;
+	const auto ly = ppu->ly;
 	if (!lcdc.bg_on) {
-		memset(&gpu->screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
+		memset(&ppu->screen[ly][0], 0xFF, sizeof(uint32_t) * 160);
 		return;
-	} else if (lcdc.win_on && ly >= gpu->wy && gpu->wx <= 7) {
+	} else if (lcdc.win_on && ly >= ppu->wy && ppu->wx <= 7) {
 		return;
 	}
 
-	const auto scx = gpu->scx;
-	const auto scy = gpu->scy;
+	const auto scx = ppu->scx;
+	const auto scy = ppu->scy;
 	const bool unsig_data = lcdc.tile_data != 0;
 
 	const int lydiv = ly >> 3;
@@ -138,7 +138,7 @@ void update_bg_scanline(const Memory& mem, Gpu* const gpu)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 	
-	Scanline scanline {&gpu->screen[ly][0], gpu->bgp.colors};
+	Scanline scanline {&ppu->screen[ly][0], ppu->bgp.colors};
 
 	if (scxmod == 0) {
 		for (int x = 0; x < 20; ++x)
@@ -151,12 +151,12 @@ void update_bg_scanline(const Memory& mem, Gpu* const gpu)
 	}
 }
 
-void update_win_scanline(const Memory& mem, Gpu* const gpu)
+void update_win_scanline(const Memory& mem, Ppu* const ppu)
 {
-	const auto ly = gpu->ly;
-	const auto lcdc = gpu->lcdc;
-	const int wy = gpu->wy;
-	const int wx = gpu->wx - 7;
+	const auto ly = ppu->ly;
+	const auto lcdc = ppu->lcdc;
+	const int wy = ppu->wy;
+	const int wx = ppu->wx - 7;
 	if (!lcdc.win_on || ly < wy || wx >= 160)
 		return;
 
@@ -177,7 +177,7 @@ void update_win_scanline(const Memory& mem, Gpu* const gpu)
 		return concat_bytes(tile_data[addr + 1], tile_data[addr]);
 	};
 
-	Scanline scanline{&gpu->screen[ly][wx_max], gpu->bgp.colors};
+	Scanline scanline{&ppu->screen[ly][wx_max], ppu->bgp.colors};
 
 	int xbeg = 0;
 	int to_draw = (160 - wx_max);
@@ -195,18 +195,18 @@ void update_win_scanline(const Memory& mem, Gpu* const gpu)
 	}
 }
 
-void update_sprite_scanline(const Memory& mem, Gpu* const gpu)
+void update_sprite_scanline(const Memory& mem, Ppu* const ppu)
 {
 	static_assert((sizeof(mem.oam) % 4) == 0, "");
-	const auto lcdc = gpu->lcdc;
+	const auto lcdc = ppu->lcdc;
 
 	if (!lcdc.obj_on)
 		return;
 
-	const auto& bgp = gpu->bgp.colors;
-	const auto& obp0 = gpu->obp0.colors;
-	const auto& obp1 = gpu->obp1.colors;
-	const auto ly = gpu->ly;
+	const auto& bgp = ppu->bgp.colors;
+	const auto& obp0 = ppu->obp0.colors;
+	const auto& obp1 = ppu->obp1.colors;
+	const auto ly = ppu->ly;
 	const int yres = lcdc.obj_size ? 16 : 8;
 
 	for (int i = sizeof(mem.oam) - 4; i >= 0; i -= 4) {
@@ -253,11 +253,11 @@ void update_sprite_scanline(const Memory& mem, Gpu* const gpu)
 		uint32_t* line;
 		int pbeg, pend;
 		if (xpos < 0) {
-			line = &gpu->screen[ly][0];
+			line = &ppu->screen[ly][0];
 			pbeg = -xpos;
 			pend = 8;
 		} else {
-			line = &gpu->screen[ly][xpos];
+			line = &ppu->screen[ly][xpos];
 			pbeg = 0;
 			pend = min(160 - xpos, 8);
 		}

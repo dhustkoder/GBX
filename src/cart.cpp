@@ -122,11 +122,11 @@ void reset(Gameboy* const gb)
 	gb->cpu.de = 0x00D8;
 	gb->cpu.hl = 0x014D;
 
-	gb->gpu.lcdc.value = 0x91;
-	gb->gpu.stat.value = 0x85;
-	write_pallete(0xFC, &gb->gpu.bgp);
-	write_pallete(0xFF, &gb->gpu.obp0);
-	write_pallete(0xFF, &gb->gpu.obp1);
+	gb->ppu.lcdc.value = 0x91;
+	gb->ppu.stat.value = 0x85;
+	write_pallete(0xFC, &gb->ppu.bgp);
+	write_pallete(0xFF, &gb->ppu.obp0);
+	write_pallete(0xFF, &gb->ppu.obp1);
 
 	gb->hwstate.tac = 0xF8;
 	gb->joypad.reg.value = 0xFF;

@@ -12,7 +12,7 @@ constexpr const int kWinHeight = 144;
 static bool init_sdl();
 static void quit_sdl();
 static bool update_events(SDL_Event* events, gbx::Gameboy* gb);
-static void render_graphics(const gbx::Gpu& gpu);
+static void render_graphics(const gbx::Ppu& ppu);
 
 
 int main(int argc, char** argv)
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
 	while (update_events(&events, gameboy)) {
 		gbx::run_for(70224, gameboy);
-		render_graphics(gameboy->gpu);
+		render_graphics(gameboy->ppu);
 		++fps;
 		const auto ticks = SDL_GetTicks();
 		if (ticks >= (last_ticks + 1000)) {
@@ -105,16 +105,16 @@ bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
 }
 
 
-void render_graphics(const gbx::Gpu& gpu)
+void render_graphics(const gbx::Ppu& ppu)
 {
-	if (!gpu.lcdc.lcd_on)
+	if (!ppu.lcdc.lcd_on)
 		return;
 
 	int pitch;
 	void* pixels;
 	if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0) {
 		constexpr const size_t size = sizeof(uint32_t) * 144 * 160;
-		memcpy(pixels, &gpu.screen[0][0], size);
+		memcpy(pixels, &ppu.screen[0][0], size);
 		SDL_UnlockTexture(texture);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);
