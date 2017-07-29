@@ -1,4 +1,5 @@
 #include <climits>
+#include "SDL.h"
 #include "SDL_audio.h"
 #include "apu.hpp"
 
@@ -7,7 +8,7 @@ extern SDL_AudioDeviceID audio_device;
 namespace gbx {
 
 
-static double apu_samples[95];
+static int8_t apu_samples[95];
 static int16_t sound_buffer[1024];
 static int8_t samples_index = 0;
 static int16_t sound_buffer_index = 0;
@@ -36,16 +37,20 @@ void update_apu(const int16_t cycles, Apu* const apu)
 				apu->square[i].out = apu->square[i].reg2.vol;
 		}
 
-		apu_samples[samples_index++] = apu->square[0].out + apu->square[1].out;
-		if (samples_index >= 95) {
+
+		apu_samples[samples_index] = apu->square[0].out + apu->square[1].out;
+		if (++samples_index >= 95) {
 			samples_index = 0;
 			double avg = 0;
 			for (int i = 0; i < 95; ++i)
 				avg += apu_samples[i];
 			avg /= 95;
-			sound_buffer[sound_buffer_index++] = avg * 500;
-			if (sound_buffer_index >= 1024) {
+			avg *= 500;
+			sound_buffer[sound_buffer_index] = avg;
+			if (++sound_buffer_index >= 1024) {
 				sound_buffer_index = 0;
+				while (SDL_GetQueuedAudioSize(audio_device) > sizeof(sound_buffer))
+					SDL_Delay(1);
 				SDL_QueueAudio(audio_device, (uint8_t*)sound_buffer, sizeof(sound_buffer));
 			}
 		}
