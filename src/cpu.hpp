@@ -4,6 +4,7 @@
 
 namespace gbx {
 
+constexpr const int_fast32_t kCpuFreq = 4194304;
 
 enum CpuFlags : uint8_t {
 	kFlagZ = 0x80, kFlagN = 0x40, 

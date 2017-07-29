@@ -128,6 +128,10 @@ void reset(Gameboy* const gb)
 	write_pallete(0xFF, &gb->ppu.obp0);
 	write_pallete(0xFF, &gb->ppu.obp1);
 
+	gb->apu.power = true;
+	gb->apu.frame_cnt = kApuFrameCntTicks;
+	gb->apu.frame_step = 0;
+
 	gb->hwstate.tac = 0xF8;
 	gb->joypad.reg.value = 0xFF;
 	gb->joypad.keys.both = 0xFF;

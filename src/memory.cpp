@@ -18,6 +18,7 @@ static uint8_t read_wram(const Memory& mem, uint16_t address);
 static uint8_t read_vram(const Memory& mem, uint16_t address);
 static uint8_t read_cart_ram(const Cart& cart, uint16_t address);
 static uint8_t read_apu_square_reg4(const Apu::Square& s);
+static uint8_t read_apu_nr52(const Apu& apu);
 static uint8_t read_io(const Gameboy& gb, uint16_t address);
 
 static void write_cart(uint16_t address, uint8_t value, Cart* cart);
@@ -35,6 +36,7 @@ static void write_apu_square_reg1(uint8_t value, Apu::Square* s);
 static void write_apu_square_reg2(uint8_t value, Apu::Square* s);
 static void write_apu_square_reg3(uint8_t value, Apu::Square* s);
 static void write_apu_square_reg4(uint8_t value, Apu::Square* s);
+static void write_apu_nr52(uint8_t value, Apu* const apu);
 static void write_lcdc(uint8_t value, Ppu* ppu, HWState* hwstate);
 static void write_stat(uint8_t value, Ppu* ppu);
 static void write_joypad(uint8_t value, Joypad* keys);
@@ -137,6 +139,13 @@ uint8_t read_cart_ram(const Cart& cart, const uint16_t address)
 uint8_t read_apu_square_reg4(const Apu::Square& s)
 {
 	return (s.trigger<<7)|(s.len_enabled<<6)|(s.freq&0x07);
+}
+
+uint8_t read_apu_nr52(const Apu& apu)
+{
+	return (apu.power<<7)                 |
+	       ((apu.square2.len_cnt > 0)<<1) |
+	       (apu.square1.len_cnt > 0);
 }
 
 void write_cart(const uint16_t address, const uint8_t value, Cart* const cart)
@@ -303,6 +312,8 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF16: return gb.apu.square2.reg1.val;
 	case 0xFF17: return gb.apu.square2.reg2.val;
 	case 0xFF19: return read_apu_square_reg4(gb.apu.square2);
+	case 0xFF25: return gb.apu.nr51.val;
+	case 0xFF26: return read_apu_nr52(gb.apu);
 	case 0xFF40: return gb.ppu.lcdc.value;
 	case 0xFF41: return gb.ppu.stat.value;
 	case 0xFF42: return gb.ppu.scy;
@@ -340,6 +351,8 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF17: write_apu_square_reg2(value, &gb->apu.square2); break;
 	case 0xFF18: write_apu_square_reg3(value, &gb->apu.square2); break;
 	case 0xFF19: write_apu_square_reg4(value, &gb->apu.square2); break;
+	case 0xFF51: gb->apu.nr51.val = value; break;
+	case 0xFF26: write_apu_nr52(value, &gb->apu); break;
 	case 0xFF40: write_lcdc(value, &gb->ppu, &gb->hwstate); break;
 	case 0xFF41: write_stat(value, &gb->ppu); break;
 	case 0xFF42: gb->ppu.scy = value; break;
@@ -356,34 +369,45 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	}
 }
 
-void write_apu_square_reg0(uint8_t value, Apu::Square1* const s)
+void write_apu_square_reg0(const uint8_t value, Apu::Square1* const s)
 {
 	s->reg0.val = value;
 }
 
-void write_apu_square_reg1(uint8_t value, Apu::Square* const s)
+void write_apu_square_reg1(const uint8_t value, Apu::Square* const s)
 {
 	s->reg1.val = value;
+	s->len_cnt = 64 - s->reg1.len;
 }
 
-void write_apu_square_reg2(uint8_t value, Apu::Square* const s)
+void write_apu_square_reg2(const uint8_t value, Apu::Square* const s)
 {
 	s->reg2.val = value;
 }
 
-void write_apu_square_reg3(uint8_t value, Apu::Square* const s)
+void write_apu_square_reg3(const uint8_t value, Apu::Square* const s)
 {
 	s->freq = (s->freq&0x0700)|value;
 }
 
-void write_apu_square_reg4(uint8_t value, Apu::Square* const s)
+void write_apu_square_reg4(const uint8_t value, Apu::Square* const s)
 {
 	s->freq = (s->freq&0x00FF)|((value&0x07)<<8);
 	s->trigger = (value&0x80) != 0;
 	s->len_enabled = (value&0x40) != 0;
 	if (s->trigger) {
-		s->freq_cnt =
-		 (s->freq_cnt&0x03)|(((2048 - s->freq) * 4)&0xFFFC);
+		s->len_cnt = 64 - s->reg1.len;
+		s->freq_cnt = (s->freq_cnt&0x03)|(((2048 - s->freq) * 4)&0xFFFC);
+	}
+}
+
+void write_apu_nr52(const uint8_t value, Apu* const apu)
+{
+	if ((value&0x80) == 0) {
+		memset(&apu->square1, 0, sizeof(apu->square1));
+		memset(&apu->square2, 0, sizeof(apu->square2));
+		apu->power = false;
+		apu->frame_cnt = kApuFrameCntTicks;
 	}
 }
 

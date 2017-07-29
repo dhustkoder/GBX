@@ -1,16 +1,18 @@
 #ifndef GBX_APU_HPP_
 #define GBX_APU_HPP_
 #include "common.hpp"
-
+#include "cpu.hpp"
 
 namespace gbx {
 
-
+constexpr const int_fast32_t kApuFrameCntTicks = kCpuFreq / 512;
 
 struct Apu {
+
 	struct Square {
 		int16_t freq;
 		int16_t freq_cnt;
+		int16_t len_cnt;
 		int8_t duty_pos;
 		uint8_t out;
 		bool trigger;
@@ -19,7 +21,7 @@ struct Apu {
 		union {
 			uint8_t val;
 			struct {
-				uint8_t length : 6;
+				uint8_t len    : 6;
 				uint8_t duty   : 2;
 			};
 		} reg1;
@@ -50,6 +52,25 @@ struct Apu {
 	} square1;
 
 	Square square2;
+
+	union {
+		uint8_t val;
+		struct {
+			uint8_t s1t1 : 1;
+			uint8_t s2t1 : 1;
+			uint8_t s3t1 : 1;
+			uint8_t s4t1 : 1;
+			uint8_t s1t2 : 1;
+			uint8_t s2t2 : 1;
+			uint8_t s3t2 : 1;
+			uint8_t s4t2 : 1;
+		};
+	} nr51;
+
+
+	int16_t frame_cnt;
+	int8_t frame_step;
+	bool power;
 };
 
 

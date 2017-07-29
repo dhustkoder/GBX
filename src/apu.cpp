@@ -14,6 +14,44 @@ static int samples_index = 0;
 static int sound_buffer_index = 0;
 
 
+static void tick_length(Apu* const apu)
+{
+	const auto tick_square_len = [](Apu::Square* const s) {
+		if (s->len_cnt > 0)
+			--s->len_cnt;
+	};
+
+	tick_square_len(&apu->square1);
+	tick_square_len(&apu->square2);
+}
+
+static void tick_frame_counter(Apu* const apu)
+{
+	if (--apu->frame_cnt <= 0)  {
+		apu->frame_cnt = kApuFrameCntTicks;
+		switch (apu->frame_step++) {
+		case 0:
+			tick_length(apu);
+			break;
+		case 2:
+			tick_length(apu);
+			//tick_sweep(apu);
+			break;
+		case 4:
+			tick_length(apu);
+			break;
+		case 6:
+			tick_length(apu);
+			//tick_sweep(apu);
+			break;
+		case 7:
+			//tick_envelop(apu);
+			apu->frame_step = 0;
+			break;
+		}
+	}
+}
+
 static void tick_square_freq_cnt(Apu::Square* const s)
 {
 	static const uint8_t dutytbl[4][8] = {
@@ -29,7 +67,7 @@ static void tick_square_freq_cnt(Apu::Square* const s)
 		s->duty_pos &= 0x07;
 	}
 	
-	if (!dutytbl[s->reg1.duty][s->duty_pos])
+	if (s->len_cnt <= 0 || !dutytbl[s->reg1.duty][s->duty_pos])
 		s->out = 0;
 	else
 		s->out = s->reg2.vol;
@@ -38,7 +76,11 @@ static void tick_square_freq_cnt(Apu::Square* const s)
 
 void update_apu(const int16_t cycles, Apu* const apu)
 {
+	if (!apu->power)
+		return;
+
 	for (int ticks = 0; ticks < cycles; ++ticks) {
+		tick_frame_counter(apu);
 		tick_square_freq_cnt(&apu->square1);
 		tick_square_freq_cnt(&apu->square2);
 
