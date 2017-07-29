@@ -46,20 +46,10 @@ int main(int argc, char** argv)
 	});
 
 	SDL_Event events;
-	uint32_t last_ticks = 0;
-	int fps = 0;
 
 	while (update_events(&events, gameboy)) {
 		gbx::run_for(70224, gameboy);
 		render_graphics(gameboy->ppu);
-		++fps;
-		const auto ticks = SDL_GetTicks();
-		if (ticks >= (last_ticks + 1000)) {
-			printf("FPS: %d\r", fps);
-			fflush(stdout);
-			last_ticks = ticks;
-			fps = 0;
-		}
 	}
 
 	return EXIT_SUCCESS;
@@ -77,6 +67,7 @@ constexpr const uint32_t keycodes[8] {
 static SDL_Window* window = nullptr;
 static SDL_Texture* texture = nullptr;
 static SDL_Renderer* renderer = nullptr;
+SDL_AudioDeviceID audio_device = 0;
 
 
 bool update_events(SDL_Event* const events, gbx::Gameboy* const gb)
@@ -127,7 +118,7 @@ void render_graphics(const gbx::Ppu& ppu)
 
 bool init_sdl()
 {
-	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
 		fprintf(stderr, "failed to init SDL2: %s\n", SDL_GetError());
 		return false;
 	}
@@ -166,8 +157,25 @@ bool init_sdl()
 
 	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(renderer);
+
+
+	SDL_AudioSpec want;
+	SDL_zero(want);
+	want.freq = 44100;
+	want.format = AUDIO_S16SYS;
+	want.channels = 1;
+	want.samples = 1024;
+
+	if ((audio_device = SDL_OpenAudioDevice(nullptr, 0, &want, nullptr, 0)) == 0) {
+		fprintf(stderr, "Failed to open audio device: %s\n", SDL_GetError());
+		goto free_texture;
+	}
+
+	SDL_PauseAudioDevice(audio_device, 0);
 	return true;
 
+free_texture:
+	SDL_DestroyTexture(texture);
 free_renderer:
 	SDL_DestroyRenderer(renderer);
 free_window:

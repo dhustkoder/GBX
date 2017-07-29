@@ -4,7 +4,6 @@
 
 namespace gbx {
 
-extern void update_ppu(int16_t cycles, const Memory& mem, HWState* hwstate, Ppu* ppu);
 static void update_timers(int16_t cycles, HWState* hwstate);
 static void update_interrupts(Gameboy* gb);
 
@@ -12,7 +11,7 @@ static void update_interrupts(Gameboy* gb);
 void run_for(const int32_t clock_limit, Gameboy* const gb)
 {
 	do {
-		const int32_t before = gb->cpu.clock;
+		const int32_t prevclk = gb->cpu.clock;
 
 		if (!gb->hwstate.flags.cpu_halt) {
 			const uint8_t opcode = mem_read8(*gb, gb->cpu.pc++);
@@ -22,9 +21,10 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 			gb->cpu.clock += 4;
 		}
 
-		const auto step_cycles = static_cast<int16_t>(gb->cpu.clock - before);
+		const auto step_cycles = static_cast<int16_t>(gb->cpu.clock - prevclk);
 
 		update_ppu(step_cycles, gb->memory, &gb->hwstate, &gb->ppu);
+		update_apu(step_cycles, &gb->apu);
 		update_timers(step_cycles, &gb->hwstate);
 		update_interrupts(gb);
 		

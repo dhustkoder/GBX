@@ -288,6 +288,17 @@ uint8_t read_io(const Gameboy& gb, const uint16_t address)
 	case 0xFF06: return gb.hwstate.tma;
 	case 0xFF07: return gb.hwstate.tac;
 	case 0xFF0F: return gb.hwstate.int_flags;
+	case 0xFF10: return gb.apu.square[0].reg0.val;
+	case 0xFF11: return gb.apu.square[0].reg1.val;
+	case 0xFF12: return gb.apu.square[0].reg2.val;
+	case 0xFF14: return (gb.apu.square[0].trigger<<7)    |
+	                    (gb.apu.square[0].len_enabled<<6) |
+	                    (gb.apu.square[0].freq&0x07);
+	case 0xFF16: return gb.apu.square[1].reg1.val;
+	case 0xFF17: return gb.apu.square[1].reg2.val;
+	case 0xFF19: return (gb.apu.square[1].trigger<<7)    |
+	                    (gb.apu.square[1].len_enabled<<6) |
+	                    (gb.apu.square[1].freq&0x07);
 	case 0xFF40: return gb.ppu.lcdc.value;
 	case 0xFF41: return gb.ppu.stat.value;
 	case 0xFF42: return gb.ppu.scy;
@@ -317,6 +328,29 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF06: gb->hwstate.tma = value; break;
 	case 0xFF07: write_tac(value, &gb->hwstate); break;
 	case 0xFF0F: gb->hwstate.int_flags = value&0x1F; break;
+	case 0xFF10: gb->apu.square[0].reg0.val = value; break;
+	case 0xFF11: gb->apu.square[0].reg1.val = value; break;
+	case 0xFF12: gb->apu.square[0].reg2.val = value; break;
+	case 0xFF13: gb->apu.square[0].freq = (gb->apu.square[0].freq&0x0700)|value; break;
+	case 0xFF14:
+		gb->apu.square[0].freq = (gb->apu.square[0].freq&0x00FF)|((value&0x07)<<8);
+		gb->apu.square[0].trigger = (value&0x80) != 0;
+		gb->apu.square[0].len_enabled = (value&0x40) != 0;
+		if (gb->apu.square[0].trigger) {
+			gb->apu.square[0].freq_cnt = (2048 - gb->apu.square[0].freq) * 4;
+		}
+		break;
+	case 0xFF16: gb->apu.square[1].reg1.val = value; break;
+	case 0xFF17: gb->apu.square[1].reg2.val = value; break;
+	case 0xFF18: gb->apu.square[1].freq = (gb->apu.square[1].freq&0x0700)|value; break;
+	case 0xFF19:
+		gb->apu.square[1].freq = (gb->apu.square[1].freq&0x00FF)|((value&0x07)<<8);
+		gb->apu.square[1].trigger = (value&0x80) != 0;
+		gb->apu.square[1].len_enabled = (value&0x40) != 0;
+		if (gb->apu.square[1].trigger) {
+			gb->apu.square[1].freq_cnt = (2048 - gb->apu.square[1].freq) * 4;
+		}
+		break;
 	case 0xFF40: write_lcdc(value, &gb->ppu, &gb->hwstate); break;
 	case 0xFF41: write_stat(value, &gb->ppu); break;
 	case 0xFF42: gb->ppu.scy = value; break;

@@ -2,6 +2,7 @@
 #define GBX_PPU_HPP_
 #include "common.hpp"
 #include "hwstate.hpp"
+#include "memory.hpp"
 
 namespace gbx {
 
@@ -68,6 +69,8 @@ struct Ppu {
 	static uint32_t screen[144][160];
 };
 
+
+extern void update_ppu(int16_t cycles, const Memory& mem, HWState* hwstate, Ppu* ppu);
 
 inline PpuMode get_ppu_mode(const Ppu& ppu)
 {
