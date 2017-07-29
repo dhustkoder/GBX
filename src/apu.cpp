@@ -1,9 +1,7 @@
 #include <climits>
-#include "SDL.h"
-#include "SDL_audio.h"
+#include "audio.hpp"
 #include "apu.hpp"
 
-extern SDL_AudioDeviceID audio_device;
 
 namespace gbx {
 
@@ -49,9 +47,7 @@ void update_apu(const int16_t cycles, Apu* const apu)
 			sound_buffer[sound_buffer_index] = avg;
 			if (++sound_buffer_index >= 1024) {
 				sound_buffer_index = 0;
-				while (SDL_GetQueuedAudioSize(audio_device) > sizeof(sound_buffer))
-					SDL_Delay(1);
-				SDL_QueueAudio(audio_device, (uint8_t*)sound_buffer, sizeof(sound_buffer));
+				queue_sound_buffer((uint8_t*)sound_buffer, sizeof(sound_buffer));
 			}
 		}
 	}

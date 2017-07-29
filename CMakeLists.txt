@@ -58,7 +58,7 @@ elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif()
 
 # gbx src directory
-set(GBX_SRC_DIR "./src")
+set(GBX_SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 # include src directory
 include_directories("${GBX_SRC_DIR}")
 
@@ -79,7 +79,7 @@ if (${TARGET_OS} STREQUAL "Linux")
 
 	file(GLOB GBX_PLATFORM_SRC_FILES "${GBX_SRC_DIR}/SDL2/*.cpp")
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SDL2_CFLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${GBX_SRC_DIR}/SDL2/ ${SDL2_CFLAGS}")
 	set(GBX_LINK_LIBRARIES "-lc ${SDL2_LIBS}")
 else()
 	message(FATAL_ERROR "Add your platform build configuration")

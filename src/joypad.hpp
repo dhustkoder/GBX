@@ -1,6 +1,7 @@
 #ifndef GBX_JOYPAD_HPP_
 #define GBX_JOYPAD_HPP_
 #include <stdint.h>
+#include "input.hpp"
 #include "hwstate.hpp"
 
 namespace gbx {
@@ -21,8 +22,8 @@ struct Joypad {
 	union {
 		uint8_t value;
 		struct {
-			uint8_t keys  : 4;
-			uint8_t mode  : 2;
+			uint8_t keys : 4;
+			uint8_t mode : 2;
 		};
 	} reg;
 
@@ -35,7 +36,7 @@ struct Joypad {
 	} keys;
 };
 
- 
+
 inline void update_joypad(const uint32_t(&keycodes)[8],
                           const uint32_t keycode, const KeyState state,
 			  HWState* const /*hwstate*/, Joypad* const pad)
