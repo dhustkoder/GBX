@@ -28,7 +28,7 @@ void run_for(const int32_t clock_limit, Gameboy* const gb)
 		update_timers(step_cycles, &gb->hwstate);
 		update_interrupts(gb);
 		
-	} while (gb->cpu.clock < clock_limit || (gb->ppu.ly > 0 && gb->ppu.ly < 144));
+	} while (gb->cpu.clock < clock_limit);
 
 	gb->cpu.clock -= clock_limit;
 }

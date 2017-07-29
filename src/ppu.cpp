@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include "video.hpp"
 #include "debug.hpp"
 #include "gameboy.hpp"
 
@@ -64,6 +65,7 @@ void mode_vblank(Ppu* const ppu, HWState* const hwstate)
 {
 	if (++ppu->ly > 153) {
 		ppu->ly = 0;
+		render_graphics(&ppu->screen[0][0], sizeof(ppu->screen));
 		set_ppu_mode(PpuMode::SearchOAM, ppu, hwstate);
 	}
 	check_ppu_lyc(ppu, hwstate);
