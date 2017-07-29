@@ -272,10 +272,10 @@ bool header_read_name(const uint8_t(&header)[0x4F], char(*const buffer)[17])
 	memcpy(buffer, &header[0x34], 16);
 	(*buffer)[16] = '\0';
 
-	if (strlen(*buffer) == 0) {
-		fputs("ROM's internal name is invalid\n", stderr);
-		return false;
-	}
+//	if (strlen(*buffer) == 0) {
+//		fputs("ROM's internal name is invalid\n", stderr);
+//		return false;
+//	}
 
 	return true;
 }

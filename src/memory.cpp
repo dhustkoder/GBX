@@ -337,7 +337,8 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 		gb->apu.square[0].trigger = (value&0x80) != 0;
 		gb->apu.square[0].len_enabled = (value&0x40) != 0;
 		if (gb->apu.square[0].trigger) {
-			gb->apu.square[0].freq_cnt = (2048 - gb->apu.square[0].freq) * 4;
+			gb->apu.square[0].freq_cnt =
+				(gb->apu.square[0].freq_cnt&0x03)|(((2048 - gb->apu.square[0].freq) * 4)&0xFFFC);
 		}
 		break;
 	case 0xFF16: gb->apu.square[1].reg1.val = value; break;
@@ -348,7 +349,8 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 		gb->apu.square[1].trigger = (value&0x80) != 0;
 		gb->apu.square[1].len_enabled = (value&0x40) != 0;
 		if (gb->apu.square[1].trigger) {
-			gb->apu.square[1].freq_cnt = (2048 - gb->apu.square[1].freq) * 4;
+			gb->apu.square[1].freq_cnt =
+				(gb->apu.square[1].freq_cnt&0x03)|(((2048 - gb->apu.square[1].freq) * 4)&0xFFFC);
 		}
 		break;
 	case 0xFF40: write_lcdc(value, &gb->ppu, &gb->hwstate); break;
@@ -438,6 +440,7 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 		for (auto& byte : gb->memory.oam)
 			byte = mem_read8(*gb, addr++);
 	}
+	gb->cpu.clock += 671;
 }
 
 

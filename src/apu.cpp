@@ -19,7 +19,7 @@ void update_apu(const int16_t cycles, Apu* const apu)
 	static const uint8_t dutytbl[4][8] = {
 		{ 0, 0, 0, 0, 0, 0, 0, 1 },
 		{ 1, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 0, 0, 0, 0, 0, 0, 1 },
+		{ 1, 0, 0, 0, 0, 1, 1, 1 },
 		{ 0, 1, 1, 1, 1, 1, 1, 0 }
 	};
 
