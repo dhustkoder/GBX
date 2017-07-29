@@ -5,15 +5,16 @@
 
 namespace gbx {
 
+constexpr const int kApuSamplesSize = 95;
+constexpr const int kSoundBufferSize = 1024;
 
-static int8_t apu_samples[95];
-static int16_t sound_buffer[1024];
-static int8_t samples_index = 0;
-static int16_t sound_buffer_index = 0;
+static int8_t apu_samples[kApuSamplesSize];
+static int16_t sound_buffer[kSoundBufferSize];
+static int samples_index = 0;
+static int sound_buffer_index = 0;
 
 
-
-void update_apu(const int16_t cycles, Apu* const apu)
+static void tick_square_freq_cnt(Apu::Square* const s)
 {
 	static const uint8_t dutytbl[4][8] = {
 		{ 0, 0, 0, 0, 0, 0, 0, 1 },
@@ -22,30 +23,35 @@ void update_apu(const int16_t cycles, Apu* const apu)
 		{ 0, 1, 1, 1, 1, 1, 1, 0 }
 	};
 
+	if (--s->freq_cnt <= 0) {
+		s->freq_cnt = (2048 - s->freq) * 4;
+		s->duty_pos += 1;
+		s->duty_pos &= 0x07;
+	}
+	
+	if (!dutytbl[s->reg1.duty][s->duty_pos])
+		s->out = 0;
+	else
+		s->out = s->reg2.vol;
+}
+
+
+void update_apu(const int16_t cycles, Apu* const apu)
+{
 	for (int ticks = 0; ticks < cycles; ++ticks) {
-		for (int i = 0; i < 2; ++i) {
-			if (--apu->square[i].freq_cnt <= 0) {
-				apu->square[i].freq_cnt = (2048 - apu->square[i].freq) * 4;
-				apu->square[i].duty_pos += 1;
-				apu->square[i].duty_pos &= 0x07;
-			}
-			if (!dutytbl[apu->square[i].reg1.duty][apu->square[i].duty_pos])
-				apu->square[i].out = 0;
-			else
-				apu->square[i].out = apu->square[i].reg2.vol;
-		}
+		tick_square_freq_cnt(&apu->square1);
+		tick_square_freq_cnt(&apu->square2);
 
-
-		apu_samples[samples_index] = apu->square[0].out + apu->square[1].out;
-		if (++samples_index >= 95) {
+		apu_samples[samples_index] = apu->square1.out + apu->square2.out;
+		if (++samples_index >= kApuSamplesSize) {
 			samples_index = 0;
 			double avg = 0;
-			for (int i = 0; i < 95; ++i)
+			for (int i = 0; i < kApuSamplesSize; ++i)
 				avg += apu_samples[i];
 			avg /= 95;
 			avg *= 500;
 			sound_buffer[sound_buffer_index] = avg;
-			if (++sound_buffer_index >= 1024) {
+			if (++sound_buffer_index >= kSoundBufferSize) {
 				sound_buffer_index = 0;
 				queue_sound_buffer((uint8_t*)sound_buffer, sizeof(sound_buffer));
 			}

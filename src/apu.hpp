@@ -8,20 +8,13 @@ namespace gbx {
 
 
 struct Apu {
-	struct {
+	struct Square {
 		int16_t freq;
 		int16_t freq_cnt;
 		int8_t duty_pos;
 		uint8_t out;
-		union {
-			uint8_t val;
-			struct {
-				uint8_t shift        : 3;
-				uint8_t negate       : 1;
-				uint8_t sweep_period : 3;
-				uint8_t              : 1;
-			};
-		} reg0;
+		bool trigger;
+		bool len_enabled;
 
 		union {
 			uint8_t val;
@@ -40,10 +33,23 @@ struct Apu {
 			};
 		} reg2;
 
-		bool trigger;
-		bool len_enabled;
+	};
 
-	} square[2];
+	struct Square1 : Square {
+
+		union {
+			uint8_t val;
+			struct {
+				uint8_t shift        : 3;
+				uint8_t negate       : 1;
+				uint8_t sweep_period : 3;
+				uint8_t              : 1;
+			};
+		} reg0;
+
+	} square1;
+
+	Square square2;
 };
 
 
