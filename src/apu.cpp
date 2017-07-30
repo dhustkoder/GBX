@@ -18,20 +18,43 @@ static int sound_buffer_index = 0;
 static void tick_sweep(Apu* const apu)
 {
 	Apu::Square1& s = apu->square1;
-	if (--s.sweep_cnt <= 0) {
-		s.sweep_cnt = s.reg0.sweep_period;
-		if (s.sweep_cnt == 0)
-			s.sweep_cnt = 8;
-		if (s.sweep_enabled && s.reg0.sweep_period > 0) {
+	if (--s.sweep_period_cnt <= 0) {
+		s.sweep_period_cnt = s.sweep_period_load;
+		if (s.sweep_period_cnt == 0)
+			s.sweep_period_cnt = 8;
+		if (s.sweep_enabled && s.sweep_period_load > 0) {
 			const uint16_t freq = apu_eval_sweep_freq(apu);
-			if (freq < 0x800 && s.reg0.shift > 0) {
+			if (freq < 0x800 && s.sweep_shift > 0) {
 				s.freq_shadow = freq;
-				s.freq = freq;
+				s.freq_load = freq;
 				apu_eval_sweep_freq(apu);
 			}
 			apu_eval_sweep_freq(apu);
 		}
 	}
+}
+
+static void tick_envelope(Apu* const apu)
+{
+	const auto tick_square_env = [](Apu::Square* const s) {
+		if (--s->env_cnt) {
+			s->env_cnt = s->env_period_load;
+
+			if (s->env_cnt == 0)
+				s->env_cnt = 8;
+
+			if (s->env_period_load > 0) {
+				if (s->env_add && s->volume < 15)
+					++s->volume;
+				else if (!s->env_add && s->volume > 0)
+					--s->volume;
+
+			}
+		}
+	};
+
+	tick_square_env(&apu->square1);
+	tick_square_env(&apu->square2);
 }
 
 static void tick_frame_counter(Apu* const apu)
@@ -54,7 +77,7 @@ static void tick_frame_counter(Apu* const apu)
 			tick_sweep(apu);
 			break;
 		case 7:
-			//tick_envelop(apu);
+			tick_envelope(apu);
 			apu->frame_step = 0;
 			break;
 		}
@@ -71,15 +94,15 @@ static void tick_square_freq_cnt(Apu::Square* const s)
 	};
 
 	if (--s->freq_cnt <= 0) {
-		s->freq_cnt = (2048 - s->freq) * 4;
+		s->freq_cnt = (2048 - s->freq_load) * 4;
 		s->duty_pos += 1;
 		s->duty_pos &= 0x07;
 	}
 	
-	if (!s->enabled || !dutytbl[s->reg1.duty][s->duty_pos])
+	if (!s->enabled || !dutytbl[s->duty_mode][s->duty_pos])
 		s->out = 0;
 	else
-		s->out = s->reg2.vol;
+		s->out = s->volume;
 }
 
 
@@ -95,9 +118,9 @@ void update_apu(const int16_t cycles, Apu* const apu)
 
 		int16_t sample = 0;
 
-		if (apu->nr51.s1t1 || apu->nr51.s1t2)
+		if (apu->s1t1 || apu->s1t2)
 			sample += apu->square1.out;
-		if (apu->nr51.s2t1 || apu->nr51.s2t2)
+		if (apu->s2t1 || apu->s2t2)
 			sample += apu->square2.out;
 
 		apu_samples[samples_index] = sample;

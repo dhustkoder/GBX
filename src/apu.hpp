@@ -11,57 +11,58 @@ constexpr const int_fast32_t kApuFrameCntTicks = kCpuFreq / 512;
 struct Apu {
 
 	struct Square {
-		int16_t freq;
+		int16_t freq_load;
 		int16_t freq_cnt;
 		int16_t len_cnt;
+		int8_t env_cnt;
 		int8_t duty_pos;
+		int8_t volume;
 		uint8_t out;
 		bool trigger;
 		bool len_enabled;
 		bool enabled;
 
 		union {
-			uint8_t val;
-			RegBit<0, 6> len;
-			RegBit<6, 2> duty;
-		} reg1;
+			uint8_t reg1raw;
+			const RegBit<0, 6> len_load;
+			const RegBit<6, 2> duty_mode;
+		};
 
 		union {
-			uint8_t val;
-			RegBit<0, 3> period;
-			RegBit<3, 1> env_add;
-			RegBit<4, 4> vol;
-		} reg2;
-
+			uint8_t reg2raw;
+			const RegBit<0, 3> env_period_load;
+			const RegBit<3, 1> env_add;
+			const RegBit<4, 4> volume_load;
+		};
 	};
 
 	struct Square1 : Square {
-		int16_t sweep_cnt;
+		int16_t sweep_period_cnt;
 		int16_t freq_shadow;
 		bool sweep_enabled;
 
 		union {
-			uint8_t val;
-			RegBit<0, 3> shift;
-			RegBit<3, 1> negate;
-			RegBit<4, 3> sweep_period;
-		} reg0;
+			uint8_t reg0raw;
+			const RegBit<0, 3> sweep_shift;
+			const RegBit<3, 1> sweep_negate;
+			const RegBit<4, 3> sweep_period_load;
+		};
 
 	} square1;
 
 	Square square2;
 
 	union {
-		uint8_t val;
-		RegBit<0> s1t1;
-		RegBit<1> s2t1;
-		RegBit<2> s3t1;
-		RegBit<3> s4t1;
-		RegBit<4> s1t2;
-		RegBit<5> s2t2;
-		RegBit<6> s3t2;
-		RegBit<7> s4t2;
-	} nr51;
+		uint8_t nr51raw;
+		const RegBit<0> s1t1;
+		const RegBit<1> s2t1;
+		const RegBit<2> s3t1;
+		const RegBit<3> s4t1;
+		const RegBit<4> s1t2;
+		const RegBit<5> s2t2;
+		const RegBit<6> s3t2;
+		const RegBit<7> s4t2;
+	};
 
 
 	int16_t frame_cnt;
@@ -89,8 +90,8 @@ inline void tick_length(Apu* const apu)
 inline uint16_t apu_eval_sweep_freq(Apu* const apu)
 {
 	Apu::Square1& s = apu->square1;
-	uint16_t freq = s.freq_shadow >> s.reg0.shift;
-	if (s.reg0.negate)
+	uint16_t freq = s.freq_shadow >> s.sweep_shift;
+	if (s.sweep_negate)
 		freq = s.freq_shadow - freq;
 	else
 		freq = s.freq_shadow + freq;
@@ -108,14 +109,14 @@ inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 	};
 
 	switch (addr) {
-	case 0xFF10: return apu.square1.reg0.val;
-	case 0xFF11: return apu.square1.reg1.val;
-	case 0xFF12: return apu.square1.reg2.val;
+	case 0xFF10: return apu.square1.reg0raw;
+	case 0xFF11: return apu.square1.reg1raw;
+	case 0xFF12: return apu.square1.reg2raw;
 	case 0xFF14: return rsquare_reg4(apu.square1);
-	case 0xFF16: return apu.square2.reg1.val;
-	case 0xFF17: return apu.square2.reg2.val;
+	case 0xFF16: return apu.square2.reg1raw;
+	case 0xFF17: return apu.square2.reg2raw;
 	case 0xFF19: return rsquare_reg4(apu.square2);
-	case 0xFF25: return apu.nr51.val;
+	case 0xFF25: return apu.nr51raw;
 	case 0xFF26:
 		return (apu.power<<7)                 |
 		       ((apu.square2.len_cnt > 0)<<1) |
@@ -127,49 +128,57 @@ inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 
 inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* const apu)
 {
-	if (!apu->power)
-		return;
-
 	const auto wsquare_reg0 = [&](Apu::Square1* const s) {
-		s->reg0.val = val;
+		s->reg0raw = val;
 	};
 
 	const auto wsquare_reg1 = [&](Apu::Square* const s) {
-		s->reg1.val = val;
-		s->len_cnt = 64 - s->reg1.len;
+		s->reg1raw = val;
+		s->len_cnt = 64 - s->len_load;
 	};
 
 	const auto wsquare_reg2 = [&](Apu::Square* const s) {
-		s->reg2.val = val;
+		s->reg2raw = val;
 	};
 
 	const auto wsquare_reg3 = [&](Apu::Square* const s) {
-		s->freq = (s->freq&0x0700)|val;
+		s->freq_load = (s->freq_load&0x0700)|val;
 	};
 
 	const auto wsquare_reg4 = [&](const int ch) {
 		Apu::Square& s = ch == 1 ? apu->square1 : apu->square2;
-		s.freq = (s.freq&0x00FF)|((val&0x07)<<8);
-		s.trigger = (val&0x80) != 0;
+
+		s.freq_load = (s.freq_load&0x00FF)|((val&0x07)<<8);
 		s.len_enabled = (val&0x40) != 0;
+		s.trigger = (val&0x80) != 0;
+
 		if (s.trigger) {
 			s.enabled = true;
+
 			if (s.len_cnt == 0)
 				s.len_cnt = 64;
-			s.freq_cnt = (2048 - s.freq) * 4;
+
+			s.freq_cnt = (2048 - s.freq_load) * 4;
+			s.volume = s.volume_load;
+
 			if (ch == 1) {
 				Apu::Square1& s1 = apu->square1;
-				s1.freq_shadow = s1.freq;
-				s1.sweep_cnt = s1.reg0.sweep_period;
-				if (s1.sweep_cnt == 0)
-					s1.sweep_cnt = 8;
-				s1.freq_shadow = s1.freq;
-				s1.sweep_enabled = s1.sweep_cnt > 0 || s1.reg0.shift > 0;
-				if (s1.reg0.shift > 0)
+				s1.freq_shadow = s1.freq_load;
+				s1.sweep_period_cnt = s1.sweep_period_load;
+
+				if (s1.sweep_period_cnt == 0)
+					s1.sweep_period_cnt = 8;
+
+				s1.freq_shadow = s1.freq_load;
+				s1.sweep_enabled = s1.sweep_period_cnt > 0 || s1.sweep_shift > 0;
+				if (s1.sweep_shift > 0)
 					apu_eval_sweep_freq(apu);
 			}
 		}
 	};
+
+	if (!apu->power && addr != 0xFF26)
+		return;
 
 	switch (addr) {
 	case 0xFF10: wsquare_reg0(&apu->square1); break;
@@ -182,15 +191,13 @@ inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* cons
 	case 0xFF18: wsquare_reg3(&apu->square2); break;
 	case 0xFF19: wsquare_reg4(2); break;
 	case 0xFF25: 
-		apu->nr51.val = val;
+		apu->nr51raw = val;
 		break;
 	case 0xFF26:
-		if ((val&0x80) == 0) {
+		apu->power = (val&0x80) != 0;
+		if (!apu->power) {
 			memset(apu, 0, sizeof(*apu));
-			apu->power = false;
 			apu->frame_cnt = kApuFrameCntTicks;
-		} else {
-			apu->power = true;
 		}
 		break;
 	}
