@@ -17,12 +17,31 @@ static int sound_buffer_index = 0;
 static void tick_length(Apu* const apu)
 {
 	const auto tick_square_len = [](Apu::Square* const s) {
-		if (s->len_cnt > 0)
-			--s->len_cnt;
+		if (s->len_cnt > 0 && --s->len_cnt <= 0)
+			s->enabled = false;
 	};
 
 	tick_square_len(&apu->square1);
 	tick_square_len(&apu->square2);
+}
+
+static void tick_sweep(Apu* const apu)
+{
+	Apu::Square1& s = apu->square1;
+	if (--s.sweep_cnt <= 0) {
+		s.sweep_cnt = s.reg0.sweep_period;
+		if (s.sweep_cnt == 0)
+			s.sweep_cnt = 8;
+		if (s.sweep_enabled && s.reg0.sweep_period > 0) {
+			const auto freq = apu_eval_sweep_freq(apu);
+			if (freq <= 2047 && s.reg0.shift > 0) {
+				s.freq_shadow = freq;
+				s.freq = freq;
+				apu_eval_sweep_freq(apu);
+			}
+			apu_eval_sweep_freq(apu);
+		}
+	}
 }
 
 static void tick_frame_counter(Apu* const apu)
@@ -35,14 +54,14 @@ static void tick_frame_counter(Apu* const apu)
 			break;
 		case 2:
 			tick_length(apu);
-			//tick_sweep(apu);
+			tick_sweep(apu);
 			break;
 		case 4:
 			tick_length(apu);
 			break;
 		case 6:
 			tick_length(apu);
-			//tick_sweep(apu);
+			tick_sweep(apu);
 			break;
 		case 7:
 			//tick_envelop(apu);
@@ -67,7 +86,7 @@ static void tick_square_freq_cnt(Apu::Square* const s)
 		s->duty_pos &= 0x07;
 	}
 	
-	if (s->len_cnt <= 0 || !dutytbl[s->reg1.duty][s->duty_pos])
+	if (!s->enabled || !dutytbl[s->reg1.duty][s->duty_pos])
 		s->out = 0;
 	else
 		s->out = s->reg2.vol;

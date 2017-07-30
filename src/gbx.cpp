@@ -14,6 +14,8 @@ int gbx_main(int argc, char** argv)
 	}
 
 	Gameboy* const gb = create_gameboy(argv[1]);
+	if (gb == nullptr)
+		return EXIT_FAILURE;
 
 	while (process_inputs(gb))
 		run_for(70224, gb);

@@ -35,7 +35,7 @@ static void write_apu_square_reg0(uint8_t value, Apu::Square1* s);
 static void write_apu_square_reg1(uint8_t value, Apu::Square* s);
 static void write_apu_square_reg2(uint8_t value, Apu::Square* s);
 static void write_apu_square_reg3(uint8_t value, Apu::Square* s);
-static void write_apu_square_reg4(uint8_t value, Apu::Square* s);
+static void write_apu_square_reg4(uint8_t value, Apu* apu, int ch);
 static void write_apu_nr52(uint8_t value, Apu* const apu);
 static void write_lcdc(uint8_t value, Ppu* ppu, HWState* hwstate);
 static void write_stat(uint8_t value, Ppu* ppu);
@@ -346,11 +346,11 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF11: write_apu_square_reg1(value, &gb->apu.square1); break;
 	case 0xFF12: write_apu_square_reg2(value, &gb->apu.square1); break;
 	case 0xFF13: write_apu_square_reg3(value, &gb->apu.square1); break;
-	case 0xFF14: write_apu_square_reg4(value, &gb->apu.square1); break;
+	case 0xFF14: write_apu_square_reg4(value, &gb->apu, 1); break;
 	case 0xFF16: write_apu_square_reg1(value, &gb->apu.square2); break;
 	case 0xFF17: write_apu_square_reg2(value, &gb->apu.square2); break;
 	case 0xFF18: write_apu_square_reg3(value, &gb->apu.square2); break;
-	case 0xFF19: write_apu_square_reg4(value, &gb->apu.square2); break;
+	case 0xFF19: write_apu_square_reg4(value, &gb->apu, 2); break;
 	case 0xFF51: gb->apu.nr51.val = value; break;
 	case 0xFF26: write_apu_nr52(value, &gb->apu); break;
 	case 0xFF40: write_lcdc(value, &gb->ppu, &gb->hwstate); break;
@@ -372,6 +372,8 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 void write_apu_square_reg0(const uint8_t value, Apu::Square1* const s)
 {
 	s->reg0.val = value;
+	s->sweep_cnt = s->reg0.sweep_period;
+	s->freq_shadow = s->freq;
 }
 
 void write_apu_square_reg1(const uint8_t value, Apu::Square* const s)
@@ -390,14 +392,26 @@ void write_apu_square_reg3(const uint8_t value, Apu::Square* const s)
 	s->freq = (s->freq&0x0700)|value;
 }
 
-void write_apu_square_reg4(const uint8_t value, Apu::Square* const s)
+void write_apu_square_reg4(const uint8_t value, Apu* const apu, const int ch)
 {
-	s->freq = (s->freq&0x00FF)|((value&0x07)<<8);
-	s->trigger = (value&0x80) != 0;
-	s->len_enabled = (value&0x40) != 0;
-	if (s->trigger) {
-		s->len_cnt = 64 - s->reg1.len;
-		s->freq_cnt = (s->freq_cnt&0x03)|(((2048 - s->freq) * 4)&0xFFFC);
+	Apu::Square& s = ch == 1 ? apu->square1 : apu->square2;
+	s.enabled = true;
+	s.freq = (s.freq&0x00FF)|((value&0x07)<<8);
+	s.trigger = (value&0x80) != 0;
+	s.len_enabled = (value&0x40) != 0;
+	if (s.trigger) {
+		s.len_cnt = 64 - s.reg1.len;
+		s.freq_cnt = (s.freq_cnt&0x03)|(((2048 - s.freq) * 4)&0xFFFC);
+		if (ch == 1) {
+			Apu::Square1& s1 = apu->square1;
+			s1.sweep_cnt = s1.reg0.sweep_period;
+			if (s1.sweep_cnt == 0)
+				s1.sweep_cnt = 8;
+			s1.freq_shadow = s1.freq;
+			s1.sweep_enabled = s1.sweep_cnt > 0 || s1.reg0.shift > 0;
+			if (s1.reg0.shift > 0)
+				apu_eval_sweep_freq(apu);
+		}
 	}
 }
 

@@ -17,6 +17,7 @@ struct Apu {
 		uint8_t out;
 		bool trigger;
 		bool len_enabled;
+		bool enabled;
 
 		union {
 			uint8_t val;
@@ -38,7 +39,9 @@ struct Apu {
 	};
 
 	struct Square1 : Square {
-
+		int16_t sweep_cnt;
+		int16_t freq_shadow;
+		bool sweep_enabled;
 		union {
 			uint8_t val;
 			struct {
@@ -48,7 +51,6 @@ struct Apu {
 				uint8_t              : 1;
 			};
 		} reg0;
-
 	} square1;
 
 	Square square2;
@@ -76,6 +78,22 @@ struct Apu {
 
 
 extern void update_apu(int16_t cycles, Apu* apu);
+
+
+inline uint16_t apu_eval_sweep_freq(Apu* const apu)
+{
+	Apu::Square1& s = apu->square1;
+	uint16_t freq = s.freq_shadow >> s.reg0.shift;
+	if (s.reg0.negate)
+		freq = s.freq_shadow - freq;
+	else
+		freq = s.freq_shadow + freq;
+
+	if (freq > 2047)
+		s.enabled = false;
+
+	return freq;
+}
 
 
 } // namespace gbx
