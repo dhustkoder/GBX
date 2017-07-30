@@ -372,14 +372,11 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 void write_apu_square_reg0(const uint8_t value, Apu::Square1* const s)
 {
 	s->reg0.val = value;
-	s->sweep_cnt = s->reg0.sweep_period;
-	s->freq_shadow = s->freq;
 }
 
 void write_apu_square_reg1(const uint8_t value, Apu::Square* const s)
 {
 	s->reg1.val = value;
-	s->len_cnt = 64 - s->reg1.len;
 }
 
 void write_apu_square_reg2(const uint8_t value, Apu::Square* const s)
@@ -395,15 +392,17 @@ void write_apu_square_reg3(const uint8_t value, Apu::Square* const s)
 void write_apu_square_reg4(const uint8_t value, Apu* const apu, const int ch)
 {
 	Apu::Square& s = ch == 1 ? apu->square1 : apu->square2;
-	s.enabled = true;
 	s.freq = (s.freq&0x00FF)|((value&0x07)<<8);
 	s.trigger = (value&0x80) != 0;
 	s.len_enabled = (value&0x40) != 0;
 	if (s.trigger) {
+		s.enabled = true;
+		s.freq_cnt = (2048 - s.freq) * 4;
 		s.len_cnt = 64 - s.reg1.len;
-		s.freq_cnt = (s.freq_cnt&0x03)|(((2048 - s.freq) * 4)&0xFFFC);
+
 		if (ch == 1) {
 			Apu::Square1& s1 = apu->square1;
+			s1.freq_shadow = s1.freq;
 			s1.sweep_cnt = s1.reg0.sweep_period;
 			if (s1.sweep_cnt == 0)
 				s1.sweep_cnt = 8;
@@ -422,6 +421,8 @@ void write_apu_nr52(const uint8_t value, Apu* const apu)
 		memset(&apu->square2, 0, sizeof(apu->square2));
 		apu->power = false;
 		apu->frame_cnt = kApuFrameCntTicks;
+	} else {
+		apu->power = true;
 	}
 }
 
