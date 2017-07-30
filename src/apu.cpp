@@ -17,8 +17,9 @@ static int sound_buffer_index = 0;
 static void tick_length(Apu* const apu)
 {
 	const auto tick_square_len = [](Apu::Square* const s) {
-		if (s->len_cnt > 0 && --s->len_cnt <= 0)
-			s->enabled = false;
+		if (s->len_cnt <= 0 || --s->len_cnt <= 0)
+			if (s->len_enabled)
+				s->enabled = false;
 	};
 
 	tick_square_len(&apu->square1);
@@ -33,8 +34,8 @@ static void tick_sweep(Apu* const apu)
 		if (s.sweep_cnt == 0)
 			s.sweep_cnt = 8;
 		if (s.sweep_enabled && s.reg0.sweep_period > 0) {
-			const auto freq = apu_eval_sweep_freq(apu);
-			if (freq <= 2047 && s.reg0.shift > 0) {
+			const uint16_t freq = apu_eval_sweep_freq(apu);
+			if (freq < 0x800 && s.reg0.shift > 0) {
 				s.freq_shadow = freq;
 				s.freq = freq;
 				apu_eval_sweep_freq(apu);
@@ -103,7 +104,14 @@ void update_apu(const int16_t cycles, Apu* const apu)
 		tick_square_freq_cnt(&apu->square1);
 		tick_square_freq_cnt(&apu->square2);
 
-		apu_samples[samples_index] = apu->square1.out + apu->square2.out;
+		int16_t sample = 0;
+
+		if (apu->nr51.s1t1 || apu->nr51.s1t2)
+			sample += apu->square1.out;
+		if (apu->nr51.s2t1 || apu->nr51.s2t2)
+			sample += apu->square2.out;
+
+		apu_samples[samples_index] = sample;
 		if (++samples_index >= kApuSamplesSize) {
 			samples_index = 0;
 			double avg = 0;
