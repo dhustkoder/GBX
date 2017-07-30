@@ -14,17 +14,6 @@ static int samples_index = 0;
 static int sound_buffer_index = 0;
 
 
-static void tick_length(Apu* const apu)
-{
-	const auto tick_square_len = [](Apu::Square* const s) {
-		if (s->len_cnt <= 0 || --s->len_cnt <= 0)
-			if (s->len_enabled)
-				s->enabled = false;
-	};
-
-	tick_square_len(&apu->square1);
-	tick_square_len(&apu->square2);
-}
 
 static void tick_sweep(Apu* const apu)
 {

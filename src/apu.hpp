@@ -22,19 +22,15 @@ struct Apu {
 
 		union {
 			uint8_t val;
-			struct {
-				uint8_t len    : 6;
-				uint8_t duty   : 2;
-			};
+			RegBit<0, 6> len;
+			RegBit<6, 2> duty;
 		} reg1;
 
 		union {
 			uint8_t val;
-			struct {
-				uint8_t period  : 3;
-				uint8_t env_add : 1;
-				uint8_t vol     : 4;
-			};
+			RegBit<0, 3> period;
+			RegBit<3, 1> env_add;
+			RegBit<4, 4> vol;
 		} reg2;
 
 	};
@@ -43,31 +39,28 @@ struct Apu {
 		int16_t sweep_cnt;
 		int16_t freq_shadow;
 		bool sweep_enabled;
+
 		union {
 			uint8_t val;
-			struct {
-				uint8_t shift        : 3;
-				uint8_t negate       : 1;
-				uint8_t sweep_period : 3;
-				uint8_t              : 1;
-			};
+			RegBit<0, 3> shift;
+			RegBit<3, 1> negate;
+			RegBit<4, 3> sweep_period;
 		} reg0;
+
 	} square1;
 
 	Square square2;
 
 	union {
 		uint8_t val;
-		struct {
-			uint8_t s1t1 : 1;
-			uint8_t s2t1 : 1;
-			uint8_t s3t1 : 1;
-			uint8_t s4t1 : 1;
-			uint8_t s1t2 : 1;
-			uint8_t s2t2 : 1;
-			uint8_t s3t2 : 1;
-			uint8_t s4t2 : 1;
-		};
+		RegBit<0> s1t1;
+		RegBit<1> s2t1;
+		RegBit<2> s3t1;
+		RegBit<3> s4t1;
+		RegBit<4> s1t2;
+		RegBit<5> s2t2;
+		RegBit<6> s3t2;
+		RegBit<7> s4t2;
 	} nr51;
 
 
@@ -79,6 +72,18 @@ struct Apu {
 
 
 extern void update_apu(int16_t cycles, Apu* apu);
+
+
+inline void tick_length(Apu* const apu)
+{
+	const auto tick_square_len = [](Apu::Square* const s) {
+		if (s->len_enabled && s->len_cnt > 0 && --s->len_cnt == 0)
+			s->enabled = false;
+	};
+
+	tick_square_len(&apu->square1);
+	tick_square_len(&apu->square2);
+}
 
 
 inline uint16_t apu_eval_sweep_freq(Apu* const apu)
@@ -99,7 +104,7 @@ inline uint16_t apu_eval_sweep_freq(Apu* const apu)
 inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 {
 	const auto rsquare_reg4 = [](const Apu::Square& s) -> uint8_t {
-		return (s.trigger<<7)|(s.len_enabled<<6)|(s.freq&0x07);
+		return s.len_enabled<<6;
 	};
 
 	switch (addr) {
@@ -149,8 +154,9 @@ inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* cons
 		s.len_enabled = (val&0x40) != 0;
 		if (s.trigger) {
 			s.enabled = true;
+			if (s.len_cnt == 0)
+				s.len_cnt = 64;
 			s.freq_cnt = (2048 - s.freq) * 4;
-			s.len_cnt = 64 - s.reg1.len;
 			if (ch == 1) {
 				Apu::Square1& s1 = apu->square1;
 				s1.freq_shadow = s1.freq;

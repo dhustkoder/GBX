@@ -49,7 +49,7 @@ bool process_inputs(gbx::Gameboy* const gb)
 		SDL_SCANCODE_UP, SDL_SCANCODE_DOWN
 	};
 
-	const auto update_key = [gb] (const gbx::KeyState state, const uint32_t keycode) {
+	const auto update_key = [&] (const gbx::KeyState state, const uint32_t keycode) {
 		gbx::update_joypad(keycodes, keycode, state, &gb->hwstate, &gb->joypad);
 	};
 
