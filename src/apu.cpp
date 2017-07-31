@@ -1,6 +1,4 @@
 #include <climits>
-#include <SDL.h>
-#include "SDL_audio.h"
 #include "audio.hpp"
 #include "apu.hpp"
 
@@ -39,24 +37,39 @@ static void tick_sweep(Apu* const apu)
 static void tick_envelope(Apu* const apu)
 {
 	const auto tick_square_env = [](Apu::Square* const s) {
-		if (--s->env_cnt) {
+		if (--s->env_cnt <= 0) {
 			s->env_cnt = s->env_period_load;
 
 			if (s->env_cnt == 0)
 				s->env_cnt = 8;
-
+			
 			if (s->env_period_load > 0) {
 				if (s->env_add && s->volume < 15)
 					++s->volume;
 				else if (!s->env_add && s->volume > 0)
 					--s->volume;
-
 			}
 		}
 	};
 
 	tick_square_env(&apu->square1);
 	tick_square_env(&apu->square2);
+
+	Apu::Noise& noise = apu->noise;
+
+	if (--noise.env_cnt <= 0) {
+		noise.env_cnt = noise.env_period_load;
+
+		if (noise.env_cnt == 0)
+			noise.env_cnt = 8;
+
+		if (noise.env_period_load > 0) {
+			if (noise.env_add && noise.volume < 15)
+				++noise.volume;
+			else if (!noise.env_add && noise.volume > 0)
+				--noise.volume;
+		}
+	}
 }
 
 static void tick_frame_counter(Apu* const apu)
@@ -100,12 +113,13 @@ static void tick_freq_counters(Apu* const apu)
 			s->freq_cnt = (2048 - s->freq_load) * 4;
 			s->duty_pos += 1;
 			s->duty_pos &= 0x07;
-		}
 
-		if (!s->enabled || !dutytbl[s->duty_mode][s->duty_pos])
-			s->out = 0;
-		else
-			s->out = s->volume;
+
+			if (!s->enabled || !dutytbl[s->duty_mode][s->duty_pos])
+				s->out = 0;
+			else
+				s->out = s->volume;
+		}
 	};
 
 	tick_square_freq_cnt(&apu->square1);
@@ -116,17 +130,34 @@ static void tick_freq_counters(Apu* const apu)
 
 	if (--wave.freq_cnt <= 0) {
 		wave.freq_cnt = (2048 - wave.freq_load) * 2;
-		wave.pos += 1;
-		wave.pos &= 0x0F;
-		const uint8_t sample = wave.pattern_ram[wave.pos/2] >> ((wave.pos%2) * 4);
-		wave.volume = sample;
+		wave.pos = (wave.pos + 1) % 32;
+		const uint8_t sample = wave.pattern_ram[wave.pos / 2];
+		wave.volume = (wave.pos&0x01) ? sample >> 4 : sample&0x0F;
+
+		if (!wave.enabled || wave.output_level == 0) {
+			wave.out = 0;
+		} else {
+			wave.out = wave.volume >> (wave.output_level - 1);
+		}
 	}
 
-	if (!wave.enabled || (wave.output_level&0x60) == 0) {
-		wave.out = 0;
-	} else {
-		const uint8_t shift = ((wave.output_level&0x60)>>5) - 1;
-		wave.out = wave.volume >> shift;
+
+	Apu::Noise& noise = apu->noise;
+	if (--noise.freq_cnt <= 0) {
+		noise.freq_cnt = kNoiseDivisors[noise.divisor_code]<<noise.clock_shift;
+		uint8_t r = (noise.lfsr&0x01) ^ ((noise.lfsr>>1)&0x01);
+		noise.lfsr >>= 1;
+		noise.lfsr |= r<<14;
+		if (noise.width_mode) {
+			noise.lfsr &= ~0x40;
+			noise.lfsr |= r<<6;
+		}
+
+
+		if (!noise.enabled || (noise.lfsr&0x01))
+			noise.out = 0;
+		else
+			noise.out = noise.volume;
 	}
 }
 
@@ -140,36 +171,46 @@ void update_apu(const int16_t cycles, Apu* const apu)
 		tick_frame_counter(apu);
 		tick_freq_counters(apu);
 
+		apu_samples[samples_index] = 0;
 
-		int16_t sample = 0;
-		int16_t out;
-		const int volume = (128 * 7)/7;
+		const auto mix = [](const int16_t out, const uint8_t vol) {
+			mix_audio(&apu_samples[samples_index], out,
+				  (kAudioMaxVolume * vol)/7);
+		};
 
-		if (apu->s1t1 || apu->s1t2) {
-			out = apu->square1.out;
-			SDL_MixAudioFormat((uint8_t*)&sample, (uint8_t*)&out, AUDIO_S16SYS, sizeof(int16_t), volume);
-		}
-		if (apu->s2t1 || apu->s2t2) {
-			out = apu->square2.out;
-			SDL_MixAudioFormat((uint8_t*)&sample, (uint8_t*)&out, AUDIO_S16SYS, sizeof(int16_t), volume);
-		}
-		if (apu->s3t1 || apu->s3t2) {
-			out = apu->wave.out;
-			SDL_MixAudioFormat((uint8_t*)&sample, (uint8_t*)&out, AUDIO_S16SYS, sizeof(int16_t), volume/16);
-		}
+		if (apu->s1t1)
+			mix(apu->square1.out, apu->rvol);
+		if (apu->s1t2)	
+			mix(apu->square1.out, apu->lvol);
+		if (apu->s2t1)
+			mix(apu->square2.out, apu->rvol);
+		if (apu->s2t2)
+			mix(apu->square2.out, apu->lvol);
+		if (apu->s3t1)
+			mix(apu->wave.out, apu->rvol);
+		if (apu->s3t2)
+			mix(apu->wave.out, apu->lvol);
+		if (apu->s4t1)
+			mix(apu->noise.out, apu->rvol);
+		if (apu->s4t2)
+			mix(apu->noise.out, apu->lvol);
 
-		apu_samples[samples_index] = sample;
+
 		if (++samples_index >= kApuSamplesSize) {
 			samples_index = 0;
+
 			double avg = 0;
+
 			for (int i = 0; i < kApuSamplesSize; ++i)
 				avg += apu_samples[i];
-			avg /= 95;
+
+			avg /= kApuSamplesSize;
 			avg *= 125;
+
 			sound_buffer[sound_buffer_index] = avg;
 			if (++sound_buffer_index >= kSoundBufferSize) {
 				sound_buffer_index = 0;
-				queue_sound_buffer((uint8_t*)sound_buffer, sizeof(sound_buffer));
+				queue_sound_buffer(sound_buffer, sizeof(sound_buffer));
 			}
 		}
 	}

@@ -19,8 +19,8 @@ constexpr const int kWinHeight = 144;
 static SDL_Window* window = nullptr;
 static SDL_Texture* texture = nullptr;
 static SDL_Renderer* renderer = nullptr;
-static SDL_AudioDeviceID audio_device = 0;
 static SDL_Event events;
+SDL_AudioDeviceID audio_device = 0;
 
 
 int main(int argc, char** argv)
@@ -87,16 +87,6 @@ void render_graphics(const uint32_t* const pixels, const uint_fast32_t len)
 		fprintf(stderr, "failed to lock texture: %s\n", err);
 	}
 }
-
-void queue_sound_buffer(const uint8_t* const buffer, const uint_fast32_t len)
-{
-	while (SDL_GetQueuedAudioSize(audio_device) > len)
-		SDL_Delay(1);
-
-	if (SDL_QueueAudio(audio_device, buffer, len) != 0)
-		fprintf(stderr, "Failed to queue audio: %s\n", SDL_GetError());
-}
-
 
 bool init_sdl()
 {
