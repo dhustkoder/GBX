@@ -24,15 +24,19 @@ struct Apu {
 
 		union {
 			uint8_t reg1raw;
-			const RegBit<0, 6> len_load;
-			const RegBit<6, 2> duty_mode;
+			struct {
+				const uint8_t len_load  : 6;
+				const uint8_t duty_mode : 2;
+			};
 		};
 
 		union {
 			uint8_t reg2raw;
-			const RegBit<0, 3> env_period_load;
-			const RegBit<3, 1> env_add;
-			const RegBit<4, 4> volume_load;
+			struct {
+				const uint8_t env_period_load : 3;
+				const uint8_t env_add         : 1;
+				const uint8_t volume_load     : 4;
+			};
 		};
 	};
 
@@ -43,9 +47,11 @@ struct Apu {
 
 		union {
 			uint8_t reg0raw;
-			const RegBit<0, 3> sweep_shift;
-			const RegBit<3, 1> sweep_negate;
-			const RegBit<4, 3> sweep_period_load;
+			struct {
+				const uint8_t sweep_shift        : 3;
+				const uint8_t sweep_negate       : 1;
+				const uint8_t sweep_period_load  : 3;
+			};
 		};
 
 	} square1;
@@ -54,14 +60,16 @@ struct Apu {
 
 	union {
 		uint8_t nr51raw;
-		const RegBit<0> s1t1;
-		const RegBit<1> s2t1;
-		const RegBit<2> s3t1;
-		const RegBit<3> s4t1;
-		const RegBit<4> s1t2;
-		const RegBit<5> s2t2;
-		const RegBit<6> s3t2;
-		const RegBit<7> s4t2;
+		struct {
+			const uint8_t s1t1 : 1;
+			const uint8_t s2t1 : 1;
+			const uint8_t s3t1 : 1;
+			const uint8_t s4t1 : 1;
+			const uint8_t s1t2 : 1;
+			const uint8_t s2t2 : 1;
+			const uint8_t s3t2 : 1;
+			const uint8_t s4t2 : 1;
+		};
 	};
 
 

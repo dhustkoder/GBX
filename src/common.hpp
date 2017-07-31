@@ -75,54 +75,6 @@ constexpr Finally<F> finally(F&& f)
 }
 
 
-template<unsigned bit, unsigned len=1, class T=uint8_t>
-class RegBit {
-public:
-	static_assert(len >= 1 && len <= 32, "");
-	static_assert(bit >= 0 && bit <= 31, "");
-	static constexpr const unsigned mask = (1u<<len) - 1u;
-	T data;
-
-	template<class N=unsigned>
-	RegBit& operator=(const N& val)
-	{
-		data = (data & ~(mask<<bit)) | ((len > 1 ? val&mask : !!val)<<bit);
-		return *this;
-	}
-
-	operator unsigned() const
-	{
-		return (data>>bit)&mask;
-	}
-
-	RegBit& operator++()
-	{
-		*this = *this + 1u;
-		return *this;
-	}
-
-	unsigned operator++(int)
-	{
-		const unsigned v = *this;
-		++*this;
-		return v;
-	}
-
-	RegBit& operator--()
-	{
-		*this = *this - 1u;
-		return *this;
-	}
-
-	unsigned operator--(int)
-	{
-		const unsigned v = *this;
-		--*this;
-		return v;
-	}
-};
-
-
 constexpr uint16_t concat_bytes(const uint8_t msb, const uint8_t lsb)
 {
 	return (msb << 8) | lsb;
