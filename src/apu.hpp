@@ -18,7 +18,6 @@ struct Apu {
 		int8_t duty_pos;
 		int8_t volume;
 		uint8_t out;
-		bool trigger;
 		bool len_enabled;
 		bool enabled;
 
@@ -57,6 +56,21 @@ struct Apu {
 	} square1;
 
 	Square square2;
+
+
+	struct Wave {
+		int16_t len_load;        // nr31 $FF1B
+		int16_t len_cnt;
+		int16_t freq_load;       // nr33 low nr34 high $FF1F $FF1E
+		int16_t freq_cnt;
+		uint8_t output_level;    // nr32 $FF1C
+		uint8_t volume;
+		uint8_t out;
+		uint8_t pos;
+		bool enabled;            // nr30 $FF1A
+		bool len_enabled;        // nr34 $FF1E
+		uint8_t pattern_ram[16]; // $FF30 - $FF3F
+	} wave;
 
 	union {
 		uint8_t nr51raw;
@@ -116,6 +130,9 @@ inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 		return s.len_enabled<<6;
 	};
 
+	if (addr >= 0xFF30 && addr <= 0xFF3F)
+		return apu.wave.pattern_ram[addr - 0xFF30];
+
 	switch (addr) {
 	case 0xFF10: return apu.square1.reg0raw;
 	case 0xFF11: return apu.square1.reg1raw;
@@ -124,6 +141,11 @@ inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 	case 0xFF16: return apu.square2.reg1raw;
 	case 0xFF17: return apu.square2.reg2raw;
 	case 0xFF19: return rsquare_reg4(apu.square2);
+	case 0xFF1A: return apu.wave.enabled;
+	case 0xFF1B: return apu.wave.len_load;
+	case 0xFF1C: return apu.wave.output_level;
+	case 0xFF1D: return apu.wave.freq_load&0xFF;
+	case 0xFF1E: return apu.wave.len_enabled<<6;
 	case 0xFF25: return apu.nr51raw;
 	case 0xFF26:
 		return (apu.power<<7)                 |
@@ -158,9 +180,9 @@ inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* cons
 
 		s.freq_load = (s.freq_load&0x00FF)|((val&0x07)<<8);
 		s.len_enabled = (val&0x40) != 0;
-		s.trigger = (val&0x80) != 0;
+		const bool trigger = (val&0x80) != 0;
 
-		if (s.trigger) {
+		if (trigger) {
 			s.enabled = true;
 
 			if (s.len_cnt == 0)
@@ -188,6 +210,11 @@ inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* cons
 	if (!apu->power && addr != 0xFF26)
 		return;
 
+	if (addr >= 0xFF30 && addr <= 0xFF3F) {
+		apu->wave.pattern_ram[addr - 0xFF30] = val;
+		return;
+	}
+
 	switch (addr) {
 	case 0xFF10: wsquare_reg0(&apu->square1); break;
 	case 0xFF11: wsquare_reg1(&apu->square1); break;
@@ -198,6 +225,21 @@ inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* cons
 	case 0xFF17: wsquare_reg2(&apu->square2); break;
 	case 0xFF18: wsquare_reg3(&apu->square2); break;
 	case 0xFF19: wsquare_reg4(2); break;
+	case 0xFF1A: apu->wave.enabled = (val&0x80) != 0; break;
+	case 0xFF1B: apu->wave.len_load = val; break;
+	case 0xFF1C: apu->wave.output_level = val; break;
+	case 0xFF1D: apu->wave.freq_load = (apu->wave.freq_load&0x0700)|val; break;
+	case 0xFF1E:
+		apu->wave.freq_load = (apu->wave.freq_load&0x00FF)|((val&0x7)<<8);
+		apu->wave.len_enabled = (val&0x40) != 0;
+		if ((val&0x80) != 0) {
+			apu->wave.enabled = true;
+			if (apu->wave.len_cnt == 0)
+				apu->wave.len_cnt = 256;
+			apu->wave.freq_cnt = (2048 - apu->wave.freq_load) * 2;
+		}
+		break;
+
 	case 0xFF25: 
 		apu->nr51raw = val;
 		break;

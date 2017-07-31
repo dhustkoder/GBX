@@ -1,4 +1,6 @@
 #include <climits>
+#include <SDL.h>
+#include "SDL_audio.h"
 #include "audio.hpp"
 #include "apu.hpp"
 
@@ -8,7 +10,7 @@ namespace gbx {
 constexpr const int kApuSamplesSize = 95;
 constexpr const int kSoundBufferSize = 1024;
 
-static int8_t apu_samples[kApuSamplesSize];
+static int16_t apu_samples[kApuSamplesSize];
 static int16_t sound_buffer[kSoundBufferSize];
 static int samples_index = 0;
 static int sound_buffer_index = 0;
@@ -84,25 +86,48 @@ static void tick_frame_counter(Apu* const apu)
 	}
 }
 
-static void tick_square_freq_cnt(Apu::Square* const s)
+static void tick_freq_counters(Apu* const apu)
 {
-	static const uint8_t dutytbl[4][8] = {
-		{ 0, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 0, 0, 0, 0, 1, 1, 1 },
-		{ 0, 1, 1, 1, 1, 1, 1, 0 }
+	const auto tick_square_freq_cnt = [](Apu::Square* const s) {
+		static const uint8_t dutytbl[4][8] = {
+			{ 0, 0, 0, 0, 0, 0, 0, 1 },
+			{ 1, 0, 0, 0, 0, 0, 0, 1 },
+			{ 1, 0, 0, 0, 0, 1, 1, 1 },
+			{ 0, 1, 1, 1, 1, 1, 1, 0 }
+		};
+
+		if (--s->freq_cnt <= 0) {
+			s->freq_cnt = (2048 - s->freq_load) * 4;
+			s->duty_pos += 1;
+			s->duty_pos &= 0x07;
+		}
+
+		if (!s->enabled || !dutytbl[s->duty_mode][s->duty_pos])
+			s->out = 0;
+		else
+			s->out = s->volume;
 	};
 
-	if (--s->freq_cnt <= 0) {
-		s->freq_cnt = (2048 - s->freq_load) * 4;
-		s->duty_pos += 1;
-		s->duty_pos &= 0x07;
+	tick_square_freq_cnt(&apu->square1);
+	tick_square_freq_cnt(&apu->square2);
+
+
+	Apu::Wave& wave = apu->wave;
+
+	if (--wave.freq_cnt <= 0) {
+		wave.freq_cnt = (2048 - wave.freq_load) * 2;
+		wave.pos += 1;
+		wave.pos &= 0x0F;
+		const uint8_t sample = wave.pattern_ram[wave.pos/2] >> ((wave.pos%2) * 4);
+		wave.volume = sample;
 	}
-	
-	if (!s->enabled || !dutytbl[s->duty_mode][s->duty_pos])
-		s->out = 0;
-	else
-		s->out = s->volume;
+
+	if (!wave.enabled || (wave.output_level&0x60) == 0) {
+		wave.out = 0;
+	} else {
+		const uint8_t shift = ((wave.output_level&0x60)>>5) - 1;
+		wave.out = wave.volume >> shift;
+	}
 }
 
 
@@ -113,15 +138,25 @@ void update_apu(const int16_t cycles, Apu* const apu)
 
 	for (int ticks = 0; ticks < cycles; ++ticks) {
 		tick_frame_counter(apu);
-		tick_square_freq_cnt(&apu->square1);
-		tick_square_freq_cnt(&apu->square2);
+		tick_freq_counters(apu);
+
 
 		int16_t sample = 0;
+		int16_t out;
+		const int volume = (128 * 7)/7;
 
-		if (apu->s1t1 || apu->s1t2)
-			sample += apu->square1.out;
-		if (apu->s2t1 || apu->s2t2)
-			sample += apu->square2.out;
+		if (apu->s1t1 || apu->s1t2) {
+			out = apu->square1.out;
+			SDL_MixAudioFormat((uint8_t*)&sample, (uint8_t*)&out, AUDIO_S16SYS, sizeof(int16_t), volume);
+		}
+		if (apu->s2t1 || apu->s2t2) {
+			out = apu->square2.out;
+			SDL_MixAudioFormat((uint8_t*)&sample, (uint8_t*)&out, AUDIO_S16SYS, sizeof(int16_t), volume);
+		}
+		if (apu->s3t1 || apu->s3t2) {
+			out = apu->wave.out;
+			SDL_MixAudioFormat((uint8_t*)&sample, (uint8_t*)&out, AUDIO_S16SYS, sizeof(int16_t), volume/16);
+		}
 
 		apu_samples[samples_index] = sample;
 		if (++samples_index >= kApuSamplesSize) {
@@ -130,7 +165,7 @@ void update_apu(const int16_t cycles, Apu* const apu)
 			for (int i = 0; i < kApuSamplesSize; ++i)
 				avg += apu_samples[i];
 			avg /= 95;
-			avg *= 500;
+			avg *= 125;
 			sound_buffer[sound_buffer_index] = avg;
 			if (++sound_buffer_index >= kSoundBufferSize) {
 				sound_buffer_index = 0;
