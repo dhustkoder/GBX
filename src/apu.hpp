@@ -206,7 +206,7 @@ inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 	case 0xFF24: return apu.nr50raw;
 	case 0xFF25: return apu.nr51raw;
 	case 0xFF26:
-		return (apu.power<<7)                 |
+		return (apu.power<<7)             |
 		       ((apu.noise.enabled)<<3)   |
 		       ((apu.wave.enabled)<<2)    |
 		       ((apu.square2.enabled)<<1) |

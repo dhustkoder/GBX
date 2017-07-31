@@ -175,7 +175,7 @@ void update_apu(const int16_t cycles, Apu* const apu)
 
 		const auto mix = [](const int16_t out, const uint8_t vol) {
 			mix_audio(&apu_samples[samples_index], out,
-				  (kAudioMaxVolume * vol)/7);
+				  (kAudioMaxVolume * vol) / 7);
 		};
 
 		if (apu->s1t1)
@@ -200,14 +200,11 @@ void update_apu(const int16_t cycles, Apu* const apu)
 			samples_index = 0;
 
 			double avg = 0;
-
 			for (int i = 0; i < kApuSamplesSize; ++i)
 				avg += apu_samples[i];
 
-			avg /= kApuSamplesSize;
-			avg *= 125;
-
-			sound_buffer[sound_buffer_index] = avg;
+			sound_buffer[sound_buffer_index] = 0;
+			mix_audio(&sound_buffer[sound_buffer_index], avg, kAudioMaxVolume);
 			if (++sound_buffer_index >= kSoundBufferSize) {
 				sound_buffer_index = 0;
 				queue_sound_buffer(sound_buffer, sizeof(sound_buffer));
