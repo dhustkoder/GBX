@@ -6,7 +6,6 @@
 #include "input.hpp"
 #include "video.hpp"
 #include "audio.hpp"
-#include "gbx.hpp"
 
 
 static bool init_sdl();
@@ -26,17 +25,24 @@ SDL_AudioDeviceID audio_device = 0;
 int main(int argc, char** argv)
 {
 	if (argc < 2) {
-		fprintf(stderr, "usage: %s <rom>\n", argv[0]);
+		fprintf(stderr, "Usage: %s [rom]\n", argv[0]);
 		return EXIT_FAILURE;
 	}
+
+	gbx::Gameboy* const gb = gbx::create_gameboy(argv[1]);
+
+	if (gb == nullptr)
+		return EXIT_FAILURE;
 
 	if (!init_sdl())
 		return EXIT_FAILURE;
 
-	const int exitcode = gbx::gbx_main(argc, argv);
+	while (process_inputs(gb))
+		gbx::run_for(70224, gb);
 
 	quit_sdl();
-	return exitcode;
+	gbx::destroy_gameboy(gb);
+	return EXIT_SUCCESS;
 }
 
 
