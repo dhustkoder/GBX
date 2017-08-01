@@ -15,10 +15,11 @@ static void quit_sdl();
 constexpr const int kWinWidth = 160;
 constexpr const int kWinHeight = 144;
 
-static SDL_Window* window = nullptr;
-static SDL_Texture* texture = nullptr;
-static SDL_Renderer* renderer = nullptr;
 static SDL_Event events;
+static SDL_Window* window = nullptr;
+
+SDL_Texture* texture = nullptr;
+SDL_Renderer* renderer = nullptr;
 SDL_AudioDeviceID audio_device = 0;
 
 
@@ -78,21 +79,6 @@ bool process_inputs(gbx::Gameboy* const gb)
 	return true;
 }
 
-
-void render_graphics(const uint32_t* const pixels, const uint_fast32_t len)
-{
-	int pitch;
-	void* dest;
-	if (SDL_LockTexture(texture, nullptr, &dest, &pitch) == 0) {
-		memcpy(dest, pixels, len);
-		SDL_UnlockTexture(texture);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		SDL_RenderPresent(renderer);
-	} else {
-		const char* const err = SDL_GetError();
-		fprintf(stderr, "failed to lock texture: %s\n", err);
-	}
-}
 
 bool init_sdl()
 {
