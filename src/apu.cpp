@@ -174,8 +174,9 @@ void update_apu(const int16_t cycles, Apu* const apu)
 		apu_samples[samples_index] = 0;
 
 		const auto mix = [](const int16_t out, const uint8_t vol) {
-			mix_audio(&apu_samples[samples_index], out,
-				  (kAudioMaxVolume * vol) / 7);
+			const int16_t finalout = (static_cast<long>(out) * INT16_MAX) / INT16_MAX;
+			const int finalvol = (static_cast<long>(kAudioMaxVolume) * vol) / 7;
+			mix_audio(&apu_samples[samples_index], finalout, finalvol);
 		};
 
 		if (apu->s1t1)
