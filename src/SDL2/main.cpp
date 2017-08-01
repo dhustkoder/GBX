@@ -133,10 +133,6 @@ bool init_sdl()
 		goto free_renderer;
 	}
 
-	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(renderer);
-
-
 	SDL_AudioSpec want;
 	SDL_zero(want);
 	want.freq = 44100;
@@ -149,6 +145,11 @@ bool init_sdl()
 		goto free_texture;
 	}
 
+
+	// init screen and audio device
+	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(renderer);
+	SDL_RenderPresent(renderer);
 	SDL_PauseAudioDevice(audio_device, 0);
 	return true;
 
