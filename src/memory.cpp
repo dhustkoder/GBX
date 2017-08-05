@@ -330,9 +330,9 @@ void write_io(const uint16_t address, const uint8_t value, Gameboy* const gb)
 	case 0xFF44: gb->ppu.ly = 0x00; break;
 	case 0xFF45: gb->ppu.lyc = value; break;
 	case 0xFF46: dma_transfer(value, gb); break;
-	case 0xFF47: write_pallete(value, &gb->ppu.bgp); break;
-	case 0xFF48: write_pallete(value, &gb->ppu.obp0); break;
-	case 0xFF49: write_pallete(value, &gb->ppu.obp1); break;
+	case 0xFF47: write_palette(value, &gb->ppu.bgp); break;
+	case 0xFF48: write_palette(value, &gb->ppu.obp0); break;
+	case 0xFF49: write_palette(value, &gb->ppu.obp1); break;
 	case 0xFF4A: gb->ppu.wy = value; break;
 	case 0xFF4B: gb->ppu.wx = value; break;
 	default: break;

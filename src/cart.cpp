@@ -124,9 +124,9 @@ void reset(Gameboy* const gb)
 
 	gb->ppu.lcdc.value = 0x91;
 	gb->ppu.stat.value = 0x85;
-	write_pallete(0xFC, &gb->ppu.bgp);
-	write_pallete(0xFF, &gb->ppu.obp0);
-	write_pallete(0xFF, &gb->ppu.obp1);
+	write_palette(0xFC, &gb->ppu.bgp);
+	write_palette(0xFF, &gb->ppu.obp0);
+	write_palette(0xFF, &gb->ppu.obp1);
 
 	gb->apu.power = true;
 	gb->apu.frame_cnt = kApuFrameCntTicks;

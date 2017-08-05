@@ -6,6 +6,7 @@
 
 namespace gbx {
 
+
 enum Color : uint32_t {
 	kBlack = 0x00000000,
 	kWhite = 0x00FFFFFF,
@@ -20,12 +21,11 @@ enum class PpuMode : uint8_t {
 	Transfer = 0x3
 };
 
-struct Pallete {
+struct Palette {
 	uint8_t value;
 	Color colors[4];
 };
 
-constexpr const Color kColors[4] { kWhite, kLightGrey, kDarkGrey, kBlack };
 
 struct Ppu {
 	int16_t clock;
@@ -62,9 +62,9 @@ struct Ppu {
 	uint8_t wx;
 	uint8_t ly;
 	uint8_t lyc;
-	Pallete bgp;
-	Pallete obp0;
-	Pallete obp1;
+	Palette bgp;
+	Palette obp0;
+	Palette obp1;
 
 	static uint32_t screen[144][160];
 };
@@ -96,14 +96,15 @@ inline void set_ppu_mode(const PpuMode mode, Ppu* const ppu, HWState* const hwst
 	ppu->stat.mode = mode_value;
 }
 
-inline void write_pallete(const uint8_t val, Pallete* const pal)
+inline void write_palette(const uint8_t val, Palette* const pal)
 {
+	constexpr const Color colors[4] { kWhite, kLightGrey, kDarkGrey, kBlack };
 	if (pal->value != val) {
 		pal->value = val;
-		pal->colors[0] = kColors[val&0x03];
-		pal->colors[1] = kColors[(val&0x0C)>>2];
-		pal->colors[2] = kColors[(val&0x30)>>4];
-		pal->colors[3] = kColors[(val&0xC0)>>6];
+		pal->colors[0] = colors[val&0x03];
+		pal->colors[1] = colors[(val&0x0C)>>2];
+		pal->colors[2] = colors[(val&0x30)>>4];
+		pal->colors[3] = colors[(val&0xC0)>>6];
 	}
 }
 
