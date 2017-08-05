@@ -409,7 +409,6 @@ void dma_transfer(const uint8_t value, Gameboy* const gb)
 		for (auto& byte : gb->memory.oam)
 			byte = mem_read8(*gb, addr++);
 	}
-	gb->cpu.clock += 671;
 }
 
 

@@ -65,7 +65,7 @@ struct Apu {
 
 
 	struct Wave {
-		int16_t len_load;        // nr31 $FF1B
+		uint8_t len_load;        // nr31 $FF1B
 		int16_t len_cnt;
 		int16_t freq_load;       // nr33 low nr34 high $FF1F $FF1E
 		int16_t freq_cnt;
@@ -206,11 +206,11 @@ inline uint8_t read_apu_register(const Apu& apu, const uint16_t addr)
 	case 0xFF24: return apu.nr50raw;
 	case 0xFF25: return apu.nr51raw;
 	case 0xFF26:
-		return (apu.power<<7)             |
-		       ((apu.noise.enabled)<<3)   |
-		       ((apu.wave.enabled)<<2)    |
-		       ((apu.square2.enabled)<<1) |
-		       (apu.square1.enabled);
+		return (apu.power<<7)               |
+		       ((!!apu.noise.len_cnt)<<3)   |
+		       ((!!apu.wave.len_cnt)<<2)    |
+		       ((!!apu.square2.len_cnt)<<1) |
+		       (!!apu.square1.len_cnt);
 	}
 
 	return 0;
