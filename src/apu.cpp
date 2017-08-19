@@ -199,9 +199,10 @@ void update_apu(const int16_t cycles, Apu* const apu)
 		if (++samples_index >= kApuSamplesSize) {
 			samples_index = 0;
 			
-			sound_buffer[sound_buffer_index] = 0;
+			int16_t sample = 0;
 			for (int i = 0; i < kApuSamplesSize; ++i)
-				mix_audio(&sound_buffer[sound_buffer_index], apu_samples[i], kAudioMaxVolume);
+				mix_audio(&sample, apu_samples[i], kAudioMaxVolume);
+			sound_buffer[sound_buffer_index] = sample;
 
 			if (++sound_buffer_index >= kSoundBufferSize) {
 				sound_buffer_index = 0;

@@ -8,11 +8,10 @@
 constexpr const auto kAudioMaxVolume = SDL_MIX_MAXVOLUME;
 
 
-inline void mix_audio(int16_t* const dst, const int16_t src, const int volume)
+inline void mix_audio(int16_t* const dest, const int16_t src, const int volume)
 {
-	SDL_MixAudioFormat((uint8_t*)dst, (uint8_t*)&src,
-		           AUDIO_S16SYS, sizeof(int16_t),
-			   volume);
+	*dest += src;
+	*dest = (*dest * volume) / kAudioMaxVolume;
 }
 
 

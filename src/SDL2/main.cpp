@@ -99,7 +99,7 @@ bool init_sdl()
 	}
 
 	renderer = SDL_CreateRenderer(window, -1,
-	  SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	  SDL_RENDERER_ACCELERATED);
 
 	if (renderer == nullptr) {
 		fprintf(stderr, "failed to create SDL_Renderer: %s\n",
