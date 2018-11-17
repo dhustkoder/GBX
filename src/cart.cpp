@@ -111,7 +111,7 @@ void destroy_gameboy(Gameboy* gb)
 
 void reset(Gameboy* const gb)
 {
-	memset(gb, 0, sizeof(*gb));
+	memset((void*)gb, 0, sizeof(*gb));
 
 	// init the system
 	// up to now only Gameboy (DMG) mode is supported

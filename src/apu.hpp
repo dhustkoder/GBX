@@ -339,7 +339,7 @@ inline void write_apu_register(const uint16_t addr, const uint8_t val, Apu* cons
 	case 0xFF26:
 		apu->power = (val&0x80) != 0;
 		if (!apu->power) {
-			memset(apu, 0, sizeof(*apu));
+			memset((void*)apu, 0, sizeof(*apu));
 			apu->frame_cnt = kApuFrameCntTicks;
 		}
 		break;
